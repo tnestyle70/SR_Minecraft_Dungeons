@@ -31,8 +31,36 @@ HRESULT CMonster::Ready_GameObject()
 _int CMonster::Update_GameObject(const _float& fTimeDelta)
 {
     _int iExit = CGameObject::Update_GameObject(fTimeDelta);
-    m_pBodyCom->Update_Body(fTimeDelta, m_bIsMoving, false);
 
+    CMonsterAnim* pAnim = dynamic_cast<CMonsterAnim*>(m_pBodyCom->Get_Anim());
+
+    // 사망 시 Transform 전체 X축 회전
+    if (pAnim && pAnim->Get_DeadRotX() != 0.f)
+    {
+        D3DXMATRIX matRot, matWorld;
+        D3DXMatrixRotationX(&matRot, pAnim->Get_DeadRotX());
+
+        // 위치만 뽑아서 회전행렬에 위치 덮어씌우기
+        _vec3 vPos;
+        m_pTransformCom->Get_Info(INFO_POS, &vPos);
+        matWorld = matRot;
+        matWorld._41 = vPos.x;
+        matWorld._42 = vPos.y;
+        matWorld._43 = vPos.z;
+
+        m_pTransformCom->Set_World(&matWorld);
+    }
+
+    // 넉백 처리
+    if (pAnim && pAnim->Get_KnockbackDelta() > 0.f)
+    {
+        _vec3 vPos;
+        m_pTransformCom->Get_Info(INFO_POS, &vPos);
+        vPos.z -= pAnim->Get_KnockbackDelta();
+        m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
+    }
+
+    m_pBodyCom->Update_Body(fTimeDelta, m_bIsMoving, false);
     CRenderer::GetInstance()->Add_RenderGroup(RENDER_NONALPHA, this);
 
     return iExit;
@@ -45,26 +73,36 @@ void CMonster::LateUpdate_GameObject(const _float& fTimeDelta)
 
 void CMonster::Render_GameObject()
 {
-    // CBodyBase::Render_Body가 파츠 순회 + 포즈 적용 + 텍스처 전부 처리
+    CMonsterAnim* pAnim = dynamic_cast<CMonsterAnim*>(m_pBodyCom->Get_Anim());
+
+    if (pAnim && pAnim->Is_HitFlash())
+    {
+        m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG2);
+        m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+        m_pGraphicDev->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_XRGB(255, 0, 0));
+    }
+
+
     m_pBodyCom->Render_Body(m_pTransformCom->Get_World(), m_pTextureCom);
+    m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+    m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
 }
 
 HRESULT CMonster::Add_Component()
 {
     Engine::CComponent* pComponent = nullptr;
 
-    // Transform
+
     pComponent = m_pTransformCom = dynamic_cast<Engine::CTransform*>
         (CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_Transform"));
     if (!pComponent) return E_FAIL;
     m_mapComponent[ID_DYNAMIC].insert({ L"Com_Transform", pComponent });
 
-    // 타입에 따라 텍스처 태그 선택
+
     const _tchar* pTexTag = nullptr;
     switch (m_eType)
     {
-    case EMonsterType::ZOMBIE:   pTexTag = L"Proto_ZombieTexture";   break;
-      
+    case EMonsterType::ZOMBIE: pTexTag = L"Proto_ZombieTexture"; break;
     default: return E_FAIL;
     }
 
@@ -73,7 +111,7 @@ HRESULT CMonster::Add_Component()
     if (!pComponent) return E_FAIL;
     m_mapComponent[ID_STATIC].insert({ L"Com_Texture", pComponent });
 
-    // MonsterBody (타입 전달 → 파츠 + 애니메이션 자동 세팅)
+
     m_pBodyCom = CMonsterBody::Create(m_pGraphicDev, m_eType);
     if (!m_pBodyCom) return E_FAIL;
 

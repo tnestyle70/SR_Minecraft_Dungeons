@@ -260,6 +260,9 @@
     <ClCompile Include="..\Code\CIronBar.cpp">
       <Filter>01. Scene\03. Editor</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CMonsterAnim.cpp">
+      <Filter>02. GameObject\01. Monster</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc">
