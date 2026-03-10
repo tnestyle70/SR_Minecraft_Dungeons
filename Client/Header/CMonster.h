@@ -2,6 +2,7 @@
 #include "CGameObject.h"
 #include "CProtoMgr.h"
 #include "CMonsterBody.h"
+#include "CMonsterAnim.h"
 
 class CMonster : public CGameObject
 {
@@ -28,7 +29,7 @@ private:
     bool            m_bIsMoving = true;  // 테스트용, 추후 이동 여부로 교체
 
 public:
-   
+
     static CMonster* Create(LPDIRECT3DDEVICE9 pGraphicDev,
         EMonsterType eType = EMonsterType::ZOMBIE);
 

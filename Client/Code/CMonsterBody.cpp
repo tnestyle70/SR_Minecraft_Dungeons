@@ -42,7 +42,7 @@ HRESULT CMonsterBody::Ready_Body()
         pLLeg = L"Proto_Zombie_LLeg";
         break;
 
- 
+
 
     default:
         return E_FAIL;
@@ -74,7 +74,7 @@ HRESULT CMonsterBody::Ready_Body()
         return E_FAIL;
 
     // 타입에 맞는 애니메이션 연결
-    m_pAnim = new CMonsterAnim(m_eType);
+    m_pAnim = new CMonsterAnim();
 
     return S_OK;
 }

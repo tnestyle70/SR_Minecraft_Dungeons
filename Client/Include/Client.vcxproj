@@ -190,6 +190,7 @@
     <ClCompile Include="..\Code\CLogo.cpp" />
     <ClCompile Include="..\Code\CMainApp.cpp" />
     <ClCompile Include="..\Code\CMonster.cpp" />
+    <ClCompile Include="..\Code\CMonsterAnim.cpp" />
     <ClCompile Include="..\Code\CMonsterBody.cpp" />
     <ClCompile Include="..\Code\CPathFinding.cpp" />
     <ClCompile Include="..\Code\CPlayer.cpp" />

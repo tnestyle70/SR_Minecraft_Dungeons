@@ -1,6 +1,7 @@
 #pragma once
 #include "CCubeBodyTex.h"
 
+
 namespace ZombieUV
 {
     // [¸Ó¸®] 0.7 x 0.7 x 0.7
