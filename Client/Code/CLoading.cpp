@@ -47,9 +47,7 @@ _uint CLoading::Loading_Stage()
 
     lstrcpy(m_szLoading, L"Texture Loading.....................................");
 
-    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_PlayerTexture",
-        Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Player/Ma.jpg"))))
-        return E_FAIL;
+    
 
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TerrainTexture",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Terrain/Grass_%d.tga", 2))))
@@ -64,10 +62,10 @@ _uint CLoading::Loading_Stage()
         return E_FAIL;
 
     // 플레이어 텍스쳐
-    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SteveTexture",
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_PlayerTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/mob/steve_real.png"))))
         return E_FAIL;
-
+  
     // 닭 텍스쳐
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ChickenTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/mob/chicken.png"))))
@@ -142,11 +140,11 @@ _uint CLoading::Loading_Stage()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Skeleton_Head",
         Engine::CCubeBodyTex::Create(m_pGraphicDev, SkeletonUV::HEAD))))
         return E_FAIL;
-
+    
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Skeleton_Body",
         Engine::CCubeBodyTex::Create(m_pGraphicDev, SkeletonUV::BODY))))
         return E_FAIL; 
-
+    
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Skeleton_RArm",
         Engine::CCubeBodyTex::Create(m_pGraphicDev, SkeletonUV::R_ARM))))
         return E_FAIL;
@@ -154,11 +152,11 @@ _uint CLoading::Loading_Stage()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Skeleton_LArm",
         Engine::CCubeBodyTex::Create(m_pGraphicDev, SkeletonUV::L_ARM))))
         return E_FAIL;
-
+    
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Skeleton_RLeg",
         Engine::CCubeBodyTex::Create(m_pGraphicDev, SkeletonUV::R_LEG))))
         return E_FAIL;
-
+    
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Skeleton_LLeg",
         Engine::CCubeBodyTex::Create(m_pGraphicDev, SkeletonUV::L_LEG))))
         return E_FAIL; 
@@ -166,11 +164,11 @@ _uint CLoading::Loading_Stage()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_BowStandbyTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/mob/bow_standby.png"))))
         return E_FAIL;
-
+    
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_BowPullingTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/mob/bow_pulling_0.png"))))
         return E_FAIL;
-
+    
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ArrowTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/mob/arrow.png"))))
         return E_FAIL;
