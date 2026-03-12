@@ -27,10 +27,10 @@ private:
     void                Fire_Arrow();
     void                Render_Bow();
 
-    // Áß·Â
+    // ì¤‘ë ¥
     void                Apply_Gravity(const _float& fTimeDelta);
     void                Resolve_BlockCollision();
-    // AI ½Ã½ºÅÛ 
+    // AI ì‹œìŠ¤í…œ 
     void                Update_AI(const _float& fTimeDelta);
 
 private:
@@ -38,7 +38,7 @@ private:
     Engine::CTransform* m_pTransformCom = nullptr;
     Engine::CTexture* m_pTextureCom = nullptr;
     CCollider* m_pColliderCom = nullptr; 
-    //½ºÄÌ·¹Åæ È°
+    //ìŠ¤ì¼ˆë ˆí†¤ í™œ
     Engine::CRcTex* m_pBowBufferCom = nullptr;
     Engine::CTexture* m_pBowStandbyTex = nullptr;
     Engine::CTexture* m_pBowPullingTex = nullptr;
@@ -53,20 +53,20 @@ private:
     float                   m_fVelocityY = 0.f;
     float                   m_fDeadAngleY = 0.f;
     bool                    m_bOnGround = false;  
-    bool                    m_bDeadDone = false; // ¸ó½ºÅÍ »èÁ¦¿ëµµ 
+    bool                    m_bDeadDone = false; // ëª¬ìŠ¤í„° ì‚­ì œìš©ë„ 
 
 
     static constexpr float  m_fGravity = -20.f;
     static constexpr float  m_fMaxFall = -20.f; 
 
-    // »çÁ¤°Å¸® °¨Áö 
-    float m_fDetectRange = 10.f; // °¨ÁöÇÒ °Å¸®
-    float m_fAttackRange = 2.f;  // °ø°İ »çÁ¤°Å¸® 
-    float m_fMoveSpeed   = 2.f;  // ÀÌµ¿ ¼Óµµ 
+    // ì‚¬ì •ê±°ë¦¬ ê°ì§€ 
+    float m_fDetectRange = 10.f; // ê°ì§€í•  ê±°ë¦¬
+    float m_fAttackRange = 2.f;  // ê³µê²© ì‚¬ì •ê±°ë¦¬ 
+    float m_fMoveSpeed   = 2.f;  // ì´ë™ ì†ë„ 
 
 public:
     static CMonster* Create(LPDIRECT3DDEVICE9 pGraphicDev,
-        EMonsterType eType = EMonsterType::ZOMBIE, _vec3 vPos = { -1.f, 10.f, 3.f }); //À§Ä¡°ª ÁÂÇ¥?
+        EMonsterType eType = EMonsterType::ZOMBIE, _vec3 vPos = { -1.f, 5.f, 3.f });
 
 private:
     virtual void Free();

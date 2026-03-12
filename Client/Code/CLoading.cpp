@@ -482,24 +482,12 @@ _uint CLoading::Loading_SquidCoast()
     m_bFinish = true;
 
     return 0;
-    /*
-    lstrcpy(m_szLoading, L"SquidCoast Texture Loading.......");
-
-    //오징어 해안 로딩씬
-    //if(FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SquidCoastTexture",
-    //    CTexture::Create(m_pGraphicDev, TEX_NORMAL, 
-    //        L"../Bin/Resource/Texture/Logo/Loading_Screen_Squid_Coast.png"))));
-
-    lstrcpy(m_szLoading, L"Loading Complete");
-    
-    m_bFinish = true;
-
-    return 0;
-    */
 }
 
 _uint CLoading::Loading_Camp()
 {
+    m_bFinish = false;
+
     lstrcpy(m_szLoading, L"Camp Texture Loading.......");
 
     //캠프 로딩씬
@@ -507,7 +495,7 @@ _uint CLoading::Loading_Camp()
     //    CTexture::Create(m_pGraphicDev, TEX_NORMAL, 
     //        L"../Bin/Resource/Texture/Logo/Loading_Screen_Lobby.png"))));
 
-    lstrcpy(m_szLoading, L"Loading Complete");
+    lstrcpy(m_szLoading, L"Camp Loading Complete");
 
     m_bFinish = true;
 
@@ -535,7 +523,7 @@ _uint CLoading::Loading_Obsidian()
 
     //옵시디언 로딩씬
     //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ObsidianTexture",
-    //    CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Logo/Obsidian_Pinnacle.png"))));
+    //    CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Logo/Obsidian_Pinnacle.png"))))
 
     lstrcpy(m_szLoading, L"Loading Complete");
 

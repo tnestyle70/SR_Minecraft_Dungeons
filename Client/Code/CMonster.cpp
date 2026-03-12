@@ -27,8 +27,8 @@ HRESULT CMonster::Ready_GameObject(_vec3& vPos)
 
     switch (m_eType)
     {
-    case EMonsterType::ZOMBIE:   m_pTransformCom->Set_Pos(-1.f, 10.f, 3.f); break;
-    case EMonsterType::SKELETON: m_pTransformCom->Set_Pos(1.f, 10.f, 3.f); break; 
+    case EMonsterType::ZOMBIE:   m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z); break;
+    case EMonsterType::SKELETON: m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z); break; 
     case EMonsterType::CREEPER:  m_pTransformCom->Set_Pos(-2.f, 10.f, 3.f); break;
     case EMonsterType::SPIDER:   m_pTransformCom->Set_Pos(2.f, 10.f, 3.f); break;
     }
@@ -46,7 +46,7 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
 
     if (pAnim && pAnim->Get_State() == EMonsterState::DEAD && pAnim->Get_DeadRotX() != 0.f)
     {
-        // »ç¸Á Ã¹ ÇÁ·¹ÀÓ¿¡ ¹æÇâ ÀúÀå
+        // ì‚¬ë§ ì²« í”„ë ˆì„ì— ë°©í–¥ ì €ì¥
         if (m_fDeadAngleY == 0.f)
             m_fDeadAngleY = D3DXToRadian(m_pTransformCom->m_vAngle.y);
 
@@ -281,7 +281,7 @@ void CMonster::Update_Arrow(const _float& fTimeDelta)
         m_vecArrows.end());
 }
 
-// [Ãß°¡] Áß·Â Àû¿ë
+// [ì¶”ê°€] ì¤‘ë ¥ ì ìš©
 void CMonster::Apply_Gravity(const _float& fTimeDelta)
 {
     if (m_bOnGround) return;
@@ -295,7 +295,7 @@ void CMonster::Apply_Gravity(const _float& fTimeDelta)
     m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
 }
 
-// [Ãß°¡] ºí·Ï Ãæµ¹
+// [ì¶”ê°€] ë¸”ë¡ ì¶©ëŒ
 void CMonster::Resolve_BlockCollision()
 {
     _vec3 vPos;
@@ -357,7 +357,7 @@ void CMonster::Update_AI(const _float& fTimeDelta)
     if (!pAnim) return;
     if (pAnim->Get_State() == EMonsterState::DEAD) return;
 
-    // Ç×»ó ÇÃ·¹ÀÌ¾î ¹æÇâ ¹Ù¶óº¸±â
+    // í•­ìƒ í”Œë ˆì´ì–´ ë°©í–¥ ë°”ë¼ë³´ê¸°
     _vec3 vLookDir = vPlayerPos - vMyPos;
     vLookDir.y = 0.f;
     D3DXVec3Normalize(&vLookDir, &vLookDir);
@@ -428,7 +428,7 @@ HRESULT CMonster::Add_Component()
     m_pBodyCom = CMonsterBody::Create(m_pGraphicDev, m_eType);
     if (!m_pBodyCom) return E_FAIL;
 
-    // [Ãß°¡] Äİ¶óÀÌ´õ
+    // [ì¶”ê°€] ì½œë¼ì´ë”
     m_pColliderCom = CCollider::Create(m_pGraphicDev,
         _vec3(0.5f, 1.8f, 0.5f),  
         _vec3(0.f, 0.9f, 0.f));  
