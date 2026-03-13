@@ -91,8 +91,14 @@
     <Filter Include="01. Scene\01. Stage\03. Obsidian">
       <UniqueIdentifier>{aef9c0eb-bd5a-4923-8992-9f0174a7408d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="02. GameObject\08. UIObject">
+      <UniqueIdentifier>{6d1b8214-4903-4c91-a67b-2877995e9664}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Header\CUIObject.h">
+      <Filter>02. GameObject\08. UIObject</Filter>
+    </ClInclude>
     <ClInclude Include="framework.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -212,6 +218,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Code\CUIObject.cpp">
+      <Filter>02. GameObject\08. UIObject</Filter>
+    </ClCompile>
     <ClCompile Include="Client.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>

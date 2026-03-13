@@ -103,8 +103,14 @@
     <Filter Include="03. Component\04. Collider">
       <UniqueIdentifier>{dc87a61d-7433-44fe-9bbc-4a723c33cf1f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="03. Component\00. VIBuffer\05. CubeBodyTex">
-      <UniqueIdentifier>{b8ab2d6e-271f-45e1-ae88-8334806763e7}</UniqueIdentifier>
+    <Filter Include="03. Component\05. UITexture">
+      <UniqueIdentifier>{6d1b8214-4903-4c91-a67b-2877995e9663}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="00. Manager\10. UIMetadataMgr">
+      <UniqueIdentifier>{e167c134-8c80-48e0-a40e-74971c66705d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="00. Manager\10. UIMgr">
+      <UniqueIdentifier>{37d09413-fccc-4dfa-9052-649c75b78c5f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -195,11 +201,15 @@
     <ClCompile Include="..\Code\CSoundMgr.cpp">
       <Filter>00. Manager\09. SoundMgr</Filter>
     </ClCompile>
-    <ClCompile Include="..\Code\CCubeBodyTex.cpp">
-      <Filter>03. Component\00. VIBuffer\05. CubeBodyTex</Filter>
-    </ClCompile>
     <ClCompile Include="..\Code\CCollider.cpp">
       <Filter>03. Component\04. Collider</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CCubeBodyTex.cpp" />
+    <ClCompile Include="..\Code\CUIMetadataMgr.cpp">
+      <Filter>00. Manager\10. UIMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CUITexture.cpp">
+      <Filter>03. Component\02. Texture</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -308,11 +318,15 @@
     <ClInclude Include="..\Header\CSoundMgr.h">
       <Filter>00. Manager\09. SoundMgr</Filter>
     </ClInclude>
-    <ClInclude Include="..\Header\CCubeBodyTex.h">
-      <Filter>03. Component\00. VIBuffer\05. CubeBodyTex</Filter>
-    </ClInclude>
     <ClInclude Include="..\Header\CCollider.h">
       <Filter>03. Component\04. Collider</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CCubeBodyTex.h" />
+    <ClInclude Include="..\Header\CUIMetadataMgr.h">
+      <Filter>00. Manager\10. UIMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CUITexture.h">
+      <Filter>03. Component\02. Texture</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

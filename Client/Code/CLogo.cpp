@@ -12,6 +12,9 @@
 #include "CBlockMgr.h"
 #include "CSceneChanger.h"
 #include "CRenderer.h"
+#include "CUIMetadataMgr.h"
+#include "CUITexture.h"
+#include "CUIObject.h"
 
 CLogo::CLogo(LPDIRECT3DDEVICE9 pGraphicDev)
     : Engine::CScene(pGraphicDev), m_pEditor(nullptr)
@@ -37,17 +40,17 @@ _int CLogo::Update_Scene(const _float& fTimeDelta)
 {
     bool bF1 = CDInputMgr::GetInstance()->Get_DIKeyState(DIK_F1);
 
-    //¿¡µðÅÍ ¸ðµå·Î º¯°æ
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     if (bF1 && !m_bF1Toggle)
     {
         if (!m_pEditor)
         {
-            //ÃÖÃÊ ¿¡µðÅÍ »ý¼º Ä«¸Þ¶ó 
+            //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½Þ¶ï¿½ 
             m_pEditor = CEditor::Create(m_pGraphicDev);
             if (!m_pEditor)
                 return -1;
         }
-        //Ã³À½ »ý¼º ÀÌÈÄ Åä±Û¸¸ Àû¿ë
+        //Ã³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Û¸ï¿½ ï¿½ï¿½ï¿½ï¿½
         m_pEditor->SetEditorMode(!m_pEditor->IsEditorMode());
     }
 
@@ -59,7 +62,7 @@ _int CLogo::Update_Scene(const _float& fTimeDelta)
         return 0;
     }
 
-    //·Î°í ¾À ¾÷µ¥ÀÌÆ®
+    //ï¿½Î°ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
     _int iExit = Engine::CScene::Update_Scene(fTimeDelta);
 
     if (GetAsyncKeyState(VK_RETURN))
@@ -103,7 +106,7 @@ HRESULT CLogo::Ready_Environment_Layer(const _tchar* pLayerTag)
     if (nullptr == pLayer)
         return E_FAIL;
 
-    // ¿ÀºêÁ§Æ® Ãß°¡
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ß°ï¿½
     CGameObject* pGameObject = nullptr;
 
     // back ground
@@ -114,6 +117,11 @@ HRESULT CLogo::Ready_Environment_Layer(const _tchar* pLayerTag)
 
     if (FAILED(pLayer->Add_GameObject(L"BackGround", pGameObject)))
         return E_FAIL;
+
+	// UI Test Object: Positioned at Bottom-Middle
+	// pGameObject = CUIObject::Create(m_pGraphicDev, 100.f, 500.f, 618.f, 96.f, L"Proto_UITexture_Hotbar");
+	// if (nullptr != pGameObject)
+	// 	pLayer->Add_GameObject(L"UI_Hotbar", pGameObject);
 
     m_mapLayer.insert({ pLayerTag, pLayer });
 
@@ -129,10 +137,18 @@ HRESULT CLogo::Ready_Prototype()
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Logo/MainMenu_Screen2.png"))))
         return E_FAIL;
 
-    //·Îµù¾À µî·Ï
+    //ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SquidCoastLoadingTexture",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Logo/Loading_Screen_Squid_Coast.png"))))
         return E_FAIL;
+
+	// UI Test Load
+	//if (FAILED(Engine::CUIMetadataMgr::GetInstance()->Ready_MetaData(L"../Bin/Resource/Texture/UI/Materials/HotBar2/hotbarBackground.json", L"Texture_HotbarBackground")))
+	//	return E_FAIL;
+    //
+	//if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_UITexture_Hotbar", 
+	//	Engine::CUITexture::Create(m_pGraphicDev, L"../Bin/Resource/Texture/UI/Materials/HotBar2/hotbarBackground.png", L"Texture_HotbarBackground"))))
+	//	return E_FAIL;
 
     return S_OK;
 }
