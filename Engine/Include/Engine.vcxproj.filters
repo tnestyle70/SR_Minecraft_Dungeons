@@ -112,6 +112,9 @@
     <Filter Include="00. Manager\10. UIMgr">
       <UniqueIdentifier>{37d09413-fccc-4dfa-9052-649c75b78c5f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="03. Component\00. VIBuffer\06. BossTex">
+      <UniqueIdentifier>{c38acc3d-0dc8-4496-83a4-d1a1d162ee13}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Code\CGraphicDev.cpp">
@@ -210,6 +213,8 @@
     </ClCompile>
     <ClCompile Include="..\Code\CUITexture.cpp">
       <Filter>03. Component\02. Texture</Filter>
+    <ClCompile Include="..\Code\CBossTex.cpp">
+      <Filter>03. Component\00. VIBuffer\06. BossTex</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -327,6 +332,8 @@
     </ClInclude>
     <ClInclude Include="..\Header\CUITexture.h">
       <Filter>03. Component\02. Texture</Filter>
+    <ClInclude Include="..\Header\CBossTex.h">
+      <Filter>03. Component\00. VIBuffer\06. BossTex</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

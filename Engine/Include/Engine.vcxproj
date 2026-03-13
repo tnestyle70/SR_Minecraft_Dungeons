@@ -147,6 +147,7 @@ call Copy.bat</Command>
   <ItemGroup>
     <ClInclude Include="..\Header\CUITexture.h" />
     <ClInclude Include="..\Header\CUIMetadataMgr.h" />
+    <ClInclude Include="..\Header\CBossTex.h" />
     <ClInclude Include="..\Header\CCalculator.h" />
     <ClInclude Include="..\Header\CCamera.h" />
     <ClInclude Include="..\Header\CCollider.h" />
@@ -188,6 +189,7 @@ call Copy.bat</Command>
   <ItemGroup>
     <ClCompile Include="..\Code\CUITexture.cpp" />
     <ClCompile Include="..\Code\CUIMetadataMgr.cpp" />
+    <ClCompile Include="..\Code\CBossTex.cpp" />
     <ClCompile Include="..\Code\CCalculator.cpp" />
     <ClCompile Include="..\Code\CCamera.cpp" />
     <ClCompile Include="..\Code\CCollider.cpp" />

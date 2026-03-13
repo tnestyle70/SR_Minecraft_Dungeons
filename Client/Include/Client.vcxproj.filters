@@ -93,6 +93,11 @@
     </Filter>
     <Filter Include="02. GameObject\08. UIObject">
       <UniqueIdentifier>{6d1b8214-4903-4c91-a67b-2877995e9664}</UniqueIdentifier>
+    <Filter Include="02. GameObject\08 Boss">
+      <UniqueIdentifier>{a34e32f4-55d5-4d81-856e-87d1c8fd9820}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. GameObject\08 Boss\00. RedStoneGolem">
+      <UniqueIdentifier>{ab32831a-1c13-4ad2-8667-42b53f24c8cd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -216,6 +221,9 @@
     <ClInclude Include="..\Header\StageData.h">
       <Filter>01. Scene\03. Editor</Filter>
     </ClInclude>
+    <ClInclude Include="..\Header\CRedStoneGolem.h">
+      <Filter>02. GameObject\08 Boss\00. RedStoneGolem</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Code\CUIObject.cpp">
@@ -334,6 +342,9 @@
     </ClCompile>
     <ClCompile Include="..\Code\CTriggerBox.cpp">
       <Filter>01. Scene\03. Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CRedStoneGolem.cpp">
+      <Filter>02. GameObject\08 Boss\00. RedStoneGolem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
