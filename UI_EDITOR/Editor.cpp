@@ -104,6 +104,21 @@ void Editor::RenderTextureFolder(TextureFolder& folder) {
 					e.texture = folder.textures[i].texture;
 					e.uv_u = uv1.x;
 					e.uv_v = uv1.y;
+					
+					// 캔버스 최대 크기
+					const float MAX_W = 1280.0f;
+					const float MAX_H = 720.0f;
+					
+					// 텍스처가 캔버스보다 크다면 비율에 맞춰 축소 (가로/세로 비율 1:1 유지)
+					if (e.width > MAX_W || e.height > MAX_H) {
+						float scaleX = MAX_W / e.width;
+						float scaleY = MAX_H / e.height;
+						float minScale = (std::min)(scaleX, scaleY);
+						
+						e.width *= minScale;
+						e.height *= minScale;
+					}
+					
 					state.entities.push_back(e);
 				}
 				if ( ImGui::IsItemHovered() ) {
@@ -316,8 +331,10 @@ void Editor::Render() {
 
 		if ( ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left) ) {
 			ImVec2 mouse_delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
-			e.x = std::clamp(state.dragOffset.x + mouse_delta.x, 0.0f, WORK_W - e.width);
-			e.y = std::clamp(state.dragOffset.y + mouse_delta.y, 0.0f, WORK_H - e.height);
+			float max_x = (std::max)(0.0f, WORK_W - e.width);
+			float max_y = (std::max)(0.0f, WORK_H - e.height);
+			e.x = std::clamp(state.dragOffset.x + mouse_delta.x, 0.0f, max_x);
+			e.y = std::clamp(state.dragOffset.y + mouse_delta.y, 0.0f, max_y);
 		}
 		ImGui::PopID();
 
