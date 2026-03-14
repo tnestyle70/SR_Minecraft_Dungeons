@@ -1,6 +1,7 @@
 #pragma once
 #include "CGameObject.h"
 #include "CProtoMgr.h"
+#include "CRedStoneGolemPart.h"
 
 class CRedStoneGolem : public CGameObject
 {
@@ -17,36 +18,23 @@ public:
 
 private:
 	HRESULT			Add_Component();
-	void Set_PartsPos();
 	void Set_DefaultScale();
+	void Set_WorldScale();
+	void Set_PartsOffset();
+	void Set_PartsParent();
+
+private:
+	void Walk_Animation();
 	
 private:
-	// Buffer
-	Engine::CRedStoneGolemHeadTex* m_pHeadBufferCom;
-	Engine::CRedStoneGolemBodyTex* m_pBodyBufferCom;
-	Engine::CRedStoneGolemShoulderTex* m_pLeftShoulderBufferCom;
-	Engine::CRedStoneGolemShoulderTex* m_pRightShoulderBufferCom;
-	Engine::CRedStoneGolemHipTex* m_pHipBufferCom;
-	Engine::CRedStoneGolemCoreTex* m_pCoreBufferCom;
-	Engine::CRedStoneGolemArmTex* m_pLeftArmBufferCom;
-	Engine::CRedStoneGolemArmTex* m_pRightArmBufferCom;
-	Engine::CRedStoneGolemLegTex* m_pLeftLegBufferCom;
-	Engine::CRedStoneGolemLegTex* m_pRightLegBufferCom;
+	static constexpr _float m_fWorldScale = 2.f;
 
-	// Transform
-	Engine::CTransform* m_pHeadTransformCom;
-	Engine::CTransform* m_pBodyTransformCom;
-	Engine::CTransform* m_pLeftShoulderTransformCom;
-	Engine::CTransform* m_pRightShoulderTransformCom;
-	Engine::CTransform* m_pHipTransformCom;
-	Engine::CTransform* m_pCoreTransformCom;
-	Engine::CTransform* m_pLeftArmTransformCom;
-	Engine::CTransform* m_pRightArmTransformCom;
-	Engine::CTransform* m_pLeftLegTransformCom;
-	Engine::CTransform* m_pRightLegTransformCom;
+	CRedStoneGolemPart* m_pParts[GOLEM_END];
 
-	// Texture
+	Engine::CTransform* m_pTransformCom;
 	Engine::CTexture* m_pTextureCom;
+
+	_float m_fWalkTime;
 
 public:
 	static CRedStoneGolem* Create(LPDIRECT3DDEVICE9 pGraphicDev);
