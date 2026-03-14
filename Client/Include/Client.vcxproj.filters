@@ -108,6 +108,8 @@
     </Filter>
     <Filter Include="02. GameObject\08 Boss\00. RedStoneGolem\00. RedStoneGolemPart">
       <UniqueIdentifier>{0176f593-e2f3-4367-9ec7-8846f3713595}</UniqueIdentifier>
+    <Filter Include="02. GameObject\02. Player\01. PlayerArrow">
+      <UniqueIdentifier>{30071fc2-fb69-456f-a65d-d52af032225a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -242,6 +244,8 @@
     </ClInclude>
     <ClInclude Include="..\Header\CRedStoneGolemPart.h">
       <Filter>02. GameObject\08 Boss\00. RedStoneGolem\00. RedStoneGolemPart</Filter>
+    <ClInclude Include="..\Header\CPlayerArrow.h">
+      <Filter>02. GameObject\02. Player\01. PlayerArrow</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -373,6 +377,8 @@
     </ClCompile>
     <ClCompile Include="..\Code\CRedStoneGolemPart.cpp">
       <Filter>02. GameObject\08 Boss\00. RedStoneGolem\00. RedStoneGolemPart</Filter>
+    <ClCompile Include="..\Code\CPlayerArrow.cpp">
+      <Filter>02. GameObject\02. Player\01. PlayerArrow</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
