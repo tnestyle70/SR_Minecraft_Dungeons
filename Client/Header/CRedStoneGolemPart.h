@@ -4,14 +4,16 @@
 
 enum REDSTONEGOLEM_PART
 {
-	GOLEM_HEAD,
 	GOLEM_BODY,
+
+	GOLEM_HEAD,
 	GOLEM_CORE,
 	GOLEM_LSHOULDER,
 	GOLEM_RSHOULDER,
+	GOLEM_HIP,
+
 	GOLEM_LARM,
 	GOLEM_RARM,
-	GOLEM_HIP,
 	GOLEM_LLEG,
 	GOLEM_RLEG,
 
@@ -32,9 +34,9 @@ public:
 	virtual void Render_GameObject();
 
 public:
-	void Set_Buffer(CVIBuffer* pBuffer) { m_pBufferCom = pBuffer; }
 	void Set_Parent(CTransform* pParent) { m_pParentTransformCom = pParent; }
 	void Set_LocalOffset(_vec3 vOffset) { m_vLocalOffset = vOffset; }
+	_vec3 Get_LocalOffset() { return m_vLocalOffset; }
 	CTransform* Get_Transform() { return m_pTransformCom; }
 
 private:

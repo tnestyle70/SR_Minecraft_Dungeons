@@ -18,13 +18,23 @@ public:
 
 private:
 	HRESULT			Add_Component();
-	void Set_PartsPos();
 	void Set_DefaultScale();
+	void Set_WorldScale();
+	void Set_PartsOffset();
+	void Set_PartsParent();
+
+private:
+	void Walk_Animation();
 	
 private:
+	static constexpr _float m_fWorldScale = 2.f;
+
 	CRedStoneGolemPart* m_pParts[GOLEM_END];
 
+	Engine::CTransform* m_pTransformCom;
 	Engine::CTexture* m_pTextureCom;
+
+	_float m_fWalkTime;
 
 public:
 	static CRedStoneGolem* Create(LPDIRECT3DDEVICE9 pGraphicDev);

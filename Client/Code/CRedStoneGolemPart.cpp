@@ -34,8 +34,18 @@ HRESULT CRedStoneGolemPart::Ready_GameObject()
 
 _int CRedStoneGolemPart::Update_GameObject(const _float& fTimeDelta)
 {
-	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
+    if (m_pParentTransformCom)
+    {
+        _vec3 vParentPos;
+        m_pParentTransformCom->Get_Info(INFO_POS, &vParentPos);
 
+        _vec3 vWorldPos = vParentPos + m_vLocalOffset;
+
+        m_pTransformCom->Set_Pos(vWorldPos.x, vWorldPos.y, vWorldPos.z);
+    }
+
+	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
+        
 	return iExit;
 }
 
@@ -51,7 +61,7 @@ void CRedStoneGolemPart::Render_GameObject()
 	m_pBufferCom->Render_Buffer();
 }
 
-HRESULT CRedStoneGolemPart::Add_Component()
+HRESULT CRedStoneGolemPart::Add_Component() 
 {
     Engine::CComponent* pComponent = nullptr;
 
@@ -110,15 +120,10 @@ HRESULT CRedStoneGolemPart::Add_Component()
     pComponent = m_pTransformCom = dynamic_cast<CTransform*>(
         CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_Transform"));
 
-    if (!pComponent)
+    if (pComponent == nullptr)
         return E_FAIL;
 
     m_mapComponent[ID_DYNAMIC].insert({ L"Com_Transform", pComponent });
-
-    //pComponent = m_pParentTransformCom = dynamic_cast<CTransform*>(
-    //    CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_Transform"));
-
-    //m_mapComponent[ID_DYNAMIC].insert({ L"Com_ParentTransform", pComponent });
 
     return S_OK;
 }
