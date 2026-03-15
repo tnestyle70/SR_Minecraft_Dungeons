@@ -100,13 +100,18 @@ HRESULT CObsidian::Ready_Environment_Layer(const _tchar* pLayerTag)
 
 	CGameObject* pGameObject = nullptr;
 
-	//dynamic camera 
+	//dynamic camera
 
 	_vec3 vEye{ 0.f, 10.f, -10.f };
 	_vec3 vAt{ 0.f, 0.f, 1.f };
 	_vec3 vUp{ 0.f, 1.f, 0.f };
 
 	pGameObject = CDynamicCamera::Create(m_pGraphicDev, &vEye, &vAt, &vUp);
+
+	CDynamicCamera* pDynamicCam = dynamic_cast<CDynamicCamera*>(pGameObject);
+	if (!pDynamicCam)
+		return E_FAIL;
+	pDynamicCam->SetActionCam();
 
 	if (!pGameObject)
 		return E_FAIL;

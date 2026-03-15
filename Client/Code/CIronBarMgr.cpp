@@ -53,12 +53,12 @@ void CIronBarMgr::Render()
 
 void CIronBarMgr::Open(int iTriggerID)
 {
-	m_bClosed = false;
-
 	for (auto& pair : m_mapIronBarGroups)
 	{
 		if (pair.first == iTriggerID)
 		{
+			m_mapClosed[iTriggerID] = false;
+
 			for (auto& pIronBar : pair.second)
 			{
 				pIronBar->SetIronBarState(eIronBarState::MOVE_UP);
@@ -71,12 +71,12 @@ void CIronBarMgr::Open(int iTriggerID)
 
 void CIronBarMgr::Close(int iTriggerID)
 {
-	m_bClosed = true;
-
 	for (auto& pair : m_mapIronBarGroups)
 	{
 		if(pair.first == iTriggerID)
 		{
+			m_mapClosed[iTriggerID] = true;
+
 			for (auto& pIronBar : pair.second)
 			{
 				pIronBar->SetIronBarState(eIronBarState::MOVE_DOWN);
@@ -93,6 +93,12 @@ void CIronBarMgr::AddIronBar(CGameObject* pGameObject, int iTriggerID)
 
 	if (pIronBar)
 	{
+		//iTriggerID의 값이 추가되지 않은 상태일 closed false 추가
+		if (m_mapClosed.find(iTriggerID) == m_mapClosed.end())
+		{
+			m_mapClosed[iTriggerID] = false;
+		}
+
 		m_mapIronBarGroups[iTriggerID].push_back(pIronBar);
 	}
 }
@@ -107,6 +113,17 @@ void CIronBarMgr::Clear()
 		}
 	}
 	m_mapIronBarGroups.clear();
+}
+
+bool CIronBarMgr::IsClosed(int iTriggerID)
+{
+	//없을 경우 기본값 false
+	if (m_mapClosed.find(iTriggerID) == m_mapClosed.end())
+	{
+		return false;
+	}
+
+	return m_mapClosed[iTriggerID];
 }
 
 void CIronBarMgr::Free()

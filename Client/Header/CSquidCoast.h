@@ -17,8 +17,6 @@ private:
 	HRESULT Ready_UI_Layer(const _tchar* pLayerTag);
 	HRESULT Ready_Light();
 	HRESULT Ready_StageData(const _tchar* szPath);
-private:
-	bool m_bActionCamFinished = false;
 public:
 	static CSquidCoast* Create(LPDIRECT3DDEVICE9 pGraphicDev);
 private:
