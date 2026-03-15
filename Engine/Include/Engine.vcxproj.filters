@@ -228,6 +228,12 @@
     <ClCompile Include="..\Code\CRedStoneGolemLegTex.cpp">
       <Filter>03. Component\00. VIBuffer\06. Boss\00. RedStoneGolem</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CParticleMgr.cpp">
+      <Filter>03. Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CParticleEmitter.cpp">
+      <Filter>03. Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\CGraphicDev.h">
@@ -362,6 +368,15 @@
     </ClInclude>
     <ClInclude Include="..\Header\CRedStoneGolemLegTex.h">
       <Filter>03. Component\00. VIBuffer\06. Boss\00. RedStoneGolem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\ParticleType.h">
+      <Filter>03. Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CParticleMgr.h">
+      <Filter>03. Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CParticleEmitter.h">
+      <Filter>03. Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

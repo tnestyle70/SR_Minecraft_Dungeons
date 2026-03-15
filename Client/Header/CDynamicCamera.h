@@ -1,5 +1,15 @@
 #pragma once
 #include "CCamera.h"
+#include <deque>
+
+//Idea - deque에 waypoint를 저장하고 스테이지에서 위치값 뽑아내면서
+//쭉 훑고 deque가 비면 캠 전환
+struct CamWayPoint
+{
+	_vec3 vEye;
+	_vec3 vUp;
+	_float fDuration;
+};
 
 class CDynamicCamera :  public CCamera
 {
@@ -22,15 +32,25 @@ public:
 	virtual void	Render_GameObject() {}
 
 private:
+	_int Update_ActionCam(const _float& fTimeDelta);
+
+private:
 	void		Key_Input(const _float& fTimeDelta);
 	void		Mouse_Move();
 	void		Mouse_Fix();
-
+public:
+	void SetActionCam();
+	bool IsActionCamFinished() { return m_bActionCam; }
 private:
 	_float		m_fSpeed;
 	_bool		m_bFix;
 	_bool		m_bCheck;
-
+private: //Cam Way Point
+	deque<CamWayPoint> m_deqWayPoints;
+	CamWayPoint m_wpStart;
+	CamWayPoint m_wpTarget;
+	CamWayPoint m_wpEnd;
+	bool m_bActionCam = false;
 public:
 	static CDynamicCamera* Create(LPDIRECT3DDEVICE9 pGraphicDev,
 									const _vec3* pEye,
