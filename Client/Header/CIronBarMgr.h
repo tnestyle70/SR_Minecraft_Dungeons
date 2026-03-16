@@ -19,12 +19,14 @@ public:
 	void AddIronBar(CGameObject* pGameObject, int iTriggerID);
 	void Clear();
 public:
-	bool IsClosed() { return m_bClosed; };
+	bool IsClosed(int iTriggerID);
 private:
 	void UpdateIronBarAnim();
 private://IronBar을 컨테이너로 관리
 	map<int, vector<CIronBar*>> m_mapIronBarGroups;
 	bool m_bClosed = false;
+	//닫혔는지 열렸는지 map으로 관리
+	map<int, bool> m_mapClosed;
 private:
 	virtual void Free();
 };

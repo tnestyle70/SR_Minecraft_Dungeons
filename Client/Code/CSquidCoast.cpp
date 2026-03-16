@@ -15,6 +15,7 @@
 #include "CRenderer.h"
 #include "StageData.h"
 #include "CRedStoneGolem.h"
+#include "CParticleMgr.h"
 #include "CHotbar.h"
 #include "CBlockRenderer.h"
 #include "CLayer.h"
@@ -58,6 +59,8 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 	CIronBarMgr::GetInstance()->Update(fTimeDelta);
 
 	CMonsterMgr::GetInstance()->Update(fTimeDelta);
+
+	CParticleMgr::GetInstance()->Update(fTimeDelta);
 	
 	if (GetAsyncKeyState(VK_RETURN) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
 	{
@@ -68,6 +71,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		CTriggerBoxMgr::GetInstance()->Clear();
 		CIronBarMgr::GetInstance()->Clear();
 		CMonsterMgr::GetInstance()->Clear();
+		CParticleMgr::GetInstance()->Clear_Emitters();
 		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP)))
 		{
 			MSG_BOX("Camp Create Failed");
@@ -86,6 +90,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 
 void CSquidCoast::LateUpdate_Scene(const _float& fTimeDelta)
 {
+
 	CScene::LateUpdate_Scene(fTimeDelta);
 
 	CTriggerBoxMgr::GetInstance()->LateUpdate(fTimeDelta);
@@ -97,6 +102,9 @@ void CSquidCoast::LateUpdate_Scene(const _float& fTimeDelta)
 
 void CSquidCoast::Render_Scene()
 {
+	CBlockMgr::GetInstance()->Render();
+
+	CParticleMgr::GetInstance()->Render();
 }
 
 HRESULT CSquidCoast::Ready_Environment_Layer(const _tchar* pLayerTag)
@@ -108,13 +116,18 @@ HRESULT CSquidCoast::Ready_Environment_Layer(const _tchar* pLayerTag)
 
 	CGameObject* pGameObject = nullptr;
 
-	//dynamic camera 
-
+	//dynamic camera
 	_vec3 vEye{ 0.f, 10.f, -10.f };
 	_vec3 vAt{ 0.f, 0.f, 1.f };
 	_vec3 vUp{ 0.f, 1.f, 0.f };
 
 	pGameObject = CDynamicCamera::Create(m_pGraphicDev, &vEye, &vAt, &vUp);
+
+	CDynamicCamera* pDynamicCam = dynamic_cast<CDynamicCamera*>(pGameObject);
+	if (!pDynamicCam)
+		return E_FAIL;
+
+	//pDynamicCam->SetActionCam();
 
 	if (!pGameObject)
 		return E_FAIL;
@@ -122,6 +135,17 @@ HRESULT CSquidCoast::Ready_Environment_Layer(const _tchar* pLayerTag)
 	if (FAILED(pLayer->Add_GameObject(L"DynamicCamera", pGameObject)))
 		return E_FAIL;
 
+	//Effect
+	LPDIRECT3DTEXTURE9 pTex = nullptr;
+	D3DXCreateTextureFromFile(m_pGraphicDev,
+		L"../Bin/Resource/Texture/Effect/FootPrint.png", &pTex);
+
+	CParticleMgr::GetInstance()->Add_Emitter(
+		CParticleEmitter::Create(m_pGraphicDev,
+			PARTICLE_FOOTSTEP, _vec3(0.f, 2.f, 0.f), pTex)
+	);
+
+	Safe_Release(pTex); // Emitter가 AddRef 했으니 여기서 Release해도 됨
 	// Block Renderer
 	pGameObject = CBlockRenderer::Create(m_pGraphicDev);
 	if (!pGameObject)

@@ -113,7 +113,7 @@ HRESULT CTriggerBox::Add_Component()
 void CTriggerBox::Trigger_Ironbar()
 {
 	//IronbarMgr에게 이벤트 발생만 전달
-	if (CIronBarMgr::GetInstance()->IsClosed())
+	if (CIronBarMgr::GetInstance()->IsClosed(m_iTriggerID))
 	{
 		CIronBarMgr::GetInstance()->Open(m_iTriggerID);
 	}

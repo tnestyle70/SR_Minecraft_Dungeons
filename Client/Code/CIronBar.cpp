@@ -38,18 +38,18 @@ _int CIronBar::Update_GameObject(const _float& fTimeDelta)
 
 	CRenderer::GetInstance()->Add_RenderGroup(RENDER_ALPHA, this);
 
-	if (GetAsyncKeyState('8'))
-	{
-		m_eState = eIronBarState::MOVE_UP;
-	}
-	if (GetAsyncKeyState('9'))
-	{
-		m_eState = eIronBarState::MOVE_DOWN;
-	}
-	if (GetAsyncKeyState('0'))
-	{
-		m_eState = eIronBarState::IDLE;
-	}
+	//if (GetAsyncKeyState('8'))
+	//{
+	//	m_eState = eIronBarState::MOVE_UP;
+	//}
+	//if (GetAsyncKeyState('9'))
+	//{
+	//	m_eState = eIronBarState::MOVE_DOWN;
+	//}
+	//if (GetAsyncKeyState('0'))
+	//{
+	//	m_eState = eIronBarState::IDLE;
+	//}
 
 	Update_Animation(fTimeDelta);
 

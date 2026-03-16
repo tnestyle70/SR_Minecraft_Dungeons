@@ -145,6 +145,8 @@ call Copy.bat</Command>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\Header\CParticleEmitter.h" />
+    <ClInclude Include="..\Header\CParticleMgr.h" />
     <ClInclude Include="..\Header\CRedStoneGolemArmTex.h" />
     <ClInclude Include="..\Header\CRedStoneGolemBodyTex.h" />
     <ClInclude Include="..\Header\CCalculator.h" />
@@ -189,9 +191,12 @@ call Copy.bat</Command>
     <ClInclude Include="..\Header\Engine_Macro.h" />
     <ClInclude Include="..\Header\Engine_Struct.h" />
     <ClInclude Include="..\Header\Engine_Typedef.h" />
+    <ClInclude Include="..\Header\ParticleType.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Code\CParticleEmitter.cpp" />
+    <ClCompile Include="..\Code\CParticleMgr.cpp" />
     <ClCompile Include="..\Code\CRedStoneGolemArmTex.cpp" />
     <ClCompile Include="..\Code\CRedStoneGolemBodyTex.cpp" />
     <ClCompile Include="..\Code\CCalculator.cpp" />

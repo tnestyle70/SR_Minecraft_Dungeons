@@ -36,7 +36,7 @@ HRESULT CDynamicCamera::Ready_GameObject(const _vec3* pEye,
     if (FAILED(CCamera::Ready_GameObject()))
         return E_FAIL;
 
-    m_fSpeed = 10.f;
+    m_fSpeed = 20.f;
 
     return S_OK;
 }
@@ -45,21 +45,79 @@ _int CDynamicCamera::Update_GameObject(const _float& fTimeDelta)
 {
     _int iExit = CCamera::Update_GameObject(fTimeDelta);
 
+    if (m_bActionCam)
+    {
+        Update_ActionCam(fTimeDelta);
+    }
+    else
+    {
+        Key_Input(fTimeDelta);
+
+        if (m_bFix)
+        {
+            Mouse_Fix();
+            Mouse_Move();
+        }
+    }
+
     return iExit;
 }
 
 void CDynamicCamera::LateUpdate_GameObject(const _float& fTimeDelta)
 {
     CCamera::LateUpdate_GameObject(fTimeDelta);
-
-    Key_Input(fTimeDelta);
-
-    if (m_bFix)
-    {
-        Mouse_Fix();
-        Mouse_Move();
-    }    
 }
+
+_int CDynamicCamera::Update_ActionCam(const _float& fTimeDelta)
+{
+    if (!m_bActionCam)
+        return 0;
+
+    //WayPoint - vEye 로 방향 구해서, 거리 판단 이후 그 방향만큼 이동
+    _vec3 vDir = m_wpTarget.vEye - m_vEye;
+    _float fDist = D3DXVec3Length(&vDir);
+   
+    if (fDist < 1.f)
+    {
+        //목적지에 도달했는지 판단
+        if (m_deqWayPoints.empty())
+        {
+            m_bActionCam = false;
+            return 0;
+        }
+        //Move to Next Way Point
+        m_wpTarget = m_deqWayPoints.front();
+        m_deqWayPoints.pop_front();
+        return 0;
+    }
+    else
+    {
+        D3DXVec3Normalize(&vDir, &vDir);
+        m_vEye += vDir * fTimeDelta * m_fSpeed;
+    }
+
+    return 0;
+}
+
+void CDynamicCamera::SetActionCam()
+{
+    //Setting Way Points
+    m_deqWayPoints.push_back({ { 10.f, 10.f, 5.f },{ m_vUp.x, m_vUp.y, m_vUp.z }, 5.f });
+    m_deqWayPoints.push_back({ { 20.f, 10.f, 5.f }, { m_vUp.x, m_vUp.y, m_vUp.z }, 5.f });
+    m_deqWayPoints.push_back({ { 50.f, 10.f, 5.f }, { m_vUp.x, m_vUp.y, m_vUp.z }, 5.f });
+    m_deqWayPoints.push_back({ { m_vEye.x, m_vEye.y , m_vEye.z }, { m_vUp.x, m_vUp.y, m_vUp.z }, 5.f });
+
+    //액션캠 시작, 끝 위치 설정 - 스테이지 기본 세팅대로, 웨이 포인트들 지정해주고 웨이 포인트 끝나면 캠 종료
+    //m_wpStart = { m_vEye, m_vUp, 0.f };
+    //처음 Target 설정
+    m_wpTarget = m_deqWayPoints.front();
+    m_deqWayPoints.pop_front();
+
+    m_bActionCam = true;
+
+    return;
+}
+
 
 void CDynamicCamera::Key_Input(const _float& fTimeDelta)
 {
