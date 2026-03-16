@@ -9,6 +9,7 @@ CMonsterMgr::CMonsterMgr()
 
 CMonsterMgr::~CMonsterMgr()
 {
+	Free();
 }
 
 HRESULT CMonsterMgr::Ready_MonsterMgr()

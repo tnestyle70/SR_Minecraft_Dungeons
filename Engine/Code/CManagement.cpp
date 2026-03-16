@@ -49,7 +49,7 @@ void CManagement::Render_Scene(LPDIRECT3DDEVICE9 pGraphicDev)
 {
     CRenderer::GetInstance()->Render_GameObject(pGraphicDev);
 
-    // debug ¿ë ·»´õ
+    // debug ¿ë ·»´õ - BatchBuffer Rendering ¼öÁ¤ÇÏ±â!
     m_pScene->Render_Scene();
 }
 

@@ -9,6 +9,10 @@
 #include <ctime>
 #include "CSoundMgr.h"
 #include "CBlockMgr.h"
+#include "CParticleMgr.h"
+#include "CMonsterMgr.h"
+#include "CIronBarMgr.h"
+#include "CTriggerBoxMgr.h"
 
 /// <summary>
 /// test 1111111111
@@ -168,22 +172,30 @@ void CMainApp::Free()
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
 
-    CRenderer::GetInstance()->DestroyInstance();
+    // 1. 씬/게임 오브젝트 먼저
     CManagement::GetInstance()->DestroyInstance();
+    CRenderer::GetInstance()->DestroyInstance();
 
-    Safe_Release(m_pDeviceClass);
-    Safe_Release(m_pGraphicDev);
-
+    // 2. 게임 매니저들
+    CParticleMgr::GetInstance()->DestroyInstance();
+    CMonsterMgr::GetInstance()->DestroyInstance();   //  누락됨
+    CIronBarMgr::GetInstance()->DestroyInstance();   //  누락됨
+    CTriggerBoxMgr::GetInstance()->DestroyInstance(); //  누락됨
+    CBlockMgr::GetInstance()->DestroyInstance();
     CSoundMgr::GetInstance()->DestroyInstance();
     CLightMgr::GetInstance()->DestroyInstance();
+
+    // 3. 엔진 시스템
     CDInputMgr::GetInstance()->DestroyInstance();
     CFontMgr::GetInstance()->DestroyInstance();
     CProtoMgr::GetInstance()->DestroyInstance();
     CFrameMgr::GetInstance()->DestroyInstance();
     CTimerMgr::GetInstance()->DestroyInstance();
-    //Renderer Setting After
-    CBlockMgr::GetInstance()->DestroyInstance();
-    CGraphicDev::GetInstance()->DestroyInstance();
+
+    // 4. 디바이스 마지막
+    Safe_Release(m_pDeviceClass);
+    Safe_Release(m_pGraphicDev);
+    CGraphicDev::GetInstance()->DestroyInstance(); // 맨 마지막
 }
 
 
