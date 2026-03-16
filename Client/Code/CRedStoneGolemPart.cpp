@@ -9,6 +9,8 @@ CRedStoneGolemPart::CRedStoneGolemPart(LPDIRECT3DDEVICE9 pGrpahicDev, REDSTONEGO
 	, m_pParentTransformCom(nullptr)
 	, m_ePart(ePart)
 {
+    D3DXMatrixIdentity(&m_matLocal);
+    D3DXMatrixIdentity(&m_matWorld);
 }
 
 CRedStoneGolemPart::CRedStoneGolemPart(const CRedStoneGolemPart& rhs)
@@ -18,6 +20,8 @@ CRedStoneGolemPart::CRedStoneGolemPart(const CRedStoneGolemPart& rhs)
 	, m_pParentTransformCom(nullptr)
 	, m_ePart(rhs.m_ePart)
 {
+    D3DXMatrixIdentity(&m_matLocal);
+    D3DXMatrixIdentity(&m_matWorld);
 }
 
 CRedStoneGolemPart::~CRedStoneGolemPart()
@@ -34,19 +38,9 @@ HRESULT CRedStoneGolemPart::Ready_GameObject()
 
 _int CRedStoneGolemPart::Update_GameObject(const _float& fTimeDelta)
 {
-    if (m_pParentTransformCom)
-    {
-        _vec3 vParentPos;
-        m_pParentTransformCom->Get_Info(INFO_POS, &vParentPos);
+    _int iExit = CGameObject::Update_GameObject(fTimeDelta);
 
-        _vec3 vWorldPos = vParentPos + m_vLocalOffset;
-
-        m_pTransformCom->Set_Pos(vWorldPos.x, vWorldPos.y, vWorldPos.z);
-    }
-
-	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
-        
-	return iExit;
+    return iExit;
 }
 
 void CRedStoneGolemPart::LateUpdate_GameObject(const _float& fTimeDelta)

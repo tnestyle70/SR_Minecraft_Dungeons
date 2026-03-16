@@ -3,6 +3,15 @@
 #include "CProtoMgr.h"
 #include "CRedStoneGolemPart.h"
 
+enum GOLEM_STATE
+{
+	GOLEM_STATE_IDLE,
+	GOLEM_STATE_WALK,
+	GOLEM_STATE_ATTACK,
+
+	GOLEM_STATE_END
+};
+
 class CRedStoneGolem : public CGameObject
 {
 private:
@@ -24,6 +33,9 @@ private:
 	void Set_PartsParent();
 
 private:
+	void Debug_Input();
+	void Golem_Animation(const _float& fTimeDelta);
+	void Idle_Animation();
 	void Walk_Animation();
 	
 private:
@@ -33,6 +45,8 @@ private:
 
 	Engine::CTransform* m_pTransformCom;
 	Engine::CTexture* m_pTextureCom;
+
+	GOLEM_STATE m_eState;
 
 	_float m_fWalkTime;
 
