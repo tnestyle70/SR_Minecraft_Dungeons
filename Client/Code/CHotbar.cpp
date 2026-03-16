@@ -55,33 +55,22 @@ HRESULT CHotbar::Add_Children()
 		_float x, y;
 	};
 
-	// Rough layout definitions
+	// 뷰 스페이스 바깥
+	constexpr float outOfWindow = -360.F;
+
+	// 동적 UI 전용
 	vector<UIDesc> childDescs = {
-		{ L"Proto_HotbarBackgroundLeft", L"../Bin/Resource/Texture/UI/Materials/HotBar2/hotbarBackgroundLeft.json", -200.f, -50.f },
-		{ L"Proto_HotbarBackgroundMiddle", L"../Bin/Resource/Texture/UI/Materials/HotBar2/hotbarBackgroundMiddle.json", -200.f, -50.f },
-		{ L"Proto_HotbarBackgroundMiddleIndent", L"../Bin/Resource/Texture/UI/Materials/HotBar2/hotbarBackgroundMiddleIndent.json", -200.f, -50.f },
-		{ L"Proto_HotbarBackgroundRight", L"../Bin/Resource/Texture/UI/Materials/HotBar2/hotbarBackgroundRight.json", -200.f, -50.f },
-		{ L"Proto_IndentSlotLeft", L"../Bin/Resource/Texture/UI/Materials/HotBar2/SlotIndent/hotbar_indentslot_left.json", -200.f, -50.f },
-		{ L"Proto_IndentSlotCenter", L"../Bin/Resource/Texture/UI/Materials/HotBar2/SlotIndent/hotbar_indentslot_center.json", -150.f, -50.f },
-		{ L"Proto_IndentSlotRight", L"../Bin/Resource/Texture/UI/Materials/HotBar2/SlotIndent/hotbar_indentslot_right.json", -100.f, -50.f },
-		{ L"Proto_RollingIcon", L"../Bin/Resource/Texture/UI/Materials/HotBar2/SlotIndent/rolling_icon.json", -150.f, -50.f },
-		{ L"Proto_SmallSlot", L"../Bin/Resource/Texture/UI/Materials/HotBar2/SlotSmall/smallslot.json", 120.f, -40.f },
-		{ L"Proto_IconInventory", L"../Bin/Resource/Texture/UI/Materials/HotBar2/Icons/v2_icon_inventory.json", 125.f, -35.f },
-		{ L"Proto_IconMap", L"../Bin/Resource/Texture/UI/Materials/HotBar2/Icons/v2_icon_map.json", -150.f, -50.f },
-		{ L"Proto_SquareFrame", L"../Bin/Resource/Texture/UI/Materials/HotBar/square_frame.json", -50.f, -50.f },
-		{ L"Proto_Rocket", L"../Bin/Resource/Texture/UI/Materials/HotBar/rocket.json", -50.f, -50.f },
-		{ L"Proto_PotionEmpty", L"../Bin/Resource/Texture/UI/Materials/HotBar/potion_empty.json", 0.f, -50.f },
-		{ L"Proto_ArrowSlot", L"../Bin/Resource/Texture/UI/Materials/HotBar2/SlotArrow/arrow_slot.json", 50.f, -50.f },
-		{ L"Proto_ArrowEmpty", L"../Bin/Resource/Texture/UI/Materials/HotBar/arrows_empty.json", -50.f, -50.f },
-		{ L"Proto_Arrow", L"../Bin/Resource/Texture/UI/Materials/HotBar/arrow.json", 0.f, -50.f },
-		{ L"Proto_IconTNTHUD", L"../Bin/Resource/Texture/UI/Materials/HotBar/icon_TNT_HUD.json", 50.f, -50.f },
-		{ L"Proto_IconEmerald", L"../Bin/Resource/Texture/UI/Materials/HotBar2/Emeralds/icon_emerald.json", 50.f, -50.f },
-		{ L"Proto_HeartFrame", L"../Bin/Resource/Texture/UI/Materials/HotBar/heart_frame.json", -350.f, -100.f },
-		{ L"Proto_HeartColor", L"../Bin/Resource/Texture/UI/Materials/HotBar/heart_color.json", -350.f, -100.f }
+		{ L"Proto_Rocket", L"../Bin/Resource/Texture/UI/Materials/HotBar/rocket.json", outOfWindow, outOfWindow },				// 폭죽 장착시 활 칸으로 위치 변환
+		{ L"Proto_ArrowEmpty", L"../Bin/Resource/Texture/UI/Materials/HotBar/arrows_empty.json", outOfWindow, outOfWindow },	// 활 장착시 화살이 없으면 활 칸으로 위치 변환
+		{ L"Proto_Arrow", L"../Bin/Resource/Texture/UI/Materials/HotBar/arrow.json", outOfWindow, outOfWindow },				// 활 장착시 화살이 있으면 활 칸으로 위치 변환
+		{ L"Proto_IconTNTHUD", L"../Bin/Resource/Texture/UI/Materials/HotBar/icon_TNT_HUD.json", outOfWindow, outOfWindow },	// TNT 장착시 활 칸으로 위치 변환
+
+		{ L"Proto_HeartMain", L"../Bin/Resource/Texture/UI/Materials/Hotbar2/Heart/heart_main.json", 588.F, 615.F },			// 하트 프레임
+		{ L"Proto_FilledHeart", L"../Bin/Resource/Texture/UI/Materials/HotBar2/Heart/filled_heart.json", 597.F, 626.F }			// 하트 (TODO: 피격시 위쪽 텍스쳐부터 투명화로 피격시 체력 다는 애니메이션 구현)
 	};
 
-	// 1. Create and show only the Test Hotbar
-	CUI_Json* pTestHotbar = CUI_Json::Create(m_pGraphicDev, nullptr, L"Proto_TestHotbarTexture");
+	// 1. Create and show only the main Hotbar
+	CUI_Json* pTestHotbar = CUI_Json::Create(m_pGraphicDev, nullptr, L"Proto_HotbarTexture");
 	if (pTestHotbar)
 	{
 		this->Add_Child(pTestHotbar);
@@ -90,14 +79,14 @@ HRESULT CHotbar::Add_Children()
 		pTestHotbar->Set_Visible(true);
 	}
 
-	// 2. Create and hide other elements
+	// 2. Create dynamic elements
 	for (auto& desc : childDescs)
 	{
 		CUI_Json* pChild = CUI_Json::Create(m_pGraphicDev, desc.jsonPath.c_str(), desc.protoTag.c_str());
 		if (pChild)
 		{
 			pChild->Set_Pos(desc.x, desc.y);
-			pChild->Set_Visible(false); // Hide for now
+			pChild->Set_Visible(true);
 			this->Add_Child(pChild);
 		}
 	}
@@ -122,5 +111,9 @@ CHotbar* CHotbar::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 
 void CHotbar::Free()
 {
+	for ( auto& child : m_vecChildren ) {
+		Safe_Release(child);
+		child = nullptr;
+	}
 	CUI::Free();
 }
