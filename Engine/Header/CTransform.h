@@ -41,6 +41,8 @@ public:
 		m_vScale *= fScale;
 	}
 
+	void Set_Parent(CTransform* pParent) { m_pParent = pParent; }
+
 public:
 	HRESULT		 Ready_Transform();
 	virtual _int Update_Component(const _float& fTimeDelta);
@@ -54,6 +56,8 @@ public:
 	_vec3		m_vAngle;
 
 	_matrix		m_matWorld;
+
+	CTransform* m_pParent;
 
 public:
 	static CTransform* Create(LPDIRECT3DDEVICE9 pGraphicDev);
