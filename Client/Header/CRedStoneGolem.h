@@ -43,19 +43,30 @@ private:
 	void NormalAttack_Animation();
 	void Skill_Animation();
 	void Dead_Animation();
+	void Chase_Player(const _float& fTimeDelta);
+
+private:
+	void Apply_Gravity(const _float& fTimeDelta);
+	void Resolve_BlockCollision();
 	
 private:
 	static constexpr _float m_fWorldScale = 2.f;
+	static constexpr _float m_fGravity = -20.f;
+	static constexpr _float m_fMaxFall = -20.f;
 
 	CRedStoneGolemPart* m_pParts[GOLEM_END];
 
 	Engine::CTransform* m_pTransformCom;
 	Engine::CTexture* m_pTextureCom;
 	Engine::CCollider* m_pColliderCom;
+	Engine::CCollider* m_pAtkColliderCom;
 
 	GOLEM_STATE m_eState;
 
 	_float m_fAnimTime;
+
+	_bool m_bOnGround;
+	_float m_fVelocityY;
 
 public:
 	static CRedStoneGolem* Create(LPDIRECT3DDEVICE9 pGraphicDev);
