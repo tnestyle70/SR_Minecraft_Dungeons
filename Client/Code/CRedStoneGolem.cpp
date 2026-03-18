@@ -2,14 +2,19 @@
 #include "CRedStoneGolem.h"
 #include "CRenderer.h"
 #include "CDInputMgr.h"
+#include "CBlockMgr.h"
+#include "CManagement.h"
 
 CRedStoneGolem::CRedStoneGolem(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
 	, m_pTextureCom(nullptr)
 	, m_pTransformCom(nullptr)
 	, m_pColliderCom(nullptr)
+	, m_pAtkColliderCom(nullptr)
 	, m_eState(GOLEM_STATE_IDLE)
 	, m_fAnimTime(0.f)
+	, m_bOnGround(false)
+	, m_fVelocityY(0.f)
 {
 	ZeroMemory(m_pParts, sizeof(m_pParts));
 }
@@ -19,8 +24,11 @@ CRedStoneGolem::CRedStoneGolem(const CRedStoneGolem& rhs)
 	, m_pTextureCom(nullptr)
 	, m_pTransformCom(nullptr)
 	, m_pColliderCom(nullptr)
+	, m_pAtkColliderCom(nullptr)
 	, m_eState(rhs.m_eState)
 	, m_fAnimTime(rhs.m_fAnimTime)
+	, m_bOnGround(rhs.m_bOnGround)
+	, m_fVelocityY(rhs.m_fVelocityY)
 {
 	ZeroMemory(m_pParts, sizeof(m_pParts));
 }
@@ -46,16 +54,22 @@ HRESULT CRedStoneGolem::Ready_GameObject()
 
 _int CRedStoneGolem::Update_GameObject(const _float& fTimeDelta)
 {
+	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
+
 	m_fAnimTime += fTimeDelta;
 
+	Chase_Player(fTimeDelta);
 	Debug_Input();
 	Golem_Animation(fTimeDelta);
 
 	_vec3 vPos;
 	m_pTransformCom->Get_Info(INFO_POS, &vPos);
-	m_pColliderCom->Update_AABB(vPos);
+	
+	//m_pColliderCom->Update_OBB(*m_pTransformCom->Get_World());
+	m_pAtkColliderCom->Update_AABB(vPos);
 
-	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
+	Apply_Gravity(fTimeDelta);
+	Resolve_BlockCollision();
 
 	for (int i = 0; i < GOLEM_END; ++i)
 	{
@@ -87,6 +101,7 @@ void CRedStoneGolem::Render_GameObject()
 	}
 
 	m_pColliderCom->Render_Collider();
+	//m_pAtkColliderCom->Render_Collider();
 
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 }
@@ -115,6 +130,10 @@ HRESULT CRedStoneGolem::Add_Component()
 	m_pColliderCom = CCollider::Create(m_pGraphicDev, _vec3(3.5f, 3.f, 1.5f), _vec3(0.f, -0.8f, 0.f));
 
 	m_mapComponent[ID_STATIC].insert({ L"Com_Collider", m_pColliderCom });
+
+	m_pAtkColliderCom = CCollider::Create(m_pGraphicDev, _vec3(2.f, 2.f, 1.5f), _vec3(0.f, -0.8f, -2.f));
+
+	m_mapComponent[ID_STATIC].insert({ L"Com_Collider", m_pAtkColliderCom });
 
 	for (int i = 0; i < GOLEM_END; i++)
 	{
@@ -202,7 +221,7 @@ void CRedStoneGolem::Set_PartsParent()
 	m_pParts[GOLEM_CORE]->Get_Transform()->Set_Parent(pBody);
 	m_pParts[GOLEM_LSHOULDER]->Get_Transform()->Set_Parent(pBody);
 	m_pParts[GOLEM_RSHOULDER]->Get_Transform()->Set_Parent(pBody);
-	m_pParts[GOLEM_HIP]->Get_Transform()->Set_Parent(pBody);
+	m_pParts[GOLEM_HIP]->Get_Transform()->Set_Parent(m_pTransformCom);
 
 	m_pParts[GOLEM_LARM]->Get_Transform()->Set_Parent(pLShoulder);
 	m_pParts[GOLEM_RARM]->Get_Transform()->Set_Parent(pRShoulder);
@@ -303,9 +322,6 @@ void CRedStoneGolem::Idle_Animation()
 
 	m_pParts[GOLEM_LLEG]->Get_Transform()->Set_Rotation(ROT_X, 0.f);
 	m_pParts[GOLEM_RLEG]->Get_Transform()->Set_Rotation(ROT_X, 0.f);
-
-	const _float fBobHeight = 0.03f * m_fWorldScale;
-	m_pTransformCom->Set_Pos(0.f, 10.f + sinf(fAngle) * fBobHeight, 0.f);
 }
 
 void CRedStoneGolem::Walk_Animation()
@@ -465,43 +481,163 @@ void CRedStoneGolem::NormalAttack_Animation()
 
 void CRedStoneGolem::Skill_Animation()
 {
-	// 추가 작업 필요
+	const _float t = m_fAnimTime;
 
-	//const _float t = m_fAnimTime;
+	if (t < 0.8f)
+	{
+		float p = t / 0.8f;
+		float ep = 1.f - (1.f - p) * (1.f - p);
 
-	//if (t < 1.f)
-	//{
-	//	_float p = t / 0.3f;
-	//	_float ep = 1.f - (1.f - p) * (1.f - p);
+		m_pParts[GOLEM_LSHOULDER]->Get_Transform()->Set_Rotation(ROT_X, 120.f * ep);
+		m_pParts[GOLEM_RSHOULDER]->Get_Transform()->Set_Rotation(ROT_X, 120.f * ep);
 
-	//	m_pParts[GOLEM_LSHOULDER]->Get_Transform()->Set_Rotation(ROT_X, -35.f * ep);
-	//	m_pParts[GOLEM_RSHOULDER]->Get_Transform()->Set_Rotation(ROT_X, -35.f * ep);
-	//	m_pParts[GOLEM_LARM]->Get_Transform()->Set_Rotation(ROT_X, -5.f * ep);
-	//	m_pParts[GOLEM_RARM]->Get_Transform()->Set_Rotation(ROT_X, -5.f * ep);
-	//}
-	//else if (t < 1.5f)
-	//{
-	//	// p는 이 구간 안에서 0~1로 정규화
-	//	_float p = t / 0.3f;
-	//	_float ep = 1.f - (1.f - p) * (1.f - p);
+		m_pParts[GOLEM_LARM]->Get_Transform()->Set_Rotation(ROT_X, 40.f * ep);
+		m_pParts[GOLEM_RARM]->Get_Transform()->Set_Rotation(ROT_X, 40.f * ep);
 
-	//	m_pParts[GOLEM_BODY]->Get_Transform()->Set_Rotation(ROT_X, 5.f * ep);
-	//	// 힙은 역방향 주지 말고 같은 방향으로 약하게 따라가게
-	//	m_pParts[GOLEM_HIP]->Get_Transform()->Set_Rotation(ROT_X, 2.f * ep);
-	//	m_pParts[GOLEM_LSHOULDER]->Get_Transform()->Set_Rotation(ROT_X, -5.f * ep);
-	//	m_pParts[GOLEM_RSHOULDER]->Get_Transform()->Set_Rotation(ROT_X, -5.f * ep);
+		m_pParts[GOLEM_BODY]->Get_Transform()->Set_Rotation(ROT_X, -10.f * ep);
 
-	//}
-	//if (m_fAnimTime >= 6.f)
-	//{
-	//	m_eState = GOLEM_STATE_IDLE;
-	//	m_fAnimTime = 0.f;
-	//}
+		m_pParts[GOLEM_HIP]->Get_Transform()->Set_Rotation(ROT_X, 0.f);
+	}
+	else if (t < 1.2f)
+	{
+		float p = (t - 0.8f) / 0.4f;
+		float ep = p * p;
+
+		m_pParts[GOLEM_BODY]->Get_Transform()->Set_Rotation(ROT_X, -10.f + (50.f * ep));
+
+		m_pParts[GOLEM_HIP]->Get_Transform()->Set_Rotation(ROT_X, -20.f * ep);
+
+		m_pParts[GOLEM_LSHOULDER]->Get_Transform()->Set_Rotation(ROT_X, 120.f);
+		m_pParts[GOLEM_RSHOULDER]->Get_Transform()->Set_Rotation(ROT_X, 120.f);
+
+		m_pParts[GOLEM_LARM]->Get_Transform()->Set_Rotation(ROT_X, 40.f);
+		m_pParts[GOLEM_RARM]->Get_Transform()->Set_Rotation(ROT_X, 40.f);
+	}
+	else if (t < 1.6f)
+	{
+		float p = (t - 1.2f) / 0.4f;
+		float ep = p * p * p;
+
+		float shoulder = 120.f + (-70.f * ep); // 120 → 50
+		float arm = 40.f + (20.f * ep);        // 40 → 60
+
+		m_pParts[GOLEM_LSHOULDER]->Get_Transform()->Set_Rotation(ROT_X, shoulder);
+		m_pParts[GOLEM_RSHOULDER]->Get_Transform()->Set_Rotation(ROT_X, shoulder);
+
+		m_pParts[GOLEM_LARM]->Get_Transform()->Set_Rotation(ROT_X, arm);
+		m_pParts[GOLEM_RARM]->Get_Transform()->Set_Rotation(ROT_X, arm);
+
+		m_pParts[GOLEM_BODY]->Get_Transform()->Set_Rotation(ROT_X, 50.f + (20.f * ep));
+
+		m_pParts[GOLEM_HIP]->Get_Transform()->Set_Rotation(ROT_X, -20.f);
+	}
+	else
+	{
+		float p = (t - 1.6f) / 0.8f;
+		float ep = 1.f - (1.f - p) * (1.f - p);
+
+		m_pParts[GOLEM_LSHOULDER]->Get_Transform()->Set_Rotation(ROT_X, 50.f * (1.f - ep));
+		m_pParts[GOLEM_RSHOULDER]->Get_Transform()->Set_Rotation(ROT_X, 50.f * (1.f - ep));
+
+		m_pParts[GOLEM_LARM]->Get_Transform()->Set_Rotation(ROT_X, 60.f * (1.f - ep));
+		m_pParts[GOLEM_RARM]->Get_Transform()->Set_Rotation(ROT_X, 60.f * (1.f - ep));
+
+		m_pParts[GOLEM_BODY]->Get_Transform()->Set_Rotation(ROT_X, 70.f * (1.f - ep));
+
+		m_pParts[GOLEM_HIP]->Get_Transform()->Set_Rotation(ROT_X, -20.f * (1.f - ep));
+	}
+
+	m_pParts[GOLEM_LLEG]->Get_Transform()->Set_Rotation(ROT_X, 0.f);
+	m_pParts[GOLEM_RLEG]->Get_Transform()->Set_Rotation(ROT_X, 0.f);
+
+	if (m_fAnimTime >= 2.4f)
+	{
+		m_eState = GOLEM_STATE_IDLE;
+		m_fAnimTime = 0.f;
+	}
 }
 
 void CRedStoneGolem::Dead_Animation()
 {
 	// todo
+}
+
+void CRedStoneGolem::Chase_Player(const _float& fTimeDelta)
+{
+	_vec3 vPlayerPos;
+
+	CTransform* pPlayerTransformCom = dynamic_cast<CTransform*>(CManagement::GetInstance()->Get_Component(ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform"));
+	pPlayerTransformCom->Get_Info(INFO_POS, &vPlayerPos);
+
+	m_pTransformCom->Chase_Target(&vPlayerPos, 2.f, fTimeDelta);
+}
+
+void CRedStoneGolem::Apply_Gravity(const _float& fTimeDelta)
+{
+	if (m_bOnGround)
+		return;
+
+	m_fVelocityY += m_fGravity * fTimeDelta;
+	if (m_fVelocityY < m_fMaxFall)
+		m_fVelocityY = m_fMaxFall;
+
+	_vec3 vPos;
+	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+	vPos.y += m_fVelocityY * fTimeDelta;
+	m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
+}
+
+void CRedStoneGolem::Resolve_BlockCollision()
+{
+	_vec3 vPos;
+	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+	m_pColliderCom->Update_AABB(vPos);
+	AABB tBossAABB = m_pColliderCom->Get_AABB();
+
+	m_bOnGround = false;
+
+	int iMinX = (int)floorf(tBossAABB.vMin.x);
+	int iMaxX = (int)ceilf(tBossAABB.vMax.x);
+	int iMinY = (int)floorf(tBossAABB.vMin.y) - 3;
+	int iMaxY = (int)ceilf(tBossAABB.vMax.y);
+	int iMinZ = (int)floorf(tBossAABB.vMin.z);
+	int iMaxZ = (int)ceilf(tBossAABB.vMax.z);
+
+	for (int y = iMinY; y <= iMaxY; ++y)
+	{
+		for (int x = iMinX; x <= iMaxX; ++x)
+		{
+			for (int z = iMinZ; z <= iMaxZ; ++z)
+			{
+				BlockPos tBlockPos = { x, y, z };
+				if (!CBlockMgr::GetInstance()->HasBlock(tBlockPos))
+					continue;
+
+				AABB tBlockAABB = CBlockMgr::GetInstance()->Get_BlockAABB(tBlockPos);
+				if (!m_pColliderCom->IsColliding(tBlockAABB))
+					continue;
+
+				_vec3 vResolve = m_pColliderCom->Resolve(tBlockAABB);
+				vPos += vResolve;
+				m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
+				m_pColliderCom->Update_AABB(vPos);
+				tBossAABB = m_pColliderCom->Get_AABB();
+
+				if (fabsf(vResolve.y) > 0.f)
+				{
+					if (vResolve.y > 0.f)
+					{
+						m_bOnGround = true;
+						m_fVelocityY = 0.f;
+					}
+					else
+					{
+						m_fVelocityY = 0.f;
+					}
+				}
+			}
+		}
+	}
 }
 
 CRedStoneGolem* CRedStoneGolem::Create(LPDIRECT3DDEVICE9 pGraphicDev)

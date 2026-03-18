@@ -8,6 +8,13 @@ struct AABB
 	_vec3 vMax;
 };
 
+struct OBB
+{
+	_vec3 vCenter;
+	_vec3 vAxis[3];
+	_vec3 vHalfSize;
+};
+
 BEGIN(Engine)
 
 class ENGINE_DLL CCollider : public CComponent
@@ -24,15 +31,20 @@ public:
 	AABB Get_AABB() const { return m_tAABB; }
 	//Transform 위치를 기준으로 AABB 업데이트
 	void Update_AABB(const _vec3& vWorldPos);
+	void Update_OBB(const _matrix& matWorld);
 	bool IsColliding(const AABB& other) const;
 	_vec3 Resolve(const AABB& other) const;
 	//디버그용 렌더링
 	void Render_Collider();
+	void Render_OBB();
 private:
 	_vec3 m_vScale;
 	_vec3 m_vOffset;
 	//AABB 구조체
 	AABB m_tAABB;
+	//OBB 구조체
+	OBB m_tOBB;
+	_vec3 m_vOriginalHalfSize;
 	//디버그용
 	LPD3DXMESH m_pDebugMesh;
 	bool m_bColliding;
