@@ -163,7 +163,10 @@ void CCollider::Render_Collider()
 	m_pDebugMesh->DrawSubset(0);
 	//렌더링 후 원상 복구
 	m_pGraphicDev->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-	//m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
+	//콜라이더 월드 행렬 원상 복구
+	//_matrix matIdentity;
+	//D3DXMatrixIdentity(&matIdentity);
+	//m_pGraphicDev->SetTransform(D3DTS_WORLD, &matIdentity);
 }
 
 void CCollider::Render_OBB()

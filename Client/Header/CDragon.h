@@ -11,6 +11,7 @@ struct DRAGON_BONE
 	float fBoneLen; //이 뼈에서 다음 뼈까지의 고정 길이
 	_matrix matWorld;
 	CCubeBodyTex* pBuffer; //이 뼈에 해당하는 렌더 버퍼
+	D3DXQUATERNION qRot; //현재 회전 상태 보존
 };
 
 //드래곤 파트별 뼈 개수 상수
@@ -69,7 +70,7 @@ private:
 	void Transition_State(eDragonState eNext);
 	void Update_IDLE(const _float& fTimeDelta);
 	void Update_Attack(const _float& fTimeDelta);
-	void Update_TAIL_ATTACK(const _float& fTimeDelta);
+	void Update_TailAttack(const _float& fTimeDelta);
 
 private:
 	//Inverse Kinetics - 추종 알고리즘
@@ -82,6 +83,13 @@ private:
 	//날개짓
 	void Update_WingFlap(const _float& fTimeDelta);
 	void Update_TailSwing(const _float& fTimeDelta);
+	//쿼터니언
+	D3DXQUATERNION DirToQuaternion(const _vec3& vDir);
+	_vec3 QuaternionToDir(const D3DXQUATERNION& quaternion);
+	//쿼터니언 보간
+	void Slerp_NeckChain(DRAGON_BONE* pResult,
+		DRAGON_BONE* pCurrent, _int iCount, _float fAlpha);
+
 	//뼈 월드 행렬 - Look-At 방식, DX9 Row-Major
 	//vZ = Normalize(bone.vDir)
 	//vX = normalize(worldUp * z)
@@ -92,6 +100,8 @@ private:
 	
 	_float DistToPlayer() const;
 private:
+	CTexture* m_pTextureCom = nullptr;
+
 	//뼈 체인
 	DRAGON_BONE m_Spine[DRAGON_SPINE_COUNT];
 	DRAGON_BONE m_Neck[DRAGON_NECK_COUNT];
@@ -108,7 +118,7 @@ private:
 	_float m_fWingSpeed; //날개짓 주기(rad/sec)
 	_float m_fWingAmp; //날개짓 최대 각도(rad)
 	//FSM 
-	eDragonState m_eState;
+	eDragonState m_eState = eDragonState::IDLE;
 	_float m_fStateTimer; //현재 상태 진입 후 누적 시간
 	//IDLE 순찰 인덱스
 	_int m_iPatrolIndex;
@@ -120,6 +130,7 @@ private:
 	//카메라가 없으니 월드 기준 고정 전진 우측 벡터 사용
 	_vec3 m_vInputForward;
 	_vec3 m_vInputRight;
+	_vec3 m_vPlayerPos;
 private:
 	static constexpr _float m_fAttackRange = 20.f;
 	static constexpr _float m_fAttackDuration = 6.f;

@@ -114,7 +114,7 @@ HRESULT CStage::Ready_Environment_Layer(const _tchar* pLayerTag)
         return E_FAIL;
     }
 
-    CBlockMgr::GetInstance()->SetEditorMode(false); // ���� ��� ����
+    CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_BATCH);
 
     FILE* pFile = nullptr;
     _wfopen_s(&pFile, L"../Bin/Data/Stage1.dat", L"rb");

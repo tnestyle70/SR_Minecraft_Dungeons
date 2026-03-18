@@ -90,6 +90,10 @@ private:
 	//Dragon 
 	CDragon* m_pDragon = nullptr;
 
+	//Perset
+	bool m_bPresetMode = false;
+	int m_eSelectedBlockPreset = 0;
+
 	//Particle
 	ParticleDesc m_tEditDesc;
 	LPDIRECT3DTEXTURE9 m_pPreviewTexture = nullptr;
