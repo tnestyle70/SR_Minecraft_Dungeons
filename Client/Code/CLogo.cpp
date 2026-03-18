@@ -150,6 +150,11 @@ HRESULT CLogo::Ready_Prototype()
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Logo/MainMenu_Screen2.png"))))
         return E_FAIL;
 
+    //=======UI=========//
+    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_HUDTexture",
+    //    CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/hotbar.png"))))
+    //    return E_FAIL;
+
     //·Îµù¾À µî·Ï
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SquidCoastLoadingTexture",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Logo/Loading_Screen_Squid_Coast.png"))))

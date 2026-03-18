@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CBlockPlacer.h"
 #include "CBlockMgr.h"
+#include "CBlockPreset.h"
 
 CBlockPlacer::CBlockPlacer(LPDIRECT3DDEVICE9 pGraphicDev)
 	: m_pGraphicDev(pGraphicDev), m_fBlockSize(1.f),
@@ -49,6 +50,7 @@ _int CBlockPlacer::Update_Placer(eBlockType eType)
 	}
 
 	_vec3 vRayPos, vRayDir;
+	
 	Compute_Ray(&vRayPos, &vRayDir);
 
 	//기존 블럭에 레이 충돌 체크
@@ -67,6 +69,7 @@ _int CBlockPlacer::Update_Placer(eBlockType eType)
 				(float)tHitPos.z };
 
 			CBlockMgr::GetInstance()->AddBlock(vPlacePos, eType);
+			
 			//실제 삽입된 PlacePos를 stack에 저장
 			m_undoStack.push(CBlockMgr::GetInstance()->ToPos(vPlacePos));
 		}
@@ -94,21 +97,44 @@ _int CBlockPlacer::Update_Placer(eBlockType eType)
 	{
 		if (bBlockHit)
 		{
-			//히트된 블럭 위에 배치
-			_vec3 vPlacePos = { (float)tHitPos.x, (float)tHitPos.y + 1.f,
-			(float)tHitPos.z };
-			CBlockMgr::GetInstance()->AddBlock(vPlacePos, eType);
-			//실제 삽입된 PlacePos를 stack에 저장
-			m_undoStack.push(CBlockMgr::GetInstance()->ToPos(vPlacePos));
+			_vec3 vPlacePos = { (float)tHitPos.x, (float)tHitPos.y + 1.f, (float)tHitPos.z };
+
+			if (m_bPresetMode)
+			{
+				switch (m_iSelectedPreset)
+				{
+				case 0: CBlockPreset::Place_OakTree((int)vPlacePos.x, (int)vPlacePos.y, (int)vPlacePos.z);    break;
+				case 1: CBlockPreset::Place_CherryTree((int)vPlacePos.x, (int)vPlacePos.y, (int)vPlacePos.z); break;
+				case 2: CBlockPreset::Place_Dragon((int)vPlacePos.x, (int)vPlacePos.y, (int)vPlacePos.z); break;
+				}
+			}
+			else
+			{
+				CBlockMgr::GetInstance()->AddBlock(vPlacePos, eType);
+				m_undoStack.push(CBlockMgr::GetInstance()->ToPos(vPlacePos));
+			}
 		}
-		else //바닥일 경우 그냥 배치
+		else
 		{
 			_vec3 vHit;
 			if (RayOnGround(&vRayPos, &vRayDir, &vHit))
 			{
-				_vec3 vPlacePos = SnapToGrid(&vHit, eType);
-				CBlockMgr::GetInstance()->AddBlock(vPlacePos, eType);
-				m_undoStack.push(CBlockMgr::GetInstance()->ToPos(vPlacePos));
+				if (m_bPresetMode)
+				{
+					_vec3 vSnap = SnapToGrid(&vHit, BLOCK_GRASS);
+					switch (m_iSelectedPreset)
+					{
+					case 0: CBlockPreset::Place_OakTree((int)vSnap.x, (int)vSnap.y, (int)vSnap.z);    break;
+					case 1: CBlockPreset::Place_CherryTree((int)vSnap.x, (int)vSnap.y, (int)vSnap.z); break;
+					case 2: CBlockPreset::Place_Dragon((int)vSnap.x, (int)vSnap.y, (int)vSnap.z); break;
+					}
+				}
+				else
+				{
+					_vec3 vPlacePos = SnapToGrid(&vHit, eType);
+					CBlockMgr::GetInstance()->AddBlock(vPlacePos, eType);
+					m_undoStack.push(CBlockMgr::GetInstance()->ToPos(vPlacePos));
+				}
 			}
 		}
 	}

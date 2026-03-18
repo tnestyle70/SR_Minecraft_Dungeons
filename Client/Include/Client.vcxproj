@@ -155,6 +155,7 @@
     <ClInclude Include="..\Header\CBiomine.h" />
     <ClInclude Include="..\Header\CBlock.h" />
     <ClInclude Include="..\Header\CBlockMgr.h" />
+    <ClInclude Include="..\Header\CBlockPreset.h" />
     <ClInclude Include="..\Header\CBlockRenderer.h" />
     <ClInclude Include="..\Header\CBlockPlacer.h" />
     <ClInclude Include="..\Header\CBodyBase.h" />
@@ -166,12 +167,15 @@
     <ClInclude Include="..\Header\CDynamicCamera.h" />
     <ClInclude Include="..\Header\CEditor.h" />
     <ClInclude Include="..\Header\CEffect.h" />
+    <ClInclude Include="..\Header\CHUD.h" />
+    <ClInclude Include="..\Header\CInventoryMgr.h" />
     <ClInclude Include="..\Header\CIronBar.h" />
     <ClInclude Include="..\Header\CIronBarMgr.h" />
     <ClInclude Include="..\Header\CLoading.h" />
     <ClInclude Include="..\Header\CLoadingScene.h" />
     <ClInclude Include="..\Header\CLogo.h" />
     <ClInclude Include="..\Header\CMainApp.h" />
+    <ClInclude Include="..\Header\CMinimap.h" />
     <ClInclude Include="..\Header\CMonster.h" />
     <ClInclude Include="..\Header\CMonsterAnim.h" />
     <ClInclude Include="..\Header\CMonsterBody.h" />
@@ -218,6 +222,7 @@
     <ClCompile Include="..\Code\CBiomine.cpp" />
     <ClCompile Include="..\Code\CBlock.cpp" />
     <ClCompile Include="..\Code\CBlockMgr.cpp" />
+    <ClCompile Include="..\Code\CBlockPreset.cpp" />
     <ClCompile Include="..\Code\CBlockRenderer.cpp" />
     <ClCompile Include="..\Code\CBlockPlacer.cpp" />
     <ClCompile Include="..\Code\CBodyBase.cpp" />
@@ -228,12 +233,15 @@
     <ClCompile Include="..\Code\CDynamicCamera.cpp" />
     <ClCompile Include="..\Code\CEditor.cpp" />
     <ClCompile Include="..\Code\CEffect.cpp" />
+    <ClCompile Include="..\Code\CHUD.cpp" />
+    <ClCompile Include="..\Code\CInventoryMgr.cpp" />
     <ClCompile Include="..\Code\CIronBar.cpp" />
     <ClCompile Include="..\Code\CIronBarMgr.cpp" />
     <ClCompile Include="..\Code\CLoading.cpp" />
     <ClCompile Include="..\Code\CLoadingScene.cpp" />
     <ClCompile Include="..\Code\CLogo.cpp" />
     <ClCompile Include="..\Code\CMainApp.cpp" />
+    <ClCompile Include="..\Code\CMinimap.cpp" />
     <ClCompile Include="..\Code\CMonster.cpp" />
     <ClCompile Include="..\Code\CMonsterAnim.cpp" />
     <ClCompile Include="..\Code\CMonsterBody.cpp" />

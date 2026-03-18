@@ -204,9 +204,25 @@ _uint CLoading::Loading_SquidCoast()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ObsidianTexture",
         CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/ObsidianTexture.dds"))))
         return E_FAIL;
+    //obsidian png
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ObsidianPngTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/obsidian.png"))))
+        return E_FAIL;
     //stonebrick
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StoneBrickTexture",
         CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/StoneBrickTexture.dds"))))
+        return E_FAIL;
+    //oak
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_OakTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/OakTexture.dds"))))
+        return E_FAIL;
+    //oak leaves
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_OakLeavesTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/OakLeaves.dds"))))
+        return E_FAIL;
+    //cherry leaves
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CherryLeavesTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/CherryLeaves.dds"))))
         return E_FAIL;
 
     //블럭 텍스쳐 아틀라스
@@ -222,6 +238,11 @@ _uint CLoading::Loading_SquidCoast()
     // Zobie
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ZombieTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/mob/zombie.png"))))
+        return E_FAIL;
+
+    //=======UI=========//
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_HUDTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/hotbar.png"))))
         return E_FAIL;
 
     // 좀비 파츠 버퍼
@@ -457,10 +478,6 @@ _uint CLoading::Loading_SquidCoast()
 
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_HeartColor",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI/Materials/HotBar/heart_color.png"))))
-        return E_FAIL;
-
-    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TestHotbarTexture",
-        Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI/Materials/hotbar.png"))))
         return E_FAIL;
 
     lstrcpy(m_szLoading, L"Etc Loading.....................................");

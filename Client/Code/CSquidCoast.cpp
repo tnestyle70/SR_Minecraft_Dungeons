@@ -17,9 +17,10 @@
 #include "CRedStoneGolem.h"
 #include "CParticleMgr.h"
 #include "CHotbar.h"
-//#include "CBlockRenderer.h"
 #include "CLayer.h"
 #include "CAncientGuardian.h"
+#include "CHUD.h"
+#include "CDragon.h"
 #include "CBox.h"
 
 
@@ -142,7 +143,6 @@ HRESULT CSquidCoast::Ready_Environment_Layer(const _tchar* pLayerTag)
 	m_pDynamicCamera = CDynamicCamera::Create(m_pGraphicDev, &vEye, &vAt, &vUp);
 	pGameObject = m_pDynamicCamera;
 
-
 	CDynamicCamera* pDynamicCam = dynamic_cast<CDynamicCamera*>(pGameObject);
 	if (!pDynamicCam)
 		return E_FAIL;
@@ -165,24 +165,6 @@ HRESULT CSquidCoast::Ready_Environment_Layer(const _tchar* pLayerTag)
 		CParticleEmitter::Create(m_pGraphicDev,
 			PARTICLE_HIT, _vec3(5.f, 2.f, 0.f), nullptr)
 	);
-
-	// Block Renderer
-	//pGameObject = CBlockRenderer::Create(m_pGraphicDev);
-	//if (!pGameObject)
-	//	return E_FAIL;
-
-	//if (FAILED(pLayer->Add_GameObject(L"BlockRenderer", pGameObject)))
-	//	return E_FAIL;
-
-	//Set Block, Particle Render Callback
-	//CRenderer::GetInstance()->Set_BlockRenderCallback([]()
-	//	{
-	//		CBlockMgr::GetInstance()->Render_Stage();
-	//	});
-	//CRenderer::GetInstance()->Set_ParticleRenderCallback([]()
-	//	{
-	//		CParticleMgr::GetInstance()->Render();
-	//	});
 
 	//SkyBox 추가
 
@@ -208,9 +190,10 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 
 	if (FAILED(pLayer->Add_GameObject(L"Player", pGameObject)))
 		return E_FAIL;
-	
-	//TriggerBoxMgr
+
 	CPlayer* pPlayer = dynamic_cast<CPlayer*>(pGameObject);
+
+	//TriggerBoxMgr
 	CCollider* pCollider = dynamic_cast<CCollider*>(pPlayer->Get_Component(ID_STATIC, L"Com_Collider"));
 	if (!pCollider)
 	{
@@ -224,6 +207,16 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		m_pDynamicCamera->SetFollowTarget(
 			dynamic_cast<Engine::CTransform*>(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform")));
 	
+	//Dragon
+	pGameObject = CDragon::Create(m_pGraphicDev);
+	if (!pGameObject)
+	{
+		MSG_BOX("Dragon Create Failed");
+		return E_FAIL;
+	}
+	pLayer->Add_GameObject(L"Dragon", pGameObject);
+
+	m_mapLayer.insert({ pLayerTag, pLayer });
 
 	//Boss
 	pGameObject = CRedStoneGolem::Create(m_pGraphicDev);
@@ -263,17 +256,13 @@ HRESULT CSquidCoast::Ready_UI_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	CGameObject* pGameObject = nullptr;
+	//HUD
+	pGameObject = CHUD::Create(m_pGraphicDev);
 
-	// Hotbar UI (Composite)
-	pGameObject = CHotbar::Create(m_pGraphicDev);
-	if (!pGameObject)
+	if (nullptr == pGameObject)
 		return E_FAIL;
 
-	CHotbar* pHotbar = static_cast<CHotbar*>(pGameObject);
-	pHotbar->Set_Pos(0.f, 0.f); // Root at top-left for full-screen test image
-
-	if (FAILED(pLayer->Add_GameObject(L"Hotbar", pGameObject)))
-
+	if (FAILED(pLayer->Add_GameObject(L"HUD", pGameObject)))
 		return E_FAIL;
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
@@ -302,7 +291,7 @@ HRESULT CSquidCoast::Ready_StageData(const _tchar* szPath)
 		return E_FAIL;
 	}
 
-	CBlockMgr::GetInstance()->SetEditorMode(false); // 먼저 모드 설정
+	CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_BATCH); // 먼저 모드 설정
 
 	CBlockMgr::GetInstance()->LoadBlocks(pFile);
 

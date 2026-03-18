@@ -1,32 +1,30 @@
 #include "pch.h"
-#include "CBackGround.h"
+#include "CHUD.h"
 #include "CRenderer.h"
 
-CBackGround::CBackGround(LPDIRECT3DDEVICE9 pGraphicDev)
-	: CGameObject(pGraphicDev)
+CHUD::CHUD(LPDIRECT3DDEVICE9 pGraphicDev)
+	:CGameObject(pGraphicDev)
 {
 }
 
-CBackGround::CBackGround(const CGameObject& rhs)
-	: CGameObject(rhs)
+CHUD::CHUD(const CGameObject& rhs)
+	:CGameObject(rhs)
 {
 }
 
-CBackGround::~CBackGround()
+CHUD::~CHUD()
 {
 }
 
-HRESULT CBackGround::Ready_GameObject(const _tchar* pProtoPath)
+HRESULT CHUD::Ready_GameObject()
 {
-	if (FAILED(Add_Component(pProtoPath)))
+	if (FAILED(Add_Component()))
 		return E_FAIL;
-
-	//m_pTransformCom->m_vScale = { 2.f, 1.f, 1.f };
 
 	return S_OK;
 }
 
-_int CBackGround::Update_GameObject(const _float& fTimeDelta)
+_int CHUD::Update_GameObject(const _float& fTimeDelta)
 {
 	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
 
@@ -35,40 +33,32 @@ _int CBackGround::Update_GameObject(const _float& fTimeDelta)
 	return iExit;
 }
 
-void CBackGround::LateUpdate_GameObject(const _float& fTimeDelta)
+void CHUD::LateUpdate_GameObject(const _float& fTimeDelta)
 {
 	CGameObject::LateUpdate_GameObject(fTimeDelta);
 }
 
-void CBackGround::Render_GameObject()
+void CHUD::Render_GameObject()
 {
-	//RcTex가 -1 ~ 1로 로컬 좌표가 설정되어있기 때문에 
-	//World Identity -> View Identity -> Projection Identity -> NDC(-1 ~ 1) -> 픽셀
-	//로컬 좌표가 그대로 NDC로 적용되어있기 때문에 화면을 꽉 채우는 화면이 그려지게 되는 것이다.
-
-	//월드 행렬 Identity로 설정해주기!!
+	//반드시 월드 행렬 identity로 설정
 	_matrix matWorld;
 	D3DXMatrixIdentity(&matWorld);
 	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
-
-	//뷰, 투영 풀어주기
+	//원본 뷰, 투영 저장
 	_matrix matOriginView, matOriginProj;
 	m_pGraphicDev->GetTransform(D3DTS_VIEW, &matOriginView);
 	m_pGraphicDev->GetTransform(D3DTS_PROJECTION, &matOriginProj);
-
 	//뷰 풀어주기
 	_matrix matView;
 	D3DXMatrixIdentity(&matView);
 	m_pGraphicDev->SetTransform(D3DTS_VIEW, &matView);
-
-	//투영 풀어주기 설정
+	//투영 풀어주기
 	_matrix matProj;
 	D3DXMatrixIdentity(&matProj);
 	m_pGraphicDev->SetTransform(D3DTS_PROJECTION, &matProj);
 
-
+	//CullMode 설정
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-
 	//알파블렌딩
 
 	m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
@@ -79,8 +69,6 @@ void CBackGround::Render_GameObject()
 	m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
 	m_pGraphicDev->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
 	m_pGraphicDev->SetRenderState(D3DRS_ALPHAREF, 0xc0);
-
-
 
 	m_pTextureCom->Set_Texture(0);
 
@@ -99,7 +87,7 @@ void CBackGround::Render_GameObject()
 	m_pGraphicDev->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
 }
 
-HRESULT CBackGround::Add_Component(const _tchar* pPath)
+HRESULT CHUD::Add_Component()
 {
 	Engine::CComponent* pComponent = nullptr;
 
@@ -109,12 +97,12 @@ HRESULT CBackGround::Add_Component(const _tchar* pPath)
 
 	if (nullptr == pComponent)
 		return E_FAIL;
-	
+
 	m_mapComponent[ID_STATIC].insert({ L"Com_Buffer", pComponent });
 
 	// Texture
 	pComponent = m_pTextureCom = dynamic_cast<CTexture*>
-		(CProtoMgr::GetInstance()->Clone_Prototype(pPath));
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_HUDTexture"));
 
 	if (nullptr == pComponent)
 		return E_FAIL;
@@ -124,22 +112,19 @@ HRESULT CBackGround::Add_Component(const _tchar* pPath)
 	return S_OK;
 }
 
-CBackGround* CBackGround::Create(LPDIRECT3DDEVICE9 pGraphicDev,
-	const _tchar* pProtoPath)
+CHUD* CHUD::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 {
-	CBackGround* pBackGround = new CBackGround(pGraphicDev);
+	CHUD* pHUD = new CHUD(pGraphicDev);
 
-	if (FAILED(pBackGround->Ready_GameObject(pProtoPath)))
+	if (FAILED(pHUD->Ready_GameObject()))
 	{
-		Safe_Release(pBackGround);
-		MSG_BOX("pBackGround Create Failed");
+		Safe_Release(pHUD);
+		MSG_BOX("pHUD Create Failed");
 		return nullptr;
 	}
 
-	return pBackGround;
+	return pHUD;
 }
 
-void CBackGround::Free()
-{
-	CGameObject::Free();
-}
+void CHUD::Free()
+{}

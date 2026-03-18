@@ -36,6 +36,7 @@ public:
 private:
 	function<void()> m_BlockRenderCallback = nullptr;
 	function<void()> m_ParticleRenderCallback = nullptr;
+
 private:
 	list<CGameObject*>		m_RenderGroup[RENDER_END];
 
