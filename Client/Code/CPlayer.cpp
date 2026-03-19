@@ -104,9 +104,12 @@ _int CPlayer::Update_GameObject(const _float& fTimeDelta)
 		//========Attack Particle============//
 		if (m_iComboStep > 0 && m_pAttackEmitter)
 		{
-			_vec3 vPos;
+			_vec3 vPos, vLook;
 			m_pTransformCom->Get_Info(INFO_POS, &vPos);
-			vPos.y += vPos.y + 1.f;
+			m_pTransformCom->Get_Info(INFO_LOOK, &vLook);
+			D3DXVec3Normalize(&vLook, &vLook);
+			vPos -= vLook * 1.5f;
+			vPos.y += 2.5f;
 			m_pAttackEmitter->Set_Position(vPos);
 		}
 	}
@@ -206,10 +209,6 @@ void CPlayer::Render_GameObject()
 	if (m_bAtkColliderActive && m_pAtkColliderCom)
 		m_pAtkColliderCom->Render_Collider();
 
-	//화살 렌더링
-	for (auto& pArrow : m_vecArrows)
-		pArrow->Render_GameObject();
-
 	// 월드 행렬
 	_matrix matRootWorld = *m_pTransformCom->Get_World();
 
@@ -262,62 +261,41 @@ void CPlayer::Render_GameObject()
 		matRArmRoot._43 -= vRight.z * 0.4f;
 	}
 
-	// HEAD
+
+	//아머 렌더링
 	Render_Part(PART_HEAD, 0.f, m_bCharging ? D3DXToRadian(90.f) : 0.f, 0.f, matRootWorld);
-	if (m_eArmorType != ARMOR_NONE && m_pArmorTextureCom)
-	{
-		m_vPartScale[PART_HEAD] *= 1.05f;
-		Render_Part(PART_HEAD, 0.f, m_bCharging ? D3DXToRadian(90.f) : 0.f, 0.f, matRootWorld, m_pArmorTextureCom);
-		m_vPartScale[PART_HEAD] /= 1.05f;
-	}
-
-	// BODY
 	Render_Part(PART_BODY, 0.f, 0.f, 0.f, matRootWorld);
-	if (m_eArmorType != ARMOR_NONE && m_pArmorTextureCom)
-	{
-		m_vPartScale[PART_BODY] *= 1.05f;
-		Render_Part(PART_BODY, 0.f, 0.f, 0.f, matRootWorld, m_pArmorTextureCom);
-		m_vPartScale[PART_BODY] /= 1.05f;
-	}
-
-	// LARM
-	Render_Part(PART_LARM, m_bCharging ? fLArmX : fSwing,
-		m_bCharging ? fLArmY : 0.f, 0.f, matRArmRoot);
-	if (m_eArmorType != ARMOR_NONE && m_pArmorTextureCom)
-	{
-		m_vPartScale[PART_LARM] *= 1.05f;
-		Render_Part(PART_LARM, m_bCharging ? fLArmX : fSwing,
-			m_bCharging ? fLArmY : 0.f, 0.f, matRArmRoot, m_pArmorTextureCom);
-		m_vPartScale[PART_LARM] /= 1.05f;
-	}
-
-	// RARM
+	Render_Part(PART_LARM, m_bCharging ? fLArmX : fSwing, m_bCharging ? fLArmY : 0.f, 0.f, matRArmRoot);
 	Render_Part(PART_RARM, m_bCharging ? fRArmX : (m_iComboStep > 0 ? fAtkX : -fSwing),
 		m_bCharging ? fRArmY : (m_iComboStep > 0 ? fAtkY : 0.f), 0.f, matRootWorld);
-	if (m_eArmorType != ARMOR_NONE && m_pArmorTextureCom)
-	{
-		m_vPartScale[PART_RARM] *= 1.05f;
-		Render_Part(PART_RARM, m_bCharging ? fRArmX : (m_iComboStep > 0 ? fAtkX : -fSwing),
-			m_bCharging ? fRArmY : (m_iComboStep > 0 ? fAtkY : 0.f), 0.f, matRootWorld, m_pArmorTextureCom);
-		m_vPartScale[PART_RARM] /= 1.05f;
-	}
-
-	// LLEG
 	Render_Part(PART_LLEG, -fSwing, 0.f, 0.f, matRootWorld);
-	if (m_eArmorType != ARMOR_NONE && m_pArmorTextureCom)
-	{
-		m_vPartScale[PART_LLEG] *= 1.05f;
-		Render_Part(PART_LLEG, -fSwing, 0.f, 0.f, matRootWorld, m_pArmorTextureCom);
-		m_vPartScale[PART_LLEG] /= 1.05f;
-	}
-
-	// RLEG
 	Render_Part(PART_RLEG, fSwing, 0.f, 0.f, matRootWorld);
+
 	if (m_eArmorType != ARMOR_NONE && m_pArmorTextureCom)
 	{
-		m_vPartScale[PART_RLEG] *= 1.05f;
-		Render_Part(PART_RLEG, fSwing, 0.f, 0.f, matRootWorld, m_pArmorTextureCom);
-		m_vPartScale[PART_RLEG] /= 1.05f;
+		m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+		m_pGraphicDev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+		m_pGraphicDev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+		m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+		m_pGraphicDev->SetRenderState(D3DRS_ALPHAREF, 10);
+		m_pGraphicDev->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
+
+		for (int i = 0; i < PART_END; ++i)
+		{
+			_matrix matScale, matArmor;
+			D3DXMatrixScaling(&matScale, 1.15f, 1.15f, 1.15f);
+			matArmor = matScale * m_matPartWorld[i];
+			m_pGraphicDev->SetTransform(D3DTS_WORLD, &matArmor);
+			m_pArmorTextureCom->Set_Texture(0);
+			m_pArmorBufferCom[i]->Render_Buffer();
+		}
+
+		m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+		m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+		m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+		m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+		m_pTextureCom->Set_Texture(0);
 	}
 
 
@@ -330,6 +308,10 @@ void CPlayer::Render_GameObject()
 	m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
 	m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
 
+	//화살 렌더링
+	for (auto& pArrow : m_vecArrows)
+		pArrow->Render_GameObject();
+
 	m_pColliderCom->Render_Collider();
 }
 
@@ -337,7 +319,7 @@ HRESULT CPlayer::Add_Component()
 {
 	Engine::CComponent* pComponent = nullptr;
 
-#pragma region 큐브 6면 부위별
+#pragma region 큐브 6면 부위별 (플레이어)
 	FACE_UV uvHead[6] = {
 		{0.125f, 0.125f, 0.25f,  0.25f },	// FRONT
 		{0.375f, 0.125f, 0.5f,   0.25f },	// BACK
@@ -388,6 +370,77 @@ HRESULT CPlayer::Add_Component()
 	};
 #pragma endregion
 
+
+#pragma region 큐브6면 부위별 (갑옷)
+	// 아머용 버퍼
+	FACE_UV uvArmorHead[6] = {
+	{0.31250f, 0.00000f, 0.46875f, 0.14063f},  // FRONT
+	{0.00000f, 0.00000f, 0.15625f, 0.14063f},  // BACK
+	{0.15625f, 0.00000f, 0.31250f, 0.14063f},  // TOP
+	{0.00000f, 0.00000f, 0.00000f, 0.00000f},  // BOT
+	{0.15625f, 0.00000f, 0.31250f, 0.14063f},  // LEFT
+	{0.15625f, 0.00000f, 0.31250f, 0.14063f},  // RIGHT
+	};
+	FACE_UV uvArmorBody[6] = {
+		{0.09375f, 0.50000f, 0.25000f, 0.68750f},  // FRONT
+		{0.34375f, 0.50000f, 0.50000f, 0.68750f},  // BACK
+		{0.25000f, 0.42188f, 0.09375f, 0.50000f},  // TOP
+		{0.00000f, 0.00000f, 0.00000f, 0.00000f},  // BOT
+		{0.00000f, 0.50000f, 0.09375f, 0.68750f},  // LEFT
+		{0.25000f, 0.50000f, 0.34375f, 0.68750f},  // RIGHT
+	};
+	FACE_UV uvArmorLArm[6] = {
+		{0.46875f, 0.18750f, 0.60938f, 0.31250f},  // FRONT
+		{0.75000f, 0.18750f, 0.89063f, 0.31250f},  // BACK
+		{0.31250f, 0.14063f, 0.45313f, 0.28125f},  // TOP
+		{0.00000f, 0.00000f, 0.00000f, 0.00000f},  // BOT
+		{0.00000f, 0.00000f, 0.00000f, 0.00000f},  // LEFT 
+		{0.60938f, 0.18750f, 0.75000f, 0.31250f},  // RIGHT
+	};
+	FACE_UV uvArmorRArm[6] = {
+		{0.46875f, 0.00000f, 0.60938f, 0.12500f},  // FRONT
+		{0.75000f, 0.00000f, 0.89063f, 0.12500f},  // BACK
+		{0.31250f, 0.14063f, 0.45313f, 0.28125f},  // TOP
+		{0.00000f, 0.00000f, 0.00000f, 0.00000f},  // BOT
+		{0.60938f, 0.00000f, 0.75000f, 0.12500f},  // LEFT 
+		{0.00000f, 0.00000f, 0.00000f, 0.00000f},  // RIGHT
+	};
+	FACE_UV uvArmorLLeg[6] = {
+		{0.34375f, 0.68750f, 0.42188f, 0.81250f},  // FRONT
+		{0.17188f, 0.68750f, 0.25000f, 0.81250f},  // BACK
+		{0.00000f, 0.00000f, 0.00000f, 0.00000f},  // TOP
+		{0.00000f, 0.00000f, 0.00000f, 0.00000f},  // BOT
+		{0.00000f, 0.00000f, 0.00000f, 0.00000f},  // LEFT
+		{0.25000f, 0.68750f, 0.34375f, 0.81250f},  // RIGHT
+	};
+	FACE_UV uvArmorRLeg[6] = {
+		{0.42188f, 0.68750f, 0.50000f, 0.81250f},  // FRONT
+		{0.09375f, 0.68750f, 0.17188f, 0.81250f},  // BACK
+		{0.00000f, 0.00000f, 0.00000f, 0.00000f},  // TOP
+		{0.00000f, 0.00000f, 0.00000f, 0.00000f},  // BOT
+		{0.00000f, 0.00000f, 0.00000f, 0.00000f},  // LEFT
+		{0.00000f, 0.68750f, 0.09375f, 0.81250f},  // RIGHT
+	};
+
+	FACE_UV* uvArmorTable[PART_END] = {
+		uvArmorHead, uvArmorBody, uvArmorLArm, uvArmorRArm, uvArmorLLeg, uvArmorRLeg
+	};
+	const wchar_t* armorTagTable[PART_END] = {
+		L"Com_ArmorHeadBuf", L"Com_ArmorBodyBuf",
+		L"Com_ArmorLArmBuf", L"Com_ArmorRArmBuf",
+		L"Com_ArmorLLegBuf", L"Com_ArmorRLegBuf"
+	};
+
+	for (_uint i = 0; i < PART_END; ++i)
+	{
+		m_pArmorBufferCom[i] = CPlayerBody::Create(m_pGraphicDev, uvArmorTable[i]);
+		if (nullptr == m_pArmorBufferCom[i])
+			return E_FAIL;
+		m_mapComponent[ID_STATIC].insert({ armorTagTable[i], m_pArmorBufferCom[i] });
+	}
+
+
+#pragma endregion
 	FACE_UV* uvTable[PART_END] = { uvHead, uvBody, uvLArm, uvRArm, uvLLeg, uvRLeg };
 	const wchar_t* tagTable[PART_END] = {
 		L"Com_HeadBuf", L"Com_BodyBuf",
@@ -744,7 +797,7 @@ _vec3 CPlayer::Picking_OnBlock()
 }
 
 void CPlayer::Render_Part(BODYPART ePart, _float fAngleX, _float fAngleY, _float fAngleZ,
-							const _matrix& matRootWorld, Engine::CTexture* pTex)
+							const _matrix& matRootWorld, Engine::CTexture* pTex, CPlayerBody* pBuf)
 {
 	_matrix matScale;
 	D3DXMatrixScaling(&matScale,
@@ -790,12 +843,18 @@ void CPlayer::Render_Part(BODYPART ePart, _float fAngleX, _float fAngleY, _float
 	if (ePart == PART_LARM)
 		m_matLArmWorld = matPartWorld;
 
+	m_matPartWorld[ePart] = matPartWorld;
+
 	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matPartWorld);
 	if (pTex)
 		pTex->Set_Texture(0);
 	else
 		m_pTextureCom->Set_Texture(0);
-	m_pBufferCom[ePart]->Render_Buffer();
+
+	if (pBuf)
+		pBuf->Render_Buffer();	
+	else
+		m_pBufferCom[ePart]->Render_Buffer();
 }
 
 void CPlayer::Calc_AttackMotion(float& fAtkX, float& fAtkY, float& fTorsoY)

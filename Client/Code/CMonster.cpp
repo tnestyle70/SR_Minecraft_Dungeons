@@ -196,9 +196,12 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
         ID_STATIC, L"GameLogic_Layer", L"Player", L"Com_AtkCollider");
     Engine::CCollider* pAtkCollider = dynamic_cast<Engine::CCollider*>(pAtkCom);
 
+    CPlayer* pPlayer = CMonsterMgr::GetInstance()->Get_Player();
+
     if (pAtkCollider && pAnim
         && pAnim->Get_State() != EMonsterState::HIT
         && pAnim->Get_State() != EMonsterState::DEAD
+        && pPlayer && pPlayer->Get_AtkColliderActive()
         && m_pColliderCom->IsColliding(pAtkCollider->Get_AABB()))
     {
         m_iHp -= 1;

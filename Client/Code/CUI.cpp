@@ -175,4 +175,9 @@ HRESULT CUI::Add_Component()
 void CUI::Free()
 {
 	Engine::CGameObject::Free();
+
+	for (auto& pChild : m_vecChildren)
+		Safe_Release(pChild);
+
+	m_vecChildren.clear();
 }

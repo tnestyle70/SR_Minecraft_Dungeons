@@ -42,10 +42,12 @@ private:
 	//_vec3			Picking_OnTerrain();
 	_vec3			Picking_OnBlock();
 	void			Render_Part(BODYPART ePart, _float fAngleX, _float fAngleY, _float fAngleZ,
-								const _matrix& matRootWorld, Engine::CTexture* pTex = nullptr);
+								const _matrix& matRootWorld, Engine::CTexture* pTex = nullptr, CPlayerBody* pBuf = nullptr);
 
 	void			Render_Sword(float fAtkX, float fAtkY, float fSwing);
 	void			Render_Bow();
+
+
 private:
 	//플레이어 정보
 
@@ -55,7 +57,7 @@ private:
 	float m_fBowDmg = 15.f;
 
 	ARMOR_TYPE m_eArmorType = ARMOR_NONE;
-
+	_matrix m_matPartWorld[PART_END];
 	//공격모션
 	int   m_iComboStep = 0;      // 0=대기, 1=우→좌, 2=좌→우, 3=찌르기
 	float m_fAtkTime = 0.f;    // 현재 공격 경과 시간
@@ -97,8 +99,12 @@ public:
 	void Set_Armor(ARMOR_TYPE eType) { m_eArmorType = eType; }
 	ARMOR_TYPE Get_ArmorType() const { return m_eArmorType; }
 
+	//콜라이더 박스 온오프 확인
+	bool Get_AtkColliderActive() const { return m_bAtkColliderActive; }
+
 private:
 	CPlayerBody* m_pBufferCom[PART_END];
+	CPlayerBody* m_pArmorBufferCom[PART_END] = {};
 	Engine::CTransform* m_pTransformCom;
 	Engine::CTexture* m_pTextureCom;
 	Engine::CCalculator* m_pCalculatorCom;
