@@ -256,7 +256,7 @@ void CParticleEmitter::Set_RenderState()
     switch (m_eParticleType)
     {
     case PARTICLE_FOOTSTEP:
-        fMin = 1.f; fMax = 32.f;
+        fMin = 1.f; fMax = 8.f;
         break;
     case PARTICLE_ATTACK:
         fMin = 1.f; fMax = 128.f;

@@ -47,7 +47,7 @@ void CManagement::LateUpdate_Scene(const _float& fTimeDelta)
 
 void CManagement::Render_Scene(LPDIRECT3DDEVICE9 pGraphicDev)
 {
-    // debug 용 렌더
+    // debug 용 렌더 - 블럭, 파티클 그리기
     m_pScene->Render_Scene();
 
     CRenderer::GetInstance()->Render_GameObject(pGraphicDev);

@@ -48,14 +48,12 @@ HRESULT CBlock::Ready_GameObject(const _vec3& vPos, eBlockType eType)
 
 _int CBlock::Update_GameObject(const _float& fTimeDelta)
 {
+	//트랜스폼 때문에 업데이트는 해주되, Add Render Gruop은 해주지 않음
 	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
 
-	//디버깅용 - 나중에 RENDER_PRIORITY로 변경
-	//최적화 이후 주석
-	if (CBlockMgr::GetInstance()->IsEditorMode())
-	{
+	//개별 블럭 렌더링용
+	if(CBlockMgr::GetInstance()->GetRenderMode() !=  eRenderMode::RENDER_BATCH)
 		CRenderer::GetInstance()->Add_RenderGroup(RENDER_NONALPHA, this);
-	}
 
 	return iExit;
 }
@@ -155,6 +153,12 @@ const _tchar* CBlock::GetTextureName()
 		return L"Proto_StoneBrickTexture";
 	case BLOCK_IRONBAR:
 		return L"Proto_StoneBrickTexture";
+	case BLOCK_OAK:
+		return L"Proto_OakTexture";
+	case BLOCK_OAK_LEAVES:
+		return L"Proto_OakLeavesTexture";
+	case BLOCK_CHERRY_LEAVES:
+		return L"Proto_CherryLeavesTexture";
 	default:
 		break;
 	}

@@ -50,13 +50,19 @@ void CBlockMgr::Update(const _float& fTimeDelta)
 
 void CBlockMgr::Render()
 {
-	if (m_bEditorMode)
+	switch (m_eRenderMode)
 	{
+	case RENDER_EDITOR:
 		Render_Editor();
-	}
-	else
-	{
+		break;
+	case RENDER_BATCH:
 		Render_Stage();
+		break;
+	case RENDER_QUADTREE:
+		Rendre_QuadTree();
+		break;
+	default:
+		break;
 	}
 }
 
@@ -82,22 +88,44 @@ void CBlockMgr::Render_Stage()
 
 	m_pGraphicDev->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
 
+	//블럭 깨짐 방지 - Texture Address Mode가 D3DTADDRESS_WRAP이라 카메라 이동으로 서브픽셀 오차가 조금만 생겨도
+	//UV가 1.0을 넘어서 반대편 0, 0 으로 이동해버림! -> Address UV Clamping 걸기
+	m_pGraphicDev->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+	m_pGraphicDev->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+	m_pGraphicDev->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
+
 	if (m_pTexture)
 		m_pTexture->Set_Texture(0);
 
 	m_pBatchBuffer->Render_Buffer();   // 드로우콜 1번
+
+	//UV 복구 
+	m_pGraphicDev->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
+	m_pGraphicDev->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
+	m_pGraphicDev->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
 
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 
 	m_pGraphicDev->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
 }
 
-void CBlockMgr::SetEditorMode(bool bEditor)
+void CBlockMgr::Rendre_QuadTree()
 {
-	m_bEditorMode = bEditor;
-	if (!bEditor)
-		RebuildBatchMesh();
+
 }
+
+void CBlockMgr::SetRenderMode(eRenderMode eMode)
+{
+	m_eRenderMode = eMode;
+	
+	if (eMode == RENDER_BATCH)
+		RebuildBatchMesh();
+	else if (eMode == RENDER_QUADTREE)
+		BuildQuadTree();
+}
+
+void CBlockMgr::BuildQuadTree()
+{}
 
 void CBlockMgr::RebuildBatchMesh()
 {
@@ -188,12 +216,21 @@ void CBlockMgr::AddBlock(const _vec3& vPos, eBlockType eType)
 		return;
 
 	m_mapBlocks.insert({ tPos, pBlock });
+}
 
-	if (!m_bEditorMode)
-	{
-		//블럭이 갱신될 때마다 배치 매쉬 갱신
-		RebuildBatchMesh();
-	}
+void CBlockMgr::AddBlock(int x, int y, int z, eBlockType eType)
+{
+	BlockPos tPos = { x, y, z };
+
+	if (m_mapBlocks.find(tPos) != m_mapBlocks.end())
+		return;
+
+	_vec3 vPos = { (float)x, (float)y, (float)z };
+	CBlock* pBlock = CBlock::Create(m_pGraphicDev, vPos, eType);
+	if (!pBlock)
+		return;
+
+	m_mapBlocks.insert({ tPos, pBlock });
 }
 
 void CBlockMgr::RemoveBlock(const _vec3& vPos)
@@ -206,12 +243,6 @@ void CBlockMgr::RemoveBlock(const _vec3& vPos)
 		return;
 	Safe_Release(iter->second);
 	m_mapBlocks.erase(iter);
-
-	if (!m_bEditorMode)
-	{
-		//블럭이 갱신될 때마다 배치 매쉬 갱신
-		RebuildBatchMesh();
-	}
 }
 
 void CBlockMgr::RemoveBlockByPos(const BlockPos& pos)
@@ -221,11 +252,6 @@ void CBlockMgr::RemoveBlockByPos(const BlockPos& pos)
 		return;
 	Safe_Release(iter->second);
 	m_mapBlocks.erase(iter);
-	if (!m_bEditorMode)
-	{
-		//블럭이 갱신될 때마다 배치 매쉬 갱신
-		RebuildBatchMesh();
-	}
 }
 
 void CBlockMgr::ClearBlocks()
@@ -297,11 +323,11 @@ HRESULT CBlockMgr::LoadBlocks(FILE* pFile)
 		}
 	}
 
-	if (!m_bEditorMode)
-	{
-		// 전체 로드 완료 후 딱 1번만 Rebuild
+	//로드 완료 후 현재 모드에 맞게 처리
+	if (m_eRenderMode == RENDER_BATCH)
 		RebuildBatchMesh();
-	}
+	else if (m_eRenderMode == RENDER_QUADTREE)
+		BuildQuadTree();
 
 	return S_OK;
 }

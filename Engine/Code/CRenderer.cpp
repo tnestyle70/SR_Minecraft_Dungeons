@@ -48,7 +48,6 @@ void CRenderer::Render_NonAlpha(LPDIRECT3DDEVICE9& pGraphicDev)
 
 void CRenderer::Render_Alpha(LPDIRECT3DDEVICE9& pGraphicDev)
 { 
-
 	pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
 
 	pGraphicDev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);

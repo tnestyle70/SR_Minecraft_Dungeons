@@ -5,6 +5,7 @@
 #include "CMonsterUV.h"
 #include "CSceneChanger.h"
 #include "CTriggerBox.h"
+#include "CBlockPreset.h"
 
 CEditor::CEditor(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev), m_bEditorMode(false)
@@ -89,7 +90,7 @@ _int CEditor::Update_Scene(const _float& fTimeDelta)
 	{
 		pair.second->Update_GameObject(fTimeDelta);
 	}
-
+	
 	//Particle
 	CParticleMgr::GetInstance()->Update(fTimeDelta);
 
@@ -185,10 +186,9 @@ HRESULT CEditor::Ready_Environment_Layer(const _tchar* pLayerTag)
 
 void CEditor::SetEditorMode(bool editorMode)
 {
-	m_bEditorMode = !m_bEditorMode;
+	m_bEditorMode = editorMode;
 
-	//에디터가 꺼질 경우 스테이지 진입하면서 LoadBlocks 호출
-	CBlockMgr::GetInstance()->SetEditorMode(m_bEditorMode);
+	//디폴트 에디터 모드
 
 	if (m_bEditorMode)
 	{
@@ -211,7 +211,7 @@ const _tchar* CEditor::GetStagePath(eStageType eStage) const
 	{
 		return s_aPath[0];
 	}
-
+	
 	return s_aPath[eStage];
 }
 
@@ -419,7 +419,7 @@ void CEditor::Render_BlockPalette()
 		{"Sand##block",       "Sand",       BLOCK_SAND},
 		{"Bedrock##block",    "Bedrock",    BLOCK_BEDROCK},
 		{"Obsidian##block",   "Obsidian",   BLOCK_OBSIDIAN},
-		{"StoneBrick##block", "StoneBrick", BLOCK_STONEBRICK},
+		{"StoneBrick##block", "StoneBrick", BLOCK_STONEBRICK}
 	};
 	constexpr int iCount = (int)(sizeof(palette) / sizeof(palette[0]));
 
@@ -430,12 +430,45 @@ void CEditor::Render_BlockPalette()
 		if (bSelected)
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.6f, 0.2f, 1.f));
 		if (ImGui::Button(palette[i].label, ImVec2(120.f, 28.f)))
+		{
 			m_eSelectedBlock = palette[i].eType;
+			m_pBlockPlacer->SetPresetMode(false);
+		}
 		if (bSelected)
 			ImGui::PopStyleColor();
 	}
 	ImGui::Separator();
-	ImGui::Text("Selected: %s", palette[m_eSelectedBlock].name);
+	
+	//프리셋 
+	enum ePresetType { PRESET_OAK, PRESET_CHERRY, PRESET_DRAGON ,PRESET_END };
+	struct PresetEntry { const char* label; const char* name; ePresetType eType; };
+	static const PresetEntry presets[] =
+	{
+		{"OakTree##preset",    "Oak Tree",    PRESET_OAK},
+		{"CherryTree##preset", "Cherry Tree", PRESET_CHERRY},
+		{"Dragon##preset", "Dragon", PRESET_DRAGON}
+	};
+	constexpr int iPCount = (int)(sizeof(presets) / sizeof(presets[0]));
+
+	ImGui::Text("[ Preset ]");
+	for (int i = 0; i < iPCount; ++i)
+	{
+		bool bSelected = (m_eSelectedBlockPreset == presets[i].eType && m_bPresetMode);
+		if (bSelected) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.4f, 0.0f, 1.f));
+		if (ImGui::Button(presets[i].label, ImVec2(120.f, 28.f)))
+		{
+			m_eSelectedBlockPreset = presets[i].eType;
+			m_bPresetMode = true;       // 프리셋 모드
+			m_pBlockPlacer->SetPresetMode(true, i);
+		}
+		if (bSelected) ImGui::PopStyleColor();
+	}
+
+	ImGui::Separator();
+	if (m_bPresetMode)
+		ImGui::Text("Selected: %s", presets[m_eSelectedBlockPreset].name);
+	else
+		ImGui::Text("Selected: %s", palette[m_eSelectedPreset].name);
 }
 
 void CEditor::Render_MonsterPalette()
@@ -1169,6 +1202,7 @@ HRESULT CEditor::LoadStageData(const _tchar* szPath)
 	}
 
 	fclose(pFile);
+
 	return S_OK;
 }
 
@@ -1307,14 +1341,33 @@ HRESULT CEditor::Ready_ProtoType()
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_BedrockTexture",
 		CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/BedrockTexture.dds"))))
 		return E_FAIL;
-	//obsidian
+	//obsidian dds
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ObsidianTexture",
 		CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/ObsidianTexture.dds"))))
+		return E_FAIL;
+	//obsidian png
+	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ObsidianPngTexture",
+		CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/obsidian.png"))))
 		return E_FAIL;
 	//stonebrick
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StoneBrickTexture",
 		CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/StoneBrickTexture.dds"))))
 		return E_FAIL;
+
+	//Block Texture
+	//oak
+	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_OakTexture",
+		CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/OakTexture.dds"))))
+		return E_FAIL;
+	//oak leaves
+	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_OakLeavesTexture",
+		CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/OakLeaves.dds"))))
+		return E_FAIL;
+	//cherry leaves
+	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CherryLeavesTexture",
+		CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/CherryLeaves.dds"))))
+		return E_FAIL;
+
 
 	//블럭 텍스쳐 아틀라스
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_BlockAtlasTexture",
