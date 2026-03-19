@@ -38,7 +38,7 @@ int Application::Run() {
 	while ( window_->ProcessMessages() ) {
 
 		auto now = clock::now();
-		float delta = ( ( std::chrono::duration<float> )( now - last ) ).count();
+		float delta = ((std::chrono::duration<float>)(now - last)).count();
 		last = now;
 
 		device_->BeginFrame();
