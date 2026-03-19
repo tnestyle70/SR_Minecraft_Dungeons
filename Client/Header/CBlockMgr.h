@@ -4,6 +4,13 @@
 #include "CBlock.h"
 #include "CBatchBuffer.h"
 
+enum eRenderMode
+{
+	RENDER_EDITOR, //개별 DrawCall
+	RENDER_BATCH, //BatchBuffer
+	RENDER_QUADTREE //QuadTree
+};
+
 struct BlockData
 {
 	int x, y, z;
@@ -21,15 +28,18 @@ public:
 	HRESULT Ready_Textures();
 	void Update(const _float& fTimeDelta);
 	void Render();
-private:
+public:
 	void Render_Editor();
 	void Render_Stage();
+	void Rendre_QuadTree();
 public:
-	void SetEditorMode(bool bEditor);
-	bool IsEditorMode() { return m_bEditorMode; };
+	void SetRenderMode(eRenderMode eMode);
+	eRenderMode GetRenderMode() { return m_eRenderMode; }
+	void BuildQuadTree(); //스테이지 로드시 호출
 
 	const map<BlockPos, CBlock*>& Get_Blocks() { return m_mapBlocks; }
 	void AddBlock(const _vec3& vPos, eBlockType eType);
+	void AddBlock(int x, int y, int z, eBlockType eType);
 	void RemoveBlock(const _vec3& vPos);
 	void RemoveBlockByPos(const BlockPos& pos);
 	void ClearBlocks();
@@ -52,7 +62,7 @@ private: //블럭의 위치 - 키, 실제 블럭 - 값으로 저장
 	//Atlas Texture
 	CTexture* m_pTexture = nullptr;
 	CBatchBuffer* m_pBatchBuffer = nullptr;
-	bool m_bEditorMode = true;
+	eRenderMode m_eRenderMode = eRenderMode::RENDER_EDITOR;
 private:
 	virtual void Free();
 };

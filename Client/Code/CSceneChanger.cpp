@@ -2,6 +2,9 @@
 #include "CSceneChanger.h"
 #include "CManagement.h"
 #include "CLoadingScene.h"
+// Object Editor
+#include "CObjectEditor.h"
+
 //stages
 #include "CLogo.h"
 #include "CStage.h"
@@ -18,13 +21,6 @@ HRESULT CSceneChanger::ChangeScene(LPDIRECT3DDEVICE9 pGraphicDev, eSceneType eTy
 	{
 	case SCENE_LOGO:
 		pScene = CLogo::Create(pGraphicDev);
-		break;
-	case SCENE_STAGE:
-		pScene = CLoadingScene::Create(
-			pGraphicDev,
-			CLoading::LOADING_STAGE,
-			SCENE_STAGE_PLAY,
-			L"Proto_ObsidianLoadingTexture");
 		break;
 	case SCENE_SQUIDCOAST:
 		pScene = CLoadingScene::Create(
@@ -54,9 +50,6 @@ HRESULT CSceneChanger::ChangeScene(LPDIRECT3DDEVICE9 pGraphicDev, eSceneType eTy
 			SCENE_OBSIDIAN_PLAY,
 			L"Proto_ObsidianLoadingTexture");
 		break;
-	case SCENE_STAGE_PLAY:
-		pScene = CStage::Create(pGraphicDev);
-		break;
 	case SCENE_SQUIDCOAST_PLAY:
 		pScene = CSquidCoast::Create(pGraphicDev);
 		break;
@@ -69,6 +62,11 @@ HRESULT CSceneChanger::ChangeScene(LPDIRECT3DDEVICE9 pGraphicDev, eSceneType eTy
 	case SCENE_OBSIDIAN_PLAY:
 		pScene = CObsidian::Create(pGraphicDev);
 		break;	
+
+		// ÁÖ½Â ¿ÀºêÁ§Æ® ¿¡µðÅÍ ¾À
+	case SCENE_OBJECT_EDITOR:
+		pScene = CObjectEditor::Create(pGraphicDev);
+		break;
 	}
 
 	if (!pScene)

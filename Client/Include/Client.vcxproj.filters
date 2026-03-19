@@ -134,6 +134,53 @@
     <ClCompile Include="..\Code\CRedStone.cpp">
       <Filter>01. Scene\01. Stage\02. RedStone</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CBlockRenderer.cpp" />
+    <ClCompile Include="..\Code\CUI.cpp" />
+    <ClCompile Include="..\Code\CHotbar.cpp" />
+    <ClCompile Include="..\Code\CUI_Json.cpp" />
+    <ClCompile Include="..\Code\CAncientGuardian.cpp">
+      <Filter>02. GameObject\09. DLCBoss\00. AncientGuardian</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CDragon.cpp">
+      <Filter>02. GameObject\10. Dragon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CAGAnim.cpp">
+      <Filter>02. GameObject\09. DLCBoss\00. AncientGuardian</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CAGBody.cpp">
+      <Filter>02. GameObject\09. DLCBoss\00. AncientGuardian</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CBiomine.cpp">
+      <Filter>02. GameObject\09. DLCBoss\01. Biomine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CVengefuHeartofEnder.cpp">
+      <Filter>02. GameObject\09. DLCBoss\02. VengefulHeartofEnder</Filter>
+    </ClCompile>
+      <ClCompile Include="..\Code\CBeam.cpp">
+      <Filter>02. GameObject\09. DLCBoss\03. Beam</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CMinimap.cpp">
+      <Filter>02. GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CInventoryMgr.cpp">
+      <Filter>03. Manager\01. Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CHUD.cpp">
+      <Filter>02. GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Header\BlockPreset.cpp" />
+    <ClCompile Include="..\Code\CBlockPreset.cpp">
+      <Filter>01. Scene\03. Editor\01. Block</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CBox.cpp">
+      <Filter>02. GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CBoxPart.cpp">
+      <Filter>02. GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CObjectEditor.cpp">
+      <Filter>01. Scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -265,6 +312,55 @@
     <ClInclude Include="..\Header\CRedStone.h">
       <Filter>01. Scene\01. Stage\02. RedStone</Filter>
     </ClInclude>
+    <ClInclude Include="..\Header\CBlockRenderer.h" />
+    <ClInclude Include="..\Header\CUI.h" />
+    <ClInclude Include="..\Header\CHotbar.h" />
+    <ClInclude Include="..\Header\CUI_Json.h" />
+    <ClInclude Include="..\Header\CAncientGuardian.h">
+      <Filter>02. GameObject\09. DLCBoss\00. AncientGuardian</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CDragon.h">
+      <Filter>02. GameObject\10. Dragon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CAncientGuardianUV.h">
+      <Filter>02. GameObject\09. DLCBoss\00. AncientGuardian</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CAGAnim.h">
+      <Filter>02. GameObject\09. DLCBoss\00. AncientGuardian</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CAGBody.h">
+      <Filter>02. GameObject\09. DLCBoss\00. AncientGuardian</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CBiomine.h">
+      <Filter>02. GameObject\09. DLCBoss\01. Biomine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CVengefuHeartofEnder.h">
+      <Filter>02. GameObject\09. DLCBoss\02. VengefulHeartofEnder</Filter>
+   </ClInclude>
+    <ClInclude Include="..\Header\CBeam.h">
+      <Filter>02. GameObject\09. DLCBoss\03. Beam</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CMinimap.h">
+      <Filter>02. GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CInventoryMgr.h">
+      <Filter>03. Manager\01. Inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CHUD.h">
+      <Filter>02. GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CBlockPreset.h">
+      <Filter>01. Scene\03. Editor\01. Block</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CBox.h">
+      <Filter>02. GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CBoxPart.h">
+      <Filter>02. GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CObjectEditor.h">
+      <Filter>01. Scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico" />
@@ -377,6 +473,24 @@
     </Filter>
     <Filter Include="03. Manager\00. PathFinding">
       <UniqueIdentifier>{02c2e2b7-b17b-42d1-a246-bd7c1aacd099}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. GameObject\09. DLCBoss\00. AncientGuardian">
+      <UniqueIdentifier>{be334d2b-3f87-42f4-bbd9-8bdf57e4209d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. GameObject\10. Dragon">
+      <UniqueIdentifier>{29ddc4e9-a644-4df3-b690-db83dd74db89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. GameObject\09. DLCBoss\01. Biomine">
+      <UniqueIdentifier>{0927f1a5-6bb7-4d82-96be-bca7297e9875}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. GameObject\09. DLCBoss\02. VengefulHeartofEnder">
+      <UniqueIdentifier>{9d9a9784-f4d8-4f28-b38c-6d8900abd69c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. GameObject\09. DLCBoss\03. Beam">
+      <UniqueIdentifier>{51625d73-6d31-4f92-bbf7-4480f89c001e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Manager\01. Inventory">
+      <UniqueIdentifier>{47eca706-72b7-404b-aea6-9d6a41c890ba}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

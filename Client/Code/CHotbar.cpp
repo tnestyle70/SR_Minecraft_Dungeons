@@ -55,18 +55,18 @@ HRESULT CHotbar::Add_Children()
 		_float x, y;
 	};
 
-	// ºä ½ºÆäÀÌ½º ¹Ù±ù
+	// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ ï¿½Ù±ï¿½
 	constexpr float outOfWindow = -360.F;
 
-	// µ¿Àû UI Àü¿ë
+	// ï¿½ï¿½ï¿½ï¿½ UI ï¿½ï¿½ï¿½ï¿½
 	vector<UIDesc> childDescs = {
-		{ L"Proto_Rocket", L"../Bin/Resource/Texture/UI/Materials/HotBar/rocket.json", outOfWindow, outOfWindow },				// ÆøÁ× ÀåÂø½Ã È° Ä­À¸·Î À§Ä¡ º¯È¯
-		{ L"Proto_ArrowEmpty", L"../Bin/Resource/Texture/UI/Materials/HotBar/arrows_empty.json", outOfWindow, outOfWindow },	// È° ÀåÂø½Ã È­»ìÀÌ ¾øÀ¸¸é È° Ä­À¸·Î À§Ä¡ º¯È¯
-		{ L"Proto_Arrow", L"../Bin/Resource/Texture/UI/Materials/HotBar/arrow.json", outOfWindow, outOfWindow },				// È° ÀåÂø½Ã È­»ìÀÌ ÀÖÀ¸¸é È° Ä­À¸·Î À§Ä¡ º¯È¯
-		{ L"Proto_IconTNTHUD", L"../Bin/Resource/Texture/UI/Materials/HotBar/icon_TNT_HUD.json", outOfWindow, outOfWindow },	// TNT ÀåÂø½Ã È° Ä­À¸·Î À§Ä¡ º¯È¯
+		{ L"Proto_Rocket", L"../Bin/Resource/Texture/UI/Materials/HotBar/rocket.json", outOfWindow, outOfWindow },				// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È° Ä­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½È¯
+		{ L"Proto_ArrowEmpty", L"../Bin/Resource/Texture/UI/Materials/HotBar/arrows_empty.json", outOfWindow, outOfWindow },	// È° ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È° Ä­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½È¯
+		{ L"Proto_Arrow", L"../Bin/Resource/Texture/UI/Materials/HotBar/arrow.json", outOfWindow, outOfWindow },				// È° ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È° Ä­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½È¯
+		{ L"Proto_IconTNTHUD", L"../Bin/Resource/Texture/UI/Materials/HotBar/icon_TNT_HUD.json", outOfWindow, outOfWindow },	// TNT ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È° Ä­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½È¯
 
-		{ L"Proto_HeartMain", L"../Bin/Resource/Texture/UI/Materials/Hotbar2/Heart/heart_main.json", 588.F, 615.F },			// ÇÏÆ® ÇÁ·¹ÀÓ
-		{ L"Proto_FilledHeart", L"../Bin/Resource/Texture/UI/Materials/HotBar2/Heart/filled_heart.json", 597.F, 626.F }			// ÇÏÆ® (TODO: ÇÇ°Ý½Ã À§ÂÊ ÅØ½ºÃÄºÎÅÍ Åõ¸íÈ­·Î ÇÇ°Ý½Ã Ã¼·Â ´Ù´Â ¾Ö´Ï¸ÞÀÌ¼Ç ±¸Çö)
+		{ L"Proto_HeartMain", L"../Bin/Resource/Texture/UI/Materials/Hotbar2/Heart/heart_main.json", 588.F, 615.F },			// ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		{ L"Proto_FilledHeart", L"../Bin/Resource/Texture/UI/Materials/HotBar2/Heart/filled_heart.json", 597.F, 626.F }			// ï¿½ï¿½Æ® (TODO: ï¿½Ç°Ý½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½ï¿½Äºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½ ï¿½Ç°Ý½ï¿½ Ã¼ï¿½ï¿½ ï¿½Ù´ï¿½ ï¿½Ö´Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	};
 
 	// 1. Create and show only the main Hotbar
@@ -79,7 +79,6 @@ HRESULT CHotbar::Add_Children()
 		pTestHotbar->Set_Visible(true);
 	}
 
-	// 2. Create dynamic elements
 	for (auto& desc : childDescs)
 	{
 		CUI_Json* pChild = CUI_Json::Create(m_pGraphicDev, desc.jsonPath.c_str(), desc.protoTag.c_str());
@@ -91,6 +90,15 @@ HRESULT CHotbar::Add_Children()
 		}
 	}
 
+	// 2. Create and show the Test Hotbar LAST so it renders on top
+	CUI_Json* pTestHotbar = CUI_Json::Create(m_pGraphicDev, nullptr, L"Proto_TestHotbarTexture");
+	if (pTestHotbar)
+	{
+		this->Add_Child(pTestHotbar);
+		pTestHotbar->Set_Scale(1.f);
+		pTestHotbar->Set_Pos(0.f, 0.f); 
+		pTestHotbar->Set_Visible(true);
+	}
 
 	return S_OK;
 }

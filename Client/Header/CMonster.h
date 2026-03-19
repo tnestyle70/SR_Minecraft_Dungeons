@@ -1,9 +1,10 @@
-#pragma once
+﻿#pragma once
 #include "CGameObject.h"
 #include "CProtoMgr.h"
 #include "CMonsterBody.h"
 #include "CMonsterAnim.h"
 #include "CArrow.h"
+
 
 class CMonster : public CGameObject
 {
@@ -20,7 +21,10 @@ public:
     
 
 
-    virtual bool        Is_Dead() override { return m_bDeadDone; } // 몬스터 삭제 
+    virtual bool        Is_Dead()                   override { return m_bDeadDone; } // 몬스터 삭제 
+    void                Take_Damage(int iDamage);
+    int                 Get_Hp()                    const { return m_iHp; }
+    int                 Get_AtkDamage()             const { return m_iAtkDamage; }
 
     //Get, Set Monster Active
     bool IsActive() { return m_bActive; }
@@ -45,7 +49,8 @@ private:
     Engine::CCollider* m_pAtkColliderCom = nullptr;
     Engine::CCollider* m_pExplosionColliderCom = nullptr; // 크리퍼 폭발 범위
     
-
+    //=========Death Effect===========//
+    Engine::CParticleEmitter* m_pDeathEmitter = nullptr;
 
     //스켈레톤 활
     Engine::CRcTex* m_pBowBufferCom = nullptr;
@@ -65,6 +70,7 @@ private:
     bool                    m_bExploded = false;                // 폭발 1회 처리용
     bool                    m_bDeadDone = false; // 몬스터 삭제용도 
     int                     m_iHp = 2;
+    int                     m_iAtkDamage = 10;
     
     
     static constexpr float  m_fGravity = -20.f;

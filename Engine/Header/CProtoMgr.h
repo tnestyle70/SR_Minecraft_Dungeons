@@ -17,7 +17,12 @@
 #include "CRedStoneGolemArmTex.h"
 #include "CRedStoneGolemLegTex.h"
 
-//
+// Box
+#include "CBoxBottomTex.h"
+#include "CBoxTopTex.h"
+
+//Effect
+#include "CParticleEmitter.h"
 
 #include "CTransform.h"
 #include "CTexture.h"

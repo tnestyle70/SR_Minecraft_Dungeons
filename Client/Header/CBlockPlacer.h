@@ -30,6 +30,9 @@ enum eBlockType
 	BLOCK_IRONBAR,
 	BLOCK_TNT,
 	BLOCK_TRIGGERBOX,
+	BLOCK_OAK,
+	BLOCK_OAK_LEAVES,
+	BLOCK_CHERRY_LEAVES,
 	BLOCK_END
 };
 
@@ -49,6 +52,16 @@ public:
 	_vec3 SnapToGrid(_vec3* pHit, eBlockType eType);
 
 	void Undo();
+public:
+	void SetPresetMode(bool bPreset, int iPreset = 0)
+	{
+		m_bPresetMode = bPreset;
+		m_iSelectedPreset = iPreset;
+	}
+
+private:
+	bool m_bPresetMode = false;
+	int  m_iSelectedPreset = 0;
 private: 
 	LPDIRECT3DDEVICE9 m_pGraphicDev;
 	float m_fBlockSize;

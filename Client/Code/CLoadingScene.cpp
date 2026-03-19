@@ -36,7 +36,7 @@ HRESULT CLoadingScene::Ready_Scene()
 
 _int CLoadingScene::Update_Scene(const _float& fTimeDelta)
 {
-	CRenderer::GetInstance()->Add_RenderGroup(RENDER_UI, m_pLoadingTexture);
+	CRenderer::GetInstance()->Add_RenderGroup(RENDER_PRIORITY, m_pLoadingTexture);
 
 	if (m_bRenderOnce)
 	{

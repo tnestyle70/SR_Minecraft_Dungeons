@@ -5,6 +5,9 @@
 #include "CRenderer.h"
 #include "CBlockMgr.h"
 #include "CCollider.h"
+#include "CParticleMgr.h"
+#include "CPlayer.h"
+#include "CMonsterMgr.h"
 
 CMonster::CMonster(LPDIRECT3DDEVICE9 pGraphicDev)
     : CGameObject(pGraphicDev)
@@ -18,28 +21,49 @@ CMonster::CMonster(const CGameObject& rhs)
 
 CMonster::~CMonster()
 {
-}
+} 
+
+
 
 HRESULT CMonster::Ready_GameObject(_vec3& vPos)
 {
     if (FAILED(Add_Component()))
         return E_FAIL;
 
-    //몬스터 소환 온 오프
     switch (m_eType)
     {
-        case EMonsterType::ZOMBIE:   m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z); break;
-        case EMonsterType::SKELETON: m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z); break; 
-        case EMonsterType::CREEPER:  m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z); break;
-        case EMonsterType::SPIDER:   m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z); break;
+    case EMonsterType::ZOMBIE:   m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z); 
+        m_iHp = 20;
+        m_iAtkDamage = 10;
+        break;        
+    case EMonsterType::SKELETON: m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z); 
+        m_iHp = 20;
+        m_iAtkDamage = 0;
+        break;
+    case EMonsterType::CREEPER:  m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z); 
+        m_iHp = 10;
+        m_iAtkDamage = 100;
+        break;
+    case EMonsterType::SPIDER:   m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
+        m_iHp = 20;
+        m_iAtkDamage = 10;
     }
+
+    //=====Effect Emitter Connect======// 
+    LPDIRECT3DTEXTURE9 pDeathEffectTexture = nullptr;
+    D3DXCreateTextureFromFile(m_pGraphicDev,
+        L"../Bin/Resource/Texture/Effect/Smoke.png", &pDeathEffectTexture);
+
+    m_pDeathEmitter = CParticleEmitter::Create(
+        m_pGraphicDev, PARTICLE_FOOTSTEP, _vec3(0.f, 0.f, 0.f), pDeathEffectTexture);
+
+    CParticleMgr::GetInstance()->Add_Emitter(m_pDeathEmitter);
 
     return S_OK;
 }
 
 _int CMonster::Update_GameObject(const _float& fTimeDelta)
 {
-    //Update Monster when active
     if (!m_bActive)
         return 0;
 
@@ -65,6 +89,15 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
         matWorld._42 = vPos.y;
         matWorld._43 = vPos.z;
         m_pTransformCom->Set_World(&matWorld);
+
+        //=======Death Effect========//
+        if (m_pDeathEmitter)
+        {
+            _vec3 vPos;
+            m_pTransformCom->Get_Info(INFO_POS, &vPos);
+            vPos.y += vPos.y + 1.f;
+            m_pDeathEmitter->Set_Position(vPos);
+        }
     }
 
     if (pAnim && pAnim->Get_KnockbackDelta() > 0.f)
@@ -103,20 +136,34 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
         return true;
     }
 
-    // 콜라이더 업데이트
+    // 좀비/스파이더 근접 공격 콜라이더 갱신
     if (m_pAtkColliderCom && pAnim &&
-        pAnim->Get_State() == EMonsterState::ATTACK &&
-        pAnim->Get_StateTime() < 0.3f)
+        (m_eType == EMonsterType::ZOMBIE || m_eType == EMonsterType::SPIDER) &&
+        pAnim->Get_State() == EMonsterState::ATTACK)
     {
         _vec3 vPos, vLook;
         m_pTransformCom->Get_Info(INFO_POS, &vPos);
         m_pTransformCom->Get_Info(INFO_LOOK, &vLook);
         D3DXVec3Normalize(&vLook, &vLook);
         _vec3 vAtkPos = vPos + vLook * 0.8f;
-        vAtkPos.y = 0.9f;
+        vAtkPos.y = vPos.y + 0.9f;
         m_pAtkColliderCom->Update_AABB(vAtkPos);
     }
 
+    //몬스터 공격 - 플레이어 피격 충돌판정
+    if (m_pAtkColliderCom)
+    {
+        CPlayer* pPlayer = CMonsterMgr::GetInstance()->Get_Player();
+        if (pPlayer)
+        {
+            Engine::CCollider* pPlayerCollider = dynamic_cast<Engine::CCollider*>(
+                pPlayer->Get_Component(ID_STATIC, L"Com_Collider"));
+            if (pPlayerCollider && m_pAtkColliderCom->IsColliding(pPlayerCollider->Get_AABB()))
+                pPlayer->Hit();
+        }
+    }
+
+    // 크리퍼 폭발 처리
     if (m_eType == EMonsterType::CREEPER && !m_bExploded)
     {
         if (pAnim && pAnim->Get_State() == EMonsterState::ATTACK
@@ -130,7 +177,20 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
         }
     }
 
-    // 플레이어 공격 콜라이더와 충돌 체크
+    // 크리퍼 폭발 → 플레이어 피격
+    if (m_eType == EMonsterType::CREEPER && m_bExploded && m_pExplosionColliderCom)
+    {
+        CPlayer* pPlayer = CMonsterMgr::GetInstance()->Get_Player();
+        if (pPlayer)
+        {
+            Engine::CCollider* pPlayerCollider = dynamic_cast<Engine::CCollider*>(
+                pPlayer->Get_Component(ID_STATIC, L"Com_Collider"));
+            if (pPlayerCollider && m_pExplosionColliderCom->IsColliding(pPlayerCollider->Get_AABB()))
+                pPlayer->Hit();
+        }
+    }
+
+    // 플레이어 공격 콜라이더와 충돌 체크 (몬스터 피격)
     Engine::CComponent* pAtkCom = CManagement::GetInstance()->Get_Component(
         ID_STATIC, L"GameLogic_Layer", L"Player", L"Com_AtkCollider");
     Engine::CCollider* pAtkCollider = dynamic_cast<Engine::CCollider*>(pAtkCom);
@@ -148,10 +208,9 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
             pAnim->Set_State(EMonsterState::HIT);
     }
 
-    // Update_Body 먼저 실행 → 상태 전환 반영
     m_pBodyCom->Update_Body(fTimeDelta, m_bIsMoving, false);
 
-    // 스켈레톤 발사 체크는 Update_Body 이후에 → m_bFired 리셋 타이밍 정확
+    // 스켈레톤 화살 처리
     if (m_eType == EMonsterType::SKELETON)
     {
         if (pAnim && pAnim->Get_State() == EMonsterState::ATTACK)
@@ -164,22 +223,21 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
         }
         else
         {
-            m_bFired = false;  // WALK 상태일 때 리셋
+            m_bFired = false;
         }
         Update_Arrow(fTimeDelta);
     }
 
     if (m_eType == EMonsterType::SKELETON)
-    CRenderer::GetInstance()->Add_RenderGroup(RENDER_ALPHA, this);
-else
-    CRenderer::GetInstance()->Add_RenderGroup(RENDER_NONALPHA, this);
+        CRenderer::GetInstance()->Add_RenderGroup(RENDER_ALPHA, this);
+    else
+        CRenderer::GetInstance()->Add_RenderGroup(RENDER_NONALPHA, this);
 
     return iExit;
 }
 
 void CMonster::LateUpdate_GameObject(const _float& fTimeDelta)
 {
-    //Update Monster when active
     if (!m_bActive)
         return;
 
@@ -188,9 +246,8 @@ void CMonster::LateUpdate_GameObject(const _float& fTimeDelta)
     CGameObject::LateUpdate_GameObject(fTimeDelta);
 }
 
-void CMonster::Render_GameObject() 
+void CMonster::Render_GameObject()
 {
-    //Update Monster when active
     if (!m_bActive)
         return;
 
@@ -228,16 +285,7 @@ void CMonster::Render_GameObject()
 
         m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
     }
-    else if (m_eType == EMonsterType::CREEPER)
-    {
-        m_pBodyCom->Render_Body(m_pTransformCom->Get_World(), m_pTextureCom); 
-
-    } 
-    else if (m_eType == EMonsterType::SPIDER)
-    {
-        m_pBodyCom->Render_Body(m_pTransformCom->Get_World(), m_pTextureCom);
-    }
-    else  // ZOMBIE
+    else
     {
         m_pBodyCom->Render_Body(m_pTransformCom->Get_World(), m_pTextureCom);
     }
@@ -250,12 +298,14 @@ void CMonster::Render_GameObject()
         if (pArrow && !pArrow->Is_Dead())
             pArrow->Render_GameObject();
     }
-    if (m_pColliderCom)
-        m_pColliderCom->Render_Collider(); 
 
+    if (m_pColliderCom)
+        m_pColliderCom->Render_Collider();
+
+    // 좀비/스파이더 공격 콜라이더 디버그 렌더
     if (m_pAtkColliderCom && pAnim &&
-        pAnim->Get_State() == EMonsterState::ATTACK &&
-        pAnim->Get_StateTime() < 0.3f)
+        (m_eType == EMonsterType::ZOMBIE || m_eType == EMonsterType::SPIDER) &&
+        pAnim->Get_State() == EMonsterState::ATTACK)
     {
         m_pAtkColliderCom->Render_Collider();
     }
@@ -266,9 +316,11 @@ void CMonster::Render_GameObject()
         m_pExplosionColliderCom->Render_Collider();
     }
 
-        
-
-   
+    // 스켈레톤 화살 콜라이더 디버그 렌더
+    if (m_eType == EMonsterType::SKELETON && m_pAtkColliderCom)
+    {
+        m_pAtkColliderCom->Render_Collider();
+    }
 }
 
 void CMonster::Render_Bow()
@@ -324,11 +376,7 @@ void CMonster::Render_Bow()
 void CMonster::Fire_Arrow()
 {
     Engine::CComponent* pCom = CManagement::GetInstance()->Get_Component(
-        ID_DYNAMIC,
-        L"GameLogic_Layer",
-        L"Player",
-        L"Com_Transform");
-
+        ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
     Engine::CTransform* pPlayerTrans = dynamic_cast<Engine::CTransform*>(pCom);
     if (!pPlayerTrans) return;
 
@@ -345,8 +393,28 @@ void CMonster::Fire_Arrow()
     D3DXVec3Normalize(&vDir, &vDir);
 
     CArrow* pArrow = CArrow::Create(m_pGraphicDev, vStartPos, vDir);
+    pArrow->m_iDamage = 10;
     if (pArrow)
         m_vecArrows.push_back(pArrow);
+} 
+void CMonster::Take_Damage(int iDamage)
+{
+    if (m_bDeadDone) return;
+
+    m_iHp -= iDamage; 
+
+    CMonsterAnim* pAnim = dynamic_cast<CMonsterAnim*>(m_pBodyCom->Get_Anim());
+    if (!pAnim) return;
+
+    if (m_iHp <= 0)
+    {
+        m_iHp = 0;
+        pAnim->Set_State(EMonsterState::DEAD);
+    }
+    else
+    {
+        pAnim->Set_State(EMonsterState::HIT);
+    }
 }
 
 void CMonster::Update_Arrow(const _float& fTimeDelta)
@@ -354,7 +422,15 @@ void CMonster::Update_Arrow(const _float& fTimeDelta)
     for (auto* pArrow : m_vecArrows)
     {
         if (pArrow && !pArrow->Is_Dead())
+        {
             pArrow->Update_GameObject(fTimeDelta);
+
+            // 화살 위치로 Com_AtkCollider 갱신
+            // 플레이어가 다른 몬스터와 동일하게 Com_AtkCollider로 받아감
+            AABB tAABB = pArrow->Get_Collider()->Get_AABB();
+            _vec3 vArrowPos = (tAABB.vMin + tAABB.vMax) * 0.5f;
+            m_pAtkColliderCom->Update_AABB(vArrowPos);
+        }
     }
 
     m_vecArrows.erase(
@@ -365,7 +441,6 @@ void CMonster::Update_Arrow(const _float& fTimeDelta)
             }),
         m_vecArrows.end());
 }
-
 
 void CMonster::Apply_Gravity(const _float& fTimeDelta)
 {
@@ -379,7 +454,6 @@ void CMonster::Apply_Gravity(const _float& fTimeDelta)
     vPos.y += m_fVelocityY * fTimeDelta;
     m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
 }
-
 
 void CMonster::Resolve_BlockCollision()
 {
@@ -427,7 +501,8 @@ void CMonster::Resolve_BlockCollision()
 
 void CMonster::Update_AI(const _float& fTimeDelta)
 {
-    Engine::CComponent* pCom = CManagement::GetInstance()->Get_Component(ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
+    Engine::CComponent* pCom = CManagement::GetInstance()->Get_Component(
+        ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
     Engine::CTransform* pPlayerTrans = dynamic_cast<Engine::CTransform*>(pCom);
     if (!pPlayerTrans) return;
 
@@ -442,11 +517,10 @@ void CMonster::Update_AI(const _float& fTimeDelta)
     if (!pAnim) return;
     if (pAnim->Get_State() == EMonsterState::DEAD) return;
 
-    
     _vec3 vLookDir = vPlayerPos - vMyPos;
     vLookDir.y = 0.f;
     D3DXVec3Normalize(&vLookDir, &vLookDir);
-    m_pTransformCom->m_vAngle.y = D3DXToDegree(atan2f(vLookDir.x, vLookDir.z)); 
+    m_pTransformCom->m_vAngle.y = D3DXToDegree(atan2f(vLookDir.x, vLookDir.z));
 
     if (m_eType == EMonsterType::SKELETON)
     {
@@ -460,7 +534,7 @@ void CMonster::Update_AI(const _float& fTimeDelta)
             m_bIsMoving = false;
             pAnim->Set_State(EMonsterState::IDLE);
         }
-        return;  
+        return;
     }
 
     if (fDist <= m_fAttackRange)
@@ -493,11 +567,13 @@ HRESULT CMonster::Add_Component()
 {
     Engine::CComponent* pComponent = nullptr;
 
+    // Transform
     pComponent = m_pTransformCom = dynamic_cast<Engine::CTransform*>
         (CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_Transform"));
     if (!pComponent) return E_FAIL;
     m_mapComponent[ID_DYNAMIC].insert({ L"Com_Transform", pComponent });
 
+    // 텍스처
     const _tchar* pTexTag = nullptr;
     switch (m_eType)
     {
@@ -513,43 +589,57 @@ HRESULT CMonster::Add_Component()
     if (!pComponent) return E_FAIL;
     m_mapComponent[ID_STATIC].insert({ L"Com_Texture", pComponent });
 
+    // 스켈레톤 활 관련
     if (m_eType == EMonsterType::SKELETON)
     {
         m_pBowStandbyTex = dynamic_cast<Engine::CTexture*>
             (CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_BowStandbyTexture"));
-
         m_pBowPullingTex = dynamic_cast<Engine::CTexture*>
             (CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_BowPullingTexture"));
-
         m_pBowBufferCom = dynamic_cast<Engine::CRcTex*>
             (CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_RcTex"));
     }
 
+    // 몸체
     m_pBodyCom = CMonsterBody::Create(m_pGraphicDev, m_eType);
     if (!m_pBodyCom) return E_FAIL;
 
-  
+    // 몸통 콜라이더
     m_pColliderCom = CCollider::Create(m_pGraphicDev,
-        _vec3(1.0f, 1.8f, 1.0f),   // 가로/깊이 0.5 → 1.0으로
+        _vec3(1.0f, 1.8f, 1.0f),
         _vec3(0.f, 0.9f, 0.f));
     if (!m_pColliderCom) return E_FAIL;
-    m_mapComponent[ID_STATIC].insert({ L"Com_Collider", m_pColliderCom }); 
+    m_mapComponent[ID_STATIC].insert({ L"Com_Collider", m_pColliderCom });
 
+    // 공격 콜라이더 - 4종 모두 Com_AtkCollider로 등록
+    // 플레이어가 타입 구분 없이 Com_AtkCollider 하나로 받아감
     if (m_eType == EMonsterType::ZOMBIE || m_eType == EMonsterType::SPIDER)
     {
+        // 근접 공격 콜라이더
         m_pAtkColliderCom = CCollider::Create(m_pGraphicDev,
             _vec3(1.2f, 0.8f, 1.2f),
             _vec3(0.f, 0.9f, 0.f));
         if (!m_pAtkColliderCom) return E_FAIL;
-    } 
-    if (m_eType == EMonsterType::CREEPER)
+        m_mapComponent[ID_STATIC].insert({ L"Com_AtkCollider", m_pAtkColliderCom });
+    }
+    else if (m_eType == EMonsterType::CREEPER)
     {
+        // 폭발 콜라이더를 AtkCollider로 등록
         m_pExplosionColliderCom = CCollider::Create(m_pGraphicDev,
-            _vec3(3.f, 3.f, 3.f),  
+            _vec3(3.f, 3.f, 3.f),
             _vec3(0.f, 0.f, 0.f));
         if (!m_pExplosionColliderCom) return E_FAIL;
-    } 
- 
+        m_mapComponent[ID_STATIC].insert({ L"Com_AtkCollider", m_pExplosionColliderCom });
+    }
+    else if (m_eType == EMonsterType::SKELETON)
+    {
+        // 화살 콜라이더 - Update_Arrow()에서 화살 위치로 매 프레임 갱신
+        m_pAtkColliderCom = CCollider::Create(m_pGraphicDev,
+            _vec3(0.3f, 0.3f, 0.3f),
+            _vec3(0.f, 0.f, 0.f));
+        if (!m_pAtkColliderCom) return E_FAIL;
+        m_mapComponent[ID_STATIC].insert({ L"Com_AtkCollider", m_pAtkColliderCom });
+    }
 
     return S_OK;
 }
@@ -571,6 +661,9 @@ CMonster* CMonster::Create(LPDIRECT3DDEVICE9 pGraphicDev, EMonsterType eType, _v
 
 void CMonster::Free()
 {
+    //======Effect Release======//
+    Safe_Release(m_pDeathEmitter);
+
     for (auto* pArrow : m_vecArrows)
         Safe_Release(pArrow);
     m_vecArrows.clear();
@@ -580,8 +673,7 @@ void CMonster::Free()
     Safe_Release(m_pBowStandbyTex);
     Safe_Release(m_pBowPullingTex);
     Safe_Release(m_pBowBufferCom);
-    Safe_Release(m_pBodyCom); 
+    Safe_Release(m_pBodyCom);
 
-    CGameObject::Free(); 
-
+    CGameObject::Free();
 }

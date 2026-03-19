@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "CCamp.h"
 #include "CMonster.h"
 #include "CPlayer.h"
@@ -13,7 +13,8 @@
 #include "CDynamicCamera.h"
 #include "CSceneChanger.h"
 #include "CRenderer.h"
-#include "StageData.h"
+#include "StageData.h" 
+#include "CAncientGuardian.h"
 
 
 CCamp::CCamp(LPDIRECT3DDEVICE9 pGraphicDev)
@@ -108,7 +109,8 @@ HRESULT CCamp::Ready_Environment_Layer(const _tchar* pLayerTag)
 	_vec3 vAt{ 0.f, 0.f, 1.f };
 	_vec3 vUp{ 0.f, 1.f, 0.f };
 
-	pGameObject = CDynamicCamera::Create(m_pGraphicDev, &vEye, &vAt, &vUp);
+	m_pDynamicCamera = CDynamicCamera::Create(m_pGraphicDev, &vEye, &vAt, &vUp);
+	pGameObject = m_pDynamicCamera;
 
 	CDynamicCamera* pDynamicCam = dynamic_cast<CDynamicCamera*>(pGameObject);
 	if (!pDynamicCam)
@@ -155,40 +157,17 @@ HRESULT CCamp::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		MSG_BOX("Player Collider Set Failed");
 	}
 	CTriggerBoxMgr::GetInstance()->SetPlayerCollider(pCollider);
+	CMonsterMgr::GetInstance()->SetPlayer(pPlayer);
 
-	//Monster
-	pGameObject = CMonster::Create(m_pGraphicDev, EMonsterType::ZOMBIE);
+	//고정카메라 추가
+	if (m_pDynamicCamera)
+		m_pDynamicCamera->SetFollowTarget(
+			dynamic_cast<Engine::CTransform*>(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform")));
 
-	if (!pGameObject)
-		return E_FAIL;
 
-	if (FAILED(pLayer->Add_GameObject(L"Monster", pGameObject)))
-		return E_FAIL;
-	//멀티맵이라 이름 같아도 가능, 그냥 맵은 안 됨
-	pGameObject = CMonster::Create(m_pGraphicDev, EMonsterType::SKELETON);
-
-	if (!pGameObject)
-		return E_FAIL;
-
-	if (FAILED(pLayer->Add_GameObject(L"Monster", pGameObject)))
-		return E_FAIL; 
-
-	pGameObject = CMonster::Create(m_pGraphicDev, EMonsterType::CREEPER);
-
-	if (!pGameObject)
-		return E_FAIL;
-
-	if (FAILED(pLayer->Add_GameObject(L"Monster", pGameObject)))
-		return E_FAIL;
-
-	pGameObject = CMonster::Create(m_pGraphicDev, EMonsterType::SPIDER);
-
-	if (!pGameObject)
-		return E_FAIL;
-	if (FAILED(pLayer->Add_GameObject(L"Monster", pGameObject)))
-		return E_FAIL;
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
+
 
 	return S_OK;
 }
@@ -219,7 +198,7 @@ HRESULT CCamp::Ready_StageData(const _tchar* szPath)
 		return E_FAIL;
 	}
 
-	CBlockMgr::GetInstance()->SetEditorMode(false); // 먼저 모드 설정
+	CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_BATCH); // 먼저 모드 설정
 
 	CBlockMgr::GetInstance()->LoadBlocks(pFile);
 

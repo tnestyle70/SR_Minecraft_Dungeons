@@ -9,6 +9,14 @@
 #include <ctime>
 #include "CSoundMgr.h"
 #include "CBlockMgr.h"
+#include "CParticleMgr.h"
+#include "CMonsterMgr.h"
+#include "CIronBarMgr.h"
+#include "CTriggerBoxMgr.h"
+#include "CMonsterMgr.h" 
+#include "CTriggerBoxMgr.h"
+#include "CIronBarMgr.h"
+#include "CParticleMgr.h"
 
 /// <summary>
 /// test 1111111111
@@ -163,17 +171,26 @@ CMainApp* CMainApp::Create()
 
 void CMainApp::Free()
 {
-    //Imgui
+    // 1. ImGui 먼저 (DX9 디바이스 쓰는 것 중 가장 먼저)
     ImGui_ImplDX9_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
 
-    CRenderer::GetInstance()->DestroyInstance();
+    // 2. 씬/렌더 → 게임오브젝트들이 여기서 Free()됨
     CManagement::GetInstance()->DestroyInstance();
 
-    Safe_Release(m_pDeviceClass);
-    Safe_Release(m_pGraphicDev);
+    // 3. 렌더 그룹 정리 후 렌더러 해제
+    CRenderer::GetInstance()->Clear_RenderGroup();
+    CRenderer::GetInstance()->DestroyInstance();
 
+    // 4. 게임 오브젝트를 관리하는 매니저들
+    CMonsterMgr::GetInstance()->DestroyInstance();
+    CIronBarMgr::GetInstance()->DestroyInstance();
+    CTriggerBoxMgr::GetInstance()->DestroyInstance();
+    CParticleMgr::GetInstance()->DestroyInstance();
+    CBlockMgr::GetInstance()->DestroyInstance();
+
+    // 5. 엔진 서비스 매니저들
     CSoundMgr::GetInstance()->DestroyInstance();
     CLightMgr::GetInstance()->DestroyInstance();
     CDInputMgr::GetInstance()->DestroyInstance();
@@ -181,9 +198,10 @@ void CMainApp::Free()
     CProtoMgr::GetInstance()->DestroyInstance();
     CFrameMgr::GetInstance()->DestroyInstance();
     CTimerMgr::GetInstance()->DestroyInstance();
-    //Renderer Setting After
-    CBlockMgr::GetInstance()->DestroyInstance();
-    CGraphicDev::GetInstance()->DestroyInstance();
+
+    // 6. DX9 디바이스는 무조건 마지막
+    Safe_Release(m_pDeviceClass);
+    Safe_Release(m_pGraphicDev);
 }
 
 

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "CSquidCoast.h"
 #include "CMonster.h"
 #include "CPlayer.h"
@@ -17,8 +17,12 @@
 #include "CRedStoneGolem.h"
 #include "CParticleMgr.h"
 #include "CHotbar.h"
-#include "CBlockRenderer.h"
 #include "CLayer.h"
+#include "CAncientGuardian.h"
+#include "CHUD.h"
+#include "CDragon.h"
+#include "CBox.h"
+
 
 CSquidCoast::CSquidCoast(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -61,6 +65,21 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 	CMonsterMgr::GetInstance()->Update(fTimeDelta);
 
 	CParticleMgr::GetInstance()->Update(fTimeDelta);
+
+	//이펙트 테스트
+	if (GetAsyncKeyState('1') & 0x8000)
+	{
+		CParticleMgr::GetInstance()->Add_Emitter(
+			CParticleEmitter::Create(m_pGraphicDev,
+				PARTICLE_FIREWORK, _vec3(0.f, 2.f, 0.f), nullptr)
+		);
+
+		CParticleMgr::GetInstance()->Add_Emitter(
+			CParticleEmitter::Create(m_pGraphicDev,
+				PARTICLE_HIT, _vec3(5.f, 2.f, 0.f), nullptr)
+		);
+	}
+
 	
 	if (GetAsyncKeyState(VK_RETURN) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
 	{
@@ -82,6 +101,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 	}
 
 	auto iter = m_mapLayer.find(L"GameLogic_Layer");
+
 	if (iter != m_mapLayer.end())
 		iter->second->Delete_GameObject(fTimeDelta);
 
@@ -90,7 +110,6 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 
 void CSquidCoast::LateUpdate_Scene(const _float& fTimeDelta)
 {
-
 	CScene::LateUpdate_Scene(fTimeDelta);
 
 	CTriggerBoxMgr::GetInstance()->LateUpdate(fTimeDelta);
@@ -121,7 +140,8 @@ HRESULT CSquidCoast::Ready_Environment_Layer(const _tchar* pLayerTag)
 	_vec3 vAt{ 0.f, 0.f, 1.f };
 	_vec3 vUp{ 0.f, 1.f, 0.f };
 
-	pGameObject = CDynamicCamera::Create(m_pGraphicDev, &vEye, &vAt, &vUp);
+	m_pDynamicCamera = CDynamicCamera::Create(m_pGraphicDev, &vEye, &vAt, &vUp);
+	pGameObject = m_pDynamicCamera;
 
 	CDynamicCamera* pDynamicCam = dynamic_cast<CDynamicCamera*>(pGameObject);
 	if (!pDynamicCam)
@@ -136,23 +156,15 @@ HRESULT CSquidCoast::Ready_Environment_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	//Effect
-	LPDIRECT3DTEXTURE9 pTex = nullptr;
-	D3DXCreateTextureFromFile(m_pGraphicDev,
-		L"../Bin/Resource/Texture/Effect/FootPrint.png", &pTex);
+	CParticleMgr::GetInstance()->Add_Emitter(
+		CParticleEmitter::Create(m_pGraphicDev,
+			PARTICLE_FIREWORK, _vec3(0.f, 2.f, 0.f), nullptr)
+	);
 
 	CParticleMgr::GetInstance()->Add_Emitter(
 		CParticleEmitter::Create(m_pGraphicDev,
-			PARTICLE_FOOTSTEP, _vec3(0.f, 2.f, 0.f), pTex)
+			PARTICLE_HIT, _vec3(5.f, 2.f, 0.f), nullptr)
 	);
-
-	Safe_Release(pTex); // Emitter가 AddRef 했으니 여기서 Release해도 됨
-	// Block Renderer
-	pGameObject = CBlockRenderer::Create(m_pGraphicDev);
-	if (!pGameObject)
-		return E_FAIL;
-
-	if (FAILED(pLayer->Add_GameObject(L"BlockRenderer", pGameObject)))
-		return E_FAIL;
 
 	//SkyBox 추가
 
@@ -178,47 +190,33 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 
 	if (FAILED(pLayer->Add_GameObject(L"Player", pGameObject)))
 		return E_FAIL;
-	
-	//TriggerBoxMgr
+
 	CPlayer* pPlayer = dynamic_cast<CPlayer*>(pGameObject);
+
+	//TriggerBoxMgr
 	CCollider* pCollider = dynamic_cast<CCollider*>(pPlayer->Get_Component(ID_STATIC, L"Com_Collider"));
 	if (!pCollider)
 	{
 		MSG_BOX("Player Collider Set Failed");
 	}
 	CTriggerBoxMgr::GetInstance()->SetPlayerCollider(pCollider);
+	CMonsterMgr::GetInstance()->SetPlayer(pPlayer);
 
-	//Monster
-	pGameObject = CMonster::Create(m_pGraphicDev, EMonsterType::ZOMBIE);
+	//고정 카메라 추가
+	if (m_pDynamicCamera)
+		m_pDynamicCamera->SetFollowTarget(
+			dynamic_cast<Engine::CTransform*>(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform")));
 	
+	//Dragon
+	pGameObject = CDragon::Create(m_pGraphicDev);
 	if (!pGameObject)
+	{
+		MSG_BOX("Dragon Create Failed");
 		return E_FAIL;
+	}
+	pLayer->Add_GameObject(L"Dragon", pGameObject);
 
-	if (FAILED(pLayer->Add_GameObject(L"Monster", pGameObject)))
-		return E_FAIL;
-	//멀티맵이라 이름 같아도 가능, 그냥 맵은 안 됨
-	pGameObject = CMonster::Create(m_pGraphicDev, EMonsterType::SKELETON);
-	
-	if (!pGameObject)
-		return E_FAIL;
-
-	if (FAILED(pLayer->Add_GameObject(L"Monster", pGameObject)))
-		return E_FAIL; 
-
-	pGameObject = CMonster::Create(m_pGraphicDev, EMonsterType::CREEPER);
-
-	if (!pGameObject)
-		return E_FAIL;
-
-	if (FAILED(pLayer->Add_GameObject(L"Monster", pGameObject)))
-		return E_FAIL; 
-
-	pGameObject = CMonster::Create(m_pGraphicDev, EMonsterType::SPIDER);
-
-	if (!pGameObject)
-		return E_FAIL;
-	if (FAILED(pLayer->Add_GameObject(L"Monster", pGameObject)))
-		return E_FAIL;
+	m_mapLayer.insert({ pLayerTag, pLayer });
 
 	//Boss
 	pGameObject = CRedStoneGolem::Create(m_pGraphicDev);
@@ -227,6 +225,22 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	if (FAILED(pLayer->Add_GameObject(L"RedStoneGolem", pGameObject)))
+		return E_FAIL; 
+
+	pGameObject = CAncientGuardian::Create(m_pGraphicDev, _vec3(5.f, 5.f, 5.f));
+	if (!pGameObject) 
+		return E_FAIL;
+
+	if (FAILED(pLayer->Add_GameObject(L"AncientGuardian", pGameObject)))
+		return E_FAIL;
+
+	//Object
+	pGameObject = CBox::Create(m_pGraphicDev);
+
+	if (!pGameObject)
+		return E_FAIL;
+
+	if (FAILED(pLayer->Add_GameObject(L"Box", pGameObject)))
 		return E_FAIL;
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
@@ -242,17 +256,13 @@ HRESULT CSquidCoast::Ready_UI_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	CGameObject* pGameObject = nullptr;
+	//HUD
+	pGameObject = CHUD::Create(m_pGraphicDev);
 
-	// Hotbar UI (Composite)
-	pGameObject = CHotbar::Create(m_pGraphicDev);
-	if (!pGameObject)
+	if (nullptr == pGameObject)
 		return E_FAIL;
 
-	CHotbar* pHotbar = static_cast<CHotbar*>(pGameObject);
-	pHotbar->Set_Pos(0.f, 0.f); // Root at top-left for full-screen test image
-
-	if (FAILED(pLayer->Add_GameObject(L"Hotbar", pGameObject)))
-
+	if (FAILED(pLayer->Add_GameObject(L"HUD", pGameObject)))
 		return E_FAIL;
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
@@ -281,7 +291,7 @@ HRESULT CSquidCoast::Ready_StageData(const _tchar* szPath)
 		return E_FAIL;
 	}
 
-	CBlockMgr::GetInstance()->SetEditorMode(false); // 먼저 모드 설정
+	CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_BATCH); // 먼저 모드 설정
 
 	CBlockMgr::GetInstance()->LoadBlocks(pFile);
 
@@ -351,5 +361,16 @@ CSquidCoast* CSquidCoast::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 
 void CSquidCoast::Free()
 {
+	CRenderer::GetInstance()->Clear_RenderGroup();
+	CTriggerBoxMgr::GetInstance()->Clear();
+	CIronBarMgr::GetInstance()->Clear();
+	CMonsterMgr::GetInstance()->Clear();
+	CParticleMgr::GetInstance()->Clear_Emitters();
+	CBlockMgr::GetInstance()->ClearBlocks();
+
+	CMonsterMgr::GetInstance()->Clear();
+	CTriggerBoxMgr::GetInstance()->Clear();
+	CIronBarMgr::GetInstance()->Clear();
+
 	CScene::Free();
 }

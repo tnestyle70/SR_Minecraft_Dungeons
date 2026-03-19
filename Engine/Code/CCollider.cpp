@@ -1,4 +1,4 @@
-#include "CCollider.h"
+﻿#include "CCollider.h"
 
 CCollider::CCollider(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CComponent(pGraphicDev), 
@@ -8,6 +8,7 @@ CCollider::CCollider(LPDIRECT3DDEVICE9 pGraphicDev)
 	m_bColliding(false)
 {
 	ZeroMemory(&m_tAABB, sizeof(m_tAABB));
+	ZeroMemory(&m_tOBB, sizeof(m_tOBB));
 }
 
 CCollider::CCollider(const CCollider& rhs)
@@ -15,6 +16,7 @@ CCollider::CCollider(const CCollider& rhs)
 	m_vScale(rhs.m_vScale),
 	m_vOffset(rhs.m_vOffset),
 	m_tAABB(rhs.m_tAABB),
+	m_tOBB(rhs.m_tOBB),
 	m_pDebugMesh(rhs.m_pDebugMesh),
 	m_bColliding(rhs.m_bColliding)
 {
@@ -29,6 +31,7 @@ HRESULT CCollider::Ready_Collider(const _vec3& vScale, const _vec3& vOffset)
 	//offset과 size를 반영한 collider 설정
 	m_vScale = vScale;
 	m_vOffset = vOffset;
+	m_vOriginalHalfSize = vScale * 0.5f;
 
 	if (FAILED(D3DXCreateBox(m_pGraphicDev, vScale.x, vScale.y,
 		vScale.z, &m_pDebugMesh, nullptr)))
@@ -52,6 +55,31 @@ void CCollider::Update_AABB(const _vec3& vWorldPos)
 	//AABB 구조체의 정보 채워주기
 	m_tAABB.vMax = vCenter + (m_vScale * 0.5f);
 	m_tAABB.vMin = vCenter - (m_vScale * 0.5f);
+}
+
+void CCollider::Update_OBB(const _matrix& matWorld)
+{
+	// 1. 중심 (translation)
+	m_tOBB.vCenter = D3DXVECTOR3(matWorld._41, matWorld._42, matWorld._43);
+
+	// 2. 축 추출 (회전 포함됨)
+	m_tOBB.vAxis[0] = D3DXVECTOR3(matWorld._11, matWorld._12, matWorld._13); // right
+	m_tOBB.vAxis[1] = D3DXVECTOR3(matWorld._21, matWorld._22, matWorld._23); // up
+	m_tOBB.vAxis[2] = D3DXVECTOR3(matWorld._31, matWorld._32, matWorld._33); // look
+
+	// 3. 축 정규화 + 스케일 추출
+	_float fScaleX = D3DXVec3Length(&m_tOBB.vAxis[0]);
+	_float fScaleY = D3DXVec3Length(&m_tOBB.vAxis[1]);
+	_float fScaleZ = D3DXVec3Length(&m_tOBB.vAxis[2]);
+
+	D3DXVec3Normalize(&m_tOBB.vAxis[0], &m_tOBB.vAxis[0]);
+	D3DXVec3Normalize(&m_tOBB.vAxis[1], &m_tOBB.vAxis[1]);
+	D3DXVec3Normalize(&m_tOBB.vAxis[2], &m_tOBB.vAxis[2]);
+
+	// 4. halfSize에 스케일 반영
+	m_tOBB.vHalfSize.x = m_vOriginalHalfSize.x * fScaleX;
+	m_tOBB.vHalfSize.y = m_vOriginalHalfSize.y * fScaleY;
+	m_tOBB.vHalfSize.z = m_vOriginalHalfSize.z * fScaleZ;
 }
 
 bool CCollider::IsColliding(const AABB& other) const
@@ -135,7 +163,85 @@ void CCollider::Render_Collider()
 	m_pDebugMesh->DrawSubset(0);
 	//렌더링 후 원상 복구
 	m_pGraphicDev->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-	//m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
+	//콜라이더 월드 행렬 원상 복구
+	//_matrix matIdentity;
+	//D3DXMatrixIdentity(&matIdentity);
+	//m_pGraphicDev->SetTransform(D3DTS_WORLD, &matIdentity);
+}
+
+void CCollider::Render_OBB()
+{
+	if (!m_pDebugMesh)
+		return;
+
+	// 텍스처 끄기
+	m_pGraphicDev->SetTexture(0, nullptr);
+
+	// -----------------------------
+	// 1. Scale 행렬
+	// -----------------------------
+	_matrix matScale;
+	D3DXMatrixScaling(&matScale,
+		m_tOBB.vHalfSize.x * 1.f,
+		m_tOBB.vHalfSize.y * 1.f,
+		m_tOBB.vHalfSize.z * 1.f);
+
+	// -----------------------------
+	// 2. Rotation 행렬 (axis 기반)
+	// -----------------------------
+	_matrix matRot;
+
+	matRot._11 = m_tOBB.vAxis[0].x;
+	matRot._21 = m_tOBB.vAxis[0].y;
+	matRot._31 = m_tOBB.vAxis[0].z;
+
+	matRot._12 = m_tOBB.vAxis[1].x;
+	matRot._22 = m_tOBB.vAxis[1].y;
+	matRot._32 = m_tOBB.vAxis[1].z;
+
+	matRot._13 = m_tOBB.vAxis[2].x;
+	matRot._23 = m_tOBB.vAxis[2].y;
+	matRot._33 = m_tOBB.vAxis[2].z;
+
+	matRot._14 = matRot._24 = matRot._34 = 0.f;
+	matRot._41 = matRot._42 = matRot._43 = 0.f;
+	matRot._44 = 1.f;
+
+	// -----------------------------
+	// 3. Translation
+	// -----------------------------
+	_matrix matTrans;
+	D3DXMatrixTranslation(&matTrans,
+		m_tOBB.vCenter.x,
+		m_tOBB.vCenter.y,
+		m_tOBB.vCenter.z);
+
+	// -----------------------------
+	// 4. 최종 월드 행렬
+	// -----------------------------
+	_matrix matWorld = matScale * matRot * matTrans;
+
+	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+
+	// -----------------------------
+	// 5. 렌더 상태
+	// -----------------------------
+	m_pGraphicDev->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+
+	D3DMATERIAL9 material;
+	ZeroMemory(&material, sizeof(material));
+
+	if (m_bColliding)
+		material.Emissive = { 1.f, 0.f, 0.f, 1.f };
+	else
+		material.Emissive = { 0.f, 1.f, 0.f, 1.f };
+
+	m_pGraphicDev->SetMaterial(&material);
+
+	m_pDebugMesh->DrawSubset(0);
+
+	// 복구
+	m_pGraphicDev->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
 }
 
 CCollider* CCollider::Create(LPDIRECT3DDEVICE9 pGraphicDev, 

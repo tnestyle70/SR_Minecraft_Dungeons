@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "CGameObject.h"
 #include "ParticleType.h"
 
@@ -23,7 +23,7 @@ private:
 	virtual ~CParticleEmitter();
 public:
 	//Custom Particle 
-	static CParticleEmitter* Create(LPDIRECT3DDEVICE9 pGraphicDev,
+	static CParticleEmitter* Create(LPDIRECT3DDEVICE9 pGraphicDev, eParticlePreset& eType,
 		const ParticleDesc& desc, LPDIRECT3DTEXTURE9 pTexture);
 	//Preset Particle
 	static CParticleEmitter* Create(LPDIRECT3DDEVICE9 pGraphicDev,
@@ -37,8 +37,12 @@ public:
 	//External Interface
 	void Set_Position(_vec3 vPos) { m_tParticleDesc.vEmitPos = vPos; }
 	_bool Is_Dead() const { return m_bDead; }
+
+	////태준 추가함수
+	//void Set_EmitDir(_vec3 vDir) { m_tParticleDesc.vEmitDir = vDir; }  // 파티클 퍼지는 방향 지정
 private:
-	HRESULT Ready_Emitter(const ParticleDesc& desc, LPDIRECT3DTEXTURE9 pTexture);
+	HRESULT Ready_Emitter(const ParticleDesc& desc, LPDIRECT3DTEXTURE9 pTexture,
+		eParticlePreset& ePresetType);
 
 	void Reset_Particle(Particle& particle);
 	void Emit_Burst();
@@ -52,6 +56,7 @@ private:
 private:
 	ParticleDesc m_tParticleDesc;
 	vector<Particle> m_vecPool; //고정 크기 파티클 풀
+	eParticlePreset m_eParticleType;
 
 	LPDIRECT3DVERTEXBUFFER9 m_pVB; //Dynamic Buffer
 	LPDIRECT3DTEXTURE9 m_pTexture; //외부 소유

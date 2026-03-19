@@ -15,6 +15,13 @@ enum BODYPART
 	PART_END
 };
 
+enum ARMOR_TYPE
+{
+	ARMOR_NONE = 0,
+	ARMOR_BARDSGARD,
+	ARMOR_END
+};
+
 class CPlayer : public CGameObject
 {
 private:
@@ -34,15 +41,20 @@ private:
 	void			Set_OnTerrain();
 	//_vec3			Picking_OnTerrain();
 	_vec3			Picking_OnBlock();
-	void			Render_Part(BODYPART ePart, _float fAngleX, _float fAngleY, _float fAngleZ, const _matrix& matRootWorld);
+	void			Render_Part(BODYPART ePart, _float fAngleX, _float fAngleY, _float fAngleZ,
+								const _matrix& matRootWorld, Engine::CTexture* pTex = nullptr);
 
 	void			Render_Sword(float fAtkX, float fAtkY, float fSwing);
-
+	void			Render_Bow();
 private:
 	//플레이어 정보
 
 	float m_fHp = 100.f;
 	float m_fMaxHp = 100.f;
+	float m_fMeleeDmg = 10.f;
+	float m_fBowDmg = 15.f;
+
+	ARMOR_TYPE m_eArmorType = ARMOR_NONE;
 
 	//공격모션
 	int   m_iComboStep = 0;      // 0=대기, 1=우→좌, 2=좌→우, 3=찌르기
@@ -58,9 +70,32 @@ private:
 	float m_fMaxCharge = 2.f;
 	bool  m_bCharging = false;
 	vector<CPlayerArrow*> m_vecArrows;
+	_matrix m_matLArmWorld;		//왼손위치
+
+	//활 발사 모션
+	Engine::CTexture* m_pBowTexture[4] = {};  // 0=standby, 1~3=pulling
+	Engine::CRcTex* m_pBowBufferCom = nullptr;
+
+
 
 	Engine::CCollider* m_pAtkColliderCom = nullptr; //공격 콜라이더
-	bool m_bAtkColliderActive = false; // 공격 콜라이더 온오프 플래그
+	bool m_bAtkColliderActive = false;
+
+
+
+public:
+	//플레이어 정보 Get / Set
+	float Get_Hp() const { return m_fHp; }
+	float Get_MaxHp() const { return m_fMaxHp; }
+	void Set_Hp(float fHp) { m_fHp = fHp; }
+
+	float Get_MeleeDmg() const { return m_fMeleeDmg; }
+	float Get_BowDmg() const { return m_fBowDmg; }
+	void Set_MeleeDmg(float fDmg) { m_fMeleeDmg = fDmg; }
+	void Set_BowDmg(float fDmg) { m_fBowDmg = fDmg; }
+
+	void Set_Armor(ARMOR_TYPE eType) { m_eArmorType = eType; }
+	ARMOR_TYPE Get_ArmorType() const { return m_eArmorType; }
 
 private:
 	CPlayerBody* m_pBufferCom[PART_END];
@@ -72,6 +107,9 @@ private:
 	//칼
 	Engine::CRcTex* m_pSwordBufferCom = nullptr;
 	Engine::CTexture* m_pSwordTextureCom = nullptr;
+
+	//아머
+	Engine::CTexture* m_pArmorTextureCom = nullptr;
 
 	_matrix m_matRArmWorld;  // 오른팔 정보저장, 칼 위치 등 활용하기 위함
 
@@ -102,6 +140,10 @@ private:
 	static constexpr float m_fRollCoolMax = 3.f;    
 	_vec3  m_vRollDir; 
 
+	//=======FootPrint Effect Variable=======
+	Engine::CParticleEmitter* m_pFootStepEmitter = nullptr;
+	Engine::CParticleEmitter* m_pAttackEmitter = nullptr;
+
 private:
 	//피격
 	bool  m_bHit = false;
@@ -113,8 +155,6 @@ private:
 private: //중력 적용과 충돌시 위치값 보정
 	void Apply_Gravity(const _float& fTimeDelta);
 	void Resolve_BlockCollision();
-	
-	void Hit();
 
 	//구르기
 	void Roll_Update(const _float& fTimeDelta);
@@ -127,6 +167,8 @@ private: //중력 적용과 충돌시 위치값 보정
 
 public:
 	static CPlayer* Create(LPDIRECT3DDEVICE9 pGraphicDev);
+
+	void Hit();
 
 private:
 	virtual void Free();

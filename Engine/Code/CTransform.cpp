@@ -2,6 +2,7 @@
 
 CTransform::CTransform()
     : m_vScale(1.f, 1.f, 1.f), m_vAngle(0.f, 0.f, 0.f)
+    , m_pParent(nullptr)
 {
     ZeroMemory(m_vInfo, sizeof(_vec3) * INFO_END);
     D3DXMatrixIdentity(&m_matWorld);
@@ -10,6 +11,7 @@ CTransform::CTransform()
 CTransform::CTransform(LPDIRECT3DDEVICE9 pGraphicDev)
     : CComponent(pGraphicDev)
     , m_vScale(1.f, 1.f, 1.f), m_vAngle(0.f, 0.f, 0.f)
+    , m_pParent(nullptr)
 {
     ZeroMemory(m_vInfo, sizeof(_vec3) * INFO_END);
     D3DXMatrixIdentity(&m_matWorld);
@@ -17,6 +19,7 @@ CTransform::CTransform(LPDIRECT3DDEVICE9 pGraphicDev)
 
 CTransform::CTransform(const CTransform& rhs)
     :CComponent(rhs), m_vScale(rhs.m_vScale), m_vAngle(rhs.m_vAngle)
+    , m_pParent(nullptr)
 {
     for (_uint i = 0; i < INFO_END; ++i)
     {
@@ -80,6 +83,20 @@ _int CTransform::Update_Component(const _float& fTimeDelta)
         memcpy(&m_matWorld.m[i][0], &m_vInfo[i], sizeof(_vec3));
     }
 
+    // 주승 추가
+    // 부모 행렬 있을 시 최종 월드 행렬 * 부모 행렬
+    if (m_pParent)
+    {
+        _matrix matParent = *m_pParent->Get_World();
+
+        // 부모 스케일 제거
+        D3DXVec3Normalize((_vec3*)&matParent.m[0][0], (_vec3*)&matParent.m[0][0]);
+        D3DXVec3Normalize((_vec3*)&matParent.m[1][0], (_vec3*)&matParent.m[1][0]);
+        D3DXVec3Normalize((_vec3*)&matParent.m[2][0], (_vec3*)&matParent.m[2][0]);
+
+        m_matWorld = m_matWorld * matParent;
+    }
+
 	return 0;
 }
 
@@ -93,15 +110,18 @@ void CTransform::Chase_Target(const _vec3* pPos, const _float& fSpeed, const _fl
 
     m_vInfo[INFO_POS] += *D3DXVec3Normalize(&vDir, &vDir) * fSpeed * fTimeDelta;
 
+    _float fAngle = atan2f(vDir.x, vDir.z) + D3DX_PI;
+
     _matrix matScale, matRot, matTrans;
 
     D3DXMatrixScaling(&matScale, 1.f, 1.f, 1.f);
+    D3DXMatrixRotationY(&matRot, fAngle);
     D3DXMatrixTranslation(&matTrans,
         m_vInfo[INFO_POS].x,
         m_vInfo[INFO_POS].y,
         m_vInfo[INFO_POS].z);
 
-    matRot = *Compute_Lookattarget(pPos);
+    //matRot = *Compute_Lookattarget(pPos);
 
     m_matWorld = matScale * matRot * matTrans;
 }
