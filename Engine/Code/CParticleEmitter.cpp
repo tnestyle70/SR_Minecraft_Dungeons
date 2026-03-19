@@ -259,7 +259,7 @@ void CParticleEmitter::Set_RenderState()
         fMin = 1.f; fMax = 8.f;
         break;
     case PARTICLE_ATTACK:
-        fMin = 1.f; fMax = 8.f;
+        fMin = 1.f; fMax = 128.f;
         break;
     case PARTICLE_HIT:
         fMin = 1.f; fMax = 8.f;
@@ -380,11 +380,11 @@ CParticleEmitter* CParticleEmitter::Create(LPDIRECT3DDEVICE9 pGraphicDev,
         desc.fSpreadAngle = D3DX_PI * 0.4f;
         desc.fMinSpeed = 0.1f;     desc.fMaxSpeed = 0.3f;
         desc.fMinLifeTime = 0.5f;     desc.fMaxLifeTime = 0.8f;
-        desc.fMinSize = 0.1f;     desc.fMaxSize = 2.f;   // 픽셀 단위
+        desc.fMinSize = 20.f;     desc.fMaxSize = 60.f;   // 픽셀 단위
         desc.colorStart = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
         desc.colorEnd = D3DXCOLOR(1.f, 1.f, 1.f, 0.f);  // 서서히 투명
         desc.bUseTextureAsIs = true;  // 원본 이미지 그대로 (알파만 페이드)
-        desc.iMaxParticles = 3;
+        desc.iMaxParticles = 10;
         desc.fEmitRate = 20.f;      // Burst
         desc.bLoop = false;
         desc.fGravity = 4.f;
