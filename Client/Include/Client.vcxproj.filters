@@ -195,6 +195,9 @@
     <ClCompile Include="..\Code\CGolemStates.cpp">
       <Filter>02. GameObject\08. Boss</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CTNT.cpp">
+      <Filter>02. GameObject</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -392,6 +395,9 @@
     </ClInclude>
     <ClInclude Include="..\Header\IGolemState.h">
       <Filter>02. GameObject\08. Boss</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CTNT.h">
+      <Filter>02. GameObject</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

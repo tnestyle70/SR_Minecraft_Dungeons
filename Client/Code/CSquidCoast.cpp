@@ -24,6 +24,7 @@
 #include "CBox.h"
 #include "CInventoryMgr.h"
 #include "CInventorySlot.h"
+#include "CTNT.h"
 
 CSquidCoast::CSquidCoast(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -226,6 +227,14 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	CPlayer* pPlayer = dynamic_cast<CPlayer*>(pGameObject);
+
+	//TNT
+	CTNT* pTNT = CTNT::Create(m_pGraphicDev, _vec3(5.f, 1.5f, 3.f));
+	if (pTNT)
+	{
+		pLayer->Add_GameObject(L"TNT", pTNT);
+		pPlayer->Add_TNT(pTNT);
+	}
 
 	//TriggerBoxMgr
 	CCollider* pCollider = dynamic_cast<CCollider*>(pPlayer->Get_Component(ID_STATIC, L"Com_Collider"));
