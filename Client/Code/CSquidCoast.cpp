@@ -235,8 +235,9 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	{
 		pLayer->Add_GameObject(L"TNT", pTNT);
 		pPlayer->Add_TNT(pTNT);
-		//HUD
-		pGameObject = CHUD::Create(m_pGraphicDev);
+	}
+	//HUD
+	pGameObject = CHUD::Create(m_pGraphicDev);
 
 		if (nullptr == pGameObject)
 			return E_FAIL;
