@@ -45,7 +45,7 @@ void CGolemState_Attack::Update(CRedStoneGolem* pGolem, const _float& fTimeDelta
     {
         if (pGolem->Check_AttackHit())
         {
-            CPlayer* pPlayer;
+            CPlayer* pPlayer = nullptr;
             pPlayer = CMonsterMgr::GetInstance()->Get_Player();
 
             if (pPlayer)
