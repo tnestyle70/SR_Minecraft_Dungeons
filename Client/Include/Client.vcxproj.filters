@@ -219,6 +219,9 @@
     <ClCompile Include="..\Code\CTNT.cpp">
       <Filter>02. GameObject\14. TNT</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CEmerald.cpp">
+      <Filter>02. GameObject\11. Environment</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -440,6 +443,9 @@
     </ClInclude>
     <ClInclude Include="..\Header\CTNT.h">
       <Filter>02. GameObject\14. TNT</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CEmerald.h">
+      <Filter>02. GameObject\11. Environment</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
