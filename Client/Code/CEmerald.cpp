@@ -27,6 +27,11 @@ _int CEmerald::Update_GameObject(const _float& fTimeDelta)
 {
 	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
 
+	_vec3 vPos;
+	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+
+	m_pColliderCom->Update_AABB(vPos);
+
 	CRenderer::GetInstance()->Add_RenderGroup(RENDER_ALPHA, this);
 
 	return iExit;
@@ -64,6 +69,8 @@ void CEmerald::Render_GameObject()
 	m_pTextureCom->Set_Texture(0);
 	m_pBufferCom->Render_Buffer();
 
+	m_pColliderCom->Render_Collider();
+
 	m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 }
@@ -94,6 +101,11 @@ HRESULT CEmerald::Add_Component()
 		return E_FAIL;
 
 	m_mapComponent[ID_STATIC].insert({ { L"Com_Texture", pComponent } });
+
+	// Collider
+	m_pColliderCom = CCollider::Create(m_pGraphicDev, _vec3(1.5f, 1.5f, 1.5f), _vec3(0.f, 0.f, 0.f));
+
+	m_mapComponent[ID_STATIC].insert({ L"Com_Collider", m_pColliderCom });
 
 
 	return S_OK;
