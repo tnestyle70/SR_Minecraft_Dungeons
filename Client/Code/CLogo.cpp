@@ -88,7 +88,7 @@ _int CLogo::Update_Scene(const _float& fTimeDelta)
         //Render Group Clear Before Change Scene!!!!
         CRenderer::GetInstance()->Clear_RenderGroup();
 
-        if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_NETWORK)))
+        if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_SQUIDCOAST)))
         {
             MSG_BOX("SquidCoast Create Failed");
             return -1;
@@ -154,7 +154,7 @@ HRESULT CLogo::Ready_Prototype()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_MainMenuTexture",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Logo/MainMenu_Screen2.png"))))
         return E_FAIL;
-
+    
     //·Îµù¾À µî·Ï
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SquidCoastLoadingTexture",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Logo/Loading_Screen_Squid_Coast.png"))))

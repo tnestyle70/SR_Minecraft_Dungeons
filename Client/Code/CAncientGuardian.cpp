@@ -54,6 +54,7 @@ _int CAncientGuardian::Update_GameObject(const _float& fTimeDelta)
 
         // Y < -10 이하 → 삭제
         if (vPos.y < -10.f)
+            CDamageMgr::GetInstance()->Clear_Guardian();
             m_bDeadDone = true;
     }
 
@@ -64,6 +65,7 @@ _int CAncientGuardian::Update_GameObject(const _float& fTimeDelta)
 
 void CAncientGuardian::LateUpdate_GameObject(const _float& fTimeDelta)
 {
+    Update_AI(fTimeDelta);
     CDLCBoss::LateUpdate_GameObject(fTimeDelta);
 }
 
