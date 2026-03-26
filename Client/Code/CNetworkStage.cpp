@@ -395,7 +395,14 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	CHUD* pHUD = dynamic_cast<CHUD*>(pGameObject);
-	pHUD->Set_NetworkPlayer(pPlayer);
+	if (pPlayer)
+	{
+		pHUD->Set_NetworkPlayer(pPlayer);
+	}
+	else
+	{
+		return E_FAIL;
+	}
 
 	//TriggerBoxMgr
 	//CNetworkPlayer* pPlayer = dynamic_cast<CNetworkPlayer*>(pGameObject);

@@ -507,7 +507,8 @@ void CNetworkMgr::On_Damage(const PKT_S2C_Damage* pPkt)
     if (pPkt->iTargetPlayerId == m_iMyPlayerId)
     {
         // ── 내가 피격됨 → HP 갱신 + 로컬 피격 이펙트 ──────────────────
-        if (!m_pLocalPlayer) return;
+        if (!m_pLocalPlayer) 
+            return;
 
         m_pLocalPlayer->Hit(pPkt->fDamage);
         float fNewHp = m_pLocalPlayer->Get_Hp();

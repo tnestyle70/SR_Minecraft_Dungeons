@@ -54,6 +54,7 @@ public:
 	GOLEM_STATE Get_State() { return m_eState; }
 	_bool Get_Dead() { return m_bDeadFinished; }
 
+	CCollider* Get_Collider() { return m_pColliderCom; }
 private:
 	HRESULT	Add_Component();
 	void Set_DefaultScale();

@@ -61,6 +61,10 @@ void CHUD::Render_GameObject()
 		m_iHP = m_pNetworkPlayer->Get_Hp();
 		m_iMaxHP = m_pNetworkPlayer->Get_MaxHp();
 	}
+	else
+	{
+		return;
+	}
 
 	
 	//체력 비율에 따른 데미지 비율, 즉 Empty Heart 렌더 비율 설정

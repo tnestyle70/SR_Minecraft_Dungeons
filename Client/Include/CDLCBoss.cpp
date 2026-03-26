@@ -5,6 +5,7 @@
 #include "CMonsterMgr.h"
 #include "CPlayer.h"
 #include "CCollider.h"
+#include "CDamageMgr.h"
 
 CDLCBoss::CDLCBoss(LPDIRECT3DDEVICE9 pGraphicDev)
     : CGameObject(pGraphicDev) 
@@ -95,6 +96,9 @@ void CDLCBoss::Take_Damage(int iDamage)
 {
     // HP 감소만 처리 - 나머지는 파생 클래스에서
     m_iHp -= iDamage;
+    _vec3 vPos;
+    m_pTransformCom->Get_Info(INFO_POS, &vPos);
+    CDamageMgr::GetInstance()->AddDamage(vPos, iDamage);
     if (m_iHp < 0) m_iHp = 0;
 }
 void CDLCBoss::Free()

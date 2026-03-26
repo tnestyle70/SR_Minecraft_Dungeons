@@ -9,7 +9,6 @@
 #include "CMonsterMgr.h"
 #include "CSoundMgr.h"
 
-
 CRedStoneGolem::CRedStoneGolem(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
 	, m_pTextureCom(nullptr)
@@ -43,9 +42,9 @@ HRESULT CRedStoneGolem::Ready_GameObject()
 	m_pStates[GOLEM_STATE_HIT] = new CGolemState_Hit();
 	m_pStates[GOLEM_STATE_DEAD] = new CGolemState_Dead();
 	
-	//m_pTransformCom->Set_Pos(0.f, 10.f, 0.f);
+	m_pTransformCom->Set_Pos(0.f, 10.f, 0.f);
 
-	m_pTransformCom->Set_Pos(-73.f, 15.f, 430.f);
+	//m_pTransformCom->Set_Pos(-73.f, 15.f, 430.f);
 	m_pTransformCom->Set_Rotation(ROT_Y, 180.f);
 
 	Set_PartsOffset();
@@ -943,6 +942,9 @@ void CRedStoneGolem::Check_Hit()
 void CRedStoneGolem::Take_Damage(_float fDamage)
 {
 	m_fHp -= fDamage;
+	_vec3 vPos;
+	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+	CDamageMgr::GetInstance()->AddDamage(vPos,fDamage);
 
 	if (m_fHp <= 0.f)
 	{
