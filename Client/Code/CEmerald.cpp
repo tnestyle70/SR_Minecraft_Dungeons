@@ -2,6 +2,7 @@
 #include "CEmerald.h"
 #include "CRenderer.h"
 #include "CManagement.h"
+#include "CSoundMgr.h"
 
 CEmerald::CEmerald(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -22,6 +23,8 @@ HRESULT CEmerald::Ready_GameObject()
 		return E_FAIL;
 
 	Init_Emerald();
+
+	CSoundMgr::GetInstance()->PlayEffect(L"Emerald/sfx_item_emerald-001_soundWave.wav", 0.6f);
 
 	return S_OK;
 }
@@ -101,6 +104,13 @@ void CEmerald::Pop_Emerald(const _float fTimeDelta)
 {
 	if (m_bDrop)
 	{
+		if (m_bFirstPop)
+		{
+			CSoundMgr::GetInstance()->PlayEffect(L"Emerald/sfx_item_emeraldBurstOut-001_soundWave.wav", 0.6f);
+
+			m_bFirstPop = false;
+		}
+
 		_vec3 vPos;
 		m_pTransformCom->Get_Info(INFO_POS, &vPos);
 
@@ -116,6 +126,8 @@ void CEmerald::Pop_Emerald(const _float fTimeDelta)
 			m_vVelocity = _vec3(0.f, 0.f, 0.f);
 			m_bDrop = false;
 			m_bChase = true;
+
+			CSoundMgr::GetInstance()->PlayEffect(L"Emerald/sfx_item_emeraldBurstOutPing-001_soundWave.wav", 0.6f);
 
 			// 방법 2: 살짝 바운스 (원하면)
 			// m_vVelocity.y *= -0.3f;
@@ -147,6 +159,8 @@ void CEmerald::Chase_Player(const _float fTimeDelta)
 	if (fDiff <= 0.5f)
 	{
 		m_bDead = true;
+
+		CSoundMgr::GetInstance()->PlayEffect(L"Emerald/sfx_item_emeraldCollect-001_soundWave.wav", 0.6f);
 	}
 	else
 	{

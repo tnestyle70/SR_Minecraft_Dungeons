@@ -3,6 +3,7 @@
 #include "CRenderer.h"
 #include "CManagement.h"
 #include "CEnvironmentMgr.h"
+#include "CSoundMgr.h"
 
 CBox::CBox(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -122,6 +123,8 @@ void CBox::Open_Box()
 
 	m_bIsOpening = true;
 	m_fAnimTime = 0.f;
+
+	CSoundMgr::GetInstance()->PlayEffect(L"Box/sfx_prop_chestWoodOpen-003_soundWave.wav", 0.6f);
 }
 
 HRESULT CBox::Add_Component()

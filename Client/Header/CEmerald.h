@@ -32,6 +32,7 @@ private:
 	_bool m_bDrop = false;
 	_bool m_bChase = false;
 	_bool m_bDead = false;
+	_bool m_bFirstPop = true;
 
 public:
 	static CEmerald* Create(LPDIRECT3DDEVICE9 pGraphicDev);
