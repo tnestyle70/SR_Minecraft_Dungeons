@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CEmerald.h"
 #include "CRenderer.h"
+#include "CManagement.h"
 
 CEmerald::CEmerald(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -27,9 +28,13 @@ HRESULT CEmerald::Ready_GameObject()
 
 _int CEmerald::Update_GameObject(const _float& fTimeDelta)
 {
+	if (m_bDead)
+		return -1;
+
 	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
 
 	Pop_Emerald(fTimeDelta);
+	Chase_Player(fTimeDelta);
 
 	_vec3 vPos;
 	m_pTransformCom->Get_Info(INFO_POS, &vPos);
@@ -110,12 +115,42 @@ void CEmerald::Pop_Emerald(const _float fTimeDelta)
 			// ¹æ¹ý 1: ±×³É ¸ØÃã
 			m_vVelocity = _vec3(0.f, 0.f, 0.f);
 			m_bDrop = false;
+			m_bChase = true;
 
 			// ¹æ¹ý 2: »ìÂ¦ ¹Ù¿î½º (¿øÇÏ¸é)
 			// m_vVelocity.y *= -0.3f;
 		}
 
 		m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
+	}
+}
+
+void CEmerald::Chase_Player(const _float fTimeDelta)
+{
+	if (!m_bChase)
+		return;
+
+	CTransform* pPlayerTrans = dynamic_cast<CTransform*>(CManagement::GetInstance()->Get_Component(ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform"));
+
+	if (!pPlayerTrans)
+		return;
+
+	_vec3 vPlayerPos, vMyPos;
+	pPlayerTrans->Get_Info(INFO_POS, &vPlayerPos);
+	m_pTransformCom->Get_Info(INFO_POS, &vMyPos);
+
+	_vec3 vDir;
+	vDir = vPlayerPos - vMyPos;
+
+	_float fDiff = D3DXVec3Length(&vDir);
+
+	if (fDiff <= 0.5f)
+	{
+		m_bDead = true;
+	}
+	else
+	{
+		m_pTransformCom->Chase_Target(&vPlayerPos, 20.f, fTimeDelta);
 	}
 }
 
