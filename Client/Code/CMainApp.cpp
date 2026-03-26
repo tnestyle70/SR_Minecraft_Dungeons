@@ -17,6 +17,8 @@
 #include "CCursorMgr.h"
 #include "CDamageMgr.h"
 #include "CEnvironmentMgr.h"
+#include "CCMiniMap.h"
+
 
 CMainApp::CMainApp()
     : m_pDeviceClass(nullptr), m_pGraphicDev(nullptr)
@@ -103,6 +105,8 @@ void CMainApp::Render_MainApp()
     CDamageMgr::GetInstance()->Render();
 
     CCursorMgr::GetInstance()->Render();
+
+    CCMiniMap::GetInstance()->Render();
 
     m_pDeviceClass->Render_End();
 }
@@ -238,6 +242,7 @@ void CMainApp::Free()
     CCursorMgr::GetInstance()->DestroyInstance();
     CDamageMgr::GetInstance()->DestroyInstance();
     CEnvironmentMgr::GetInstance()->DestroyInstance();
+    CCMiniMap::GetInstance()->DestroyInstance();
 
     // 5. 엔진 서비스 매니저들
     CSoundMgr::GetInstance()->DestroyInstance();
