@@ -170,7 +170,7 @@ void CDragon::Handle_Input(const _float& fTimeDelta)
 	_vec3 vSpineForward = m_Spine[0].vDir;
 	//수평 방향만 담당 - Y값 0.f
 	vSpineForward.y = 0.f;
-
+	
 	if (D3DXVec3Length(&vSpineForward) > 0.01f)
 	{
 		D3DXVec3Normalize(&m_vInputForward, &vSpineForward);

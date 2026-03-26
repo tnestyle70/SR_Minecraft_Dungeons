@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "CMonsterMgr.h"
 #include "CCursorMgr.h"
+#include "CRedStoneGolem.h"
+#include "CAncientGuardian.h"
 
 IMPLEMENT_SINGLETON(CMonsterMgr)
 
@@ -105,11 +107,11 @@ void CMonsterMgr::CheckCursorHover()
 			if (!pMonster->IsActive())
 				continue;
 			
-			CCollider* pCollider = pMonster->Get_Collider();
-			if (!pCollider)
+			CCollider* pMonsterCollider = pMonster->Get_Collider();
+			if (!pMonsterCollider)
 				continue;
 			//Collider와 충돌을 했을 경우, Hover true로 설정
-			if (pCollider->IntersectRay(vRayOrigin, vRayDir))
+			if (pMonsterCollider->IntersectRay(vRayOrigin, vRayDir))
 			{
 				CCursorMgr::GetInstance()->SetCursorState(eCursorState::ENEMY_HOVER);
 				bHover = true;
@@ -118,6 +120,32 @@ void CMonsterMgr::CheckCursorHover()
 		}
 		if (bHover)
 			break;
+	}
+
+	//Guardian, Golem
+	if (m_pGuardian)
+	{
+		CCollider* pGuardianCollider = m_pGuardian->Get_Collider();
+		if (pGuardianCollider)
+		{
+			if (pGuardianCollider->IntersectRay(vRayOrigin, vRayDir))
+			{
+				CCursorMgr::GetInstance()->SetCursorState(eCursorState::ENEMY_HOVER);
+				bHover = true;
+			}
+		}
+	}
+	if (m_pGolem)
+	{
+		CCollider* pGolemCollider = m_pGolem->Get_Collider();
+		if (pGolemCollider)
+		{
+			if (pGolemCollider->IntersectRay(vRayOrigin, vRayDir))
+			{
+				CCursorMgr::GetInstance()->SetCursorState(eCursorState::ENEMY_HOVER);
+				bHover = true;
+			}
+		}
 	}
 
 	if (!bHover && !CCursorMgr::GetInstance()->IsClicked())
@@ -173,10 +201,14 @@ void CMonsterMgr::Clear()
 		for (auto& pMonster : pair.second.vecMonsters)
 			Safe_Release(pMonster);
 	}
+	m_pGuardian = nullptr;
+	m_pGolem = nullptr;
 	m_mapMonsterGroups.clear();
 }
 
 void CMonsterMgr::Free()
 {
+	m_pGuardian = nullptr;
+	m_pGolem = nullptr;
 	Clear();
 }

@@ -36,7 +36,8 @@ private:
     void Fire_Beam();                                             
     void Update_Beams(const _float& fTimeDelta);                  
     void Drop_Biomine();                                          
-    void Update_Biomines(const _float& fTimeDelta);               
+    void Update_Biomines(const _float& fTimeDelta);      
+
 private:
     CAGBody* m_pBodyCom = nullptr;              
     Engine::CTexture* m_pTextureCom = nullptr;  

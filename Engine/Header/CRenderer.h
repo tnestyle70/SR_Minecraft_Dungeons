@@ -18,7 +18,7 @@ public:
 	void		Add_RenderGroup(RENDERID eID, CGameObject* pGameObject);
 	void		Render_GameObject(LPDIRECT3DDEVICE9& pGraphicDev);
 	void		Clear_RenderGroup();
-
+	
 public:
 	void		Render_Priority(LPDIRECT3DDEVICE9& pGraphicDev);
 	void		Render_NonAlpha(LPDIRECT3DDEVICE9& pGraphicDev);

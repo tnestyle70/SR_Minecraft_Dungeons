@@ -84,8 +84,9 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 
 	CMonsterMgr::GetInstance()->Update(fTimeDelta);
 
-	CParticleMgr::GetInstance()->Update(fTimeDelta); 
-	CCMiniMap::GetInstance()->Update(fTimeDelta);
+	CParticleMgr::GetInstance()->Update(fTimeDelta);
+
+	//CCMiniMap::GetInstance()->Update(fTimeDelta);
 
 	//이펙트 테스트
 	if (GetAsyncKeyState('1') & 0x8000)
@@ -115,6 +116,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		CInventoryMgr::GetInstance()->Clear_Player();
 		CDamageMgr::GetInstance()->Clear_Boss();
 		CEnvironmentMgr::GetInstance()->Clear_Boxes();
+
 		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP)))
 		{
 			MSG_BOX("Camp Create Failed");
@@ -160,8 +162,9 @@ void CSquidCoast::Render_Scene()
 
 	CBlockMgr::GetInstance()->Render();
 
-	CParticleMgr::GetInstance()->Render(); 
-	CCMiniMap::GetInstance()->Render();
+	CParticleMgr::GetInstance()->Render();
+
+	//CCMiniMap::GetInstance()->Render();
 }
 
 void CSquidCoast::Render_UI()
@@ -323,6 +326,7 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	{
 		CDamageMgr::GetInstance()->Ready_Component();
 		CDamageMgr::GetInstance()->Set_RedStone(pGolem);
+		CMonsterMgr::GetInstance()->AddGolem(pGolem);
 
 		if (pPlayer)
 			pPlayer->Set_Boss(pGolem);
@@ -340,7 +344,7 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	{
 		pPlayer->Set_Guardian(pGuardian);
 		CDamageMgr::GetInstance()->Set_Guardian(pGuardian);
-
+		CMonsterMgr::GetInstance()->AddGuardian(pGuardian);
 	}
 
 	if (FAILED(pLayer->Add_GameObject(L"AncientGuardian", pGameObject)))

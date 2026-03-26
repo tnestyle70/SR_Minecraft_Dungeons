@@ -14,7 +14,9 @@ _bool CFrame::IsPermit_Call(const _float& fTimeDelta)
 
 	if (m_fAccTimeDelta >= m_fCallLimit)
 	{
-		m_fAccTimeDelta = 0.f;
+		//m_fAccTimeDelta = 0.f;
+
+		m_fAccTimeDelta -= m_fCallLimit;
 
 		return true;
 	}

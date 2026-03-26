@@ -29,8 +29,8 @@ enum WAVE_TYPE
 // ─── 파도 파라미터 (런타임 조절 가능) ────────────────────────
 struct OCEAN_DESC
 {
-    _ulong  dwVtxCntX = 128;      // 격자 X 해상도 (2의 거듭제곱 권장)
-    _ulong  dwVtxCntZ = 128;      // 격자 Z 해상도
+    _ulong  dwVtxCntX = 16;      // 격자 X 해상도 (2의 거듭제곱 권장)
+    _ulong  dwVtxCntZ = 16;      // 격자 Z 해상도
     _float  fPatchSize = 512.f;    // 월드 패치 크기 (m)
     _float  fAmplitude = 2.5e-4f;  // Phillips 스펙트럼 A
     _float  fWindSpeed = 12.f;     // 풍속 (m/s)

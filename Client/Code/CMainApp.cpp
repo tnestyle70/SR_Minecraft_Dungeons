@@ -17,6 +17,7 @@
 #include "CCursorMgr.h"
 #include "CDamageMgr.h"
 #include "CEnvironmentMgr.h"
+#include "CNetworkMgr.h"
 
 CMainApp::CMainApp()
     : m_pDeviceClass(nullptr), m_pGraphicDev(nullptr)
@@ -97,7 +98,7 @@ void CMainApp::Render_MainApp()
     m_pManagementClass->Render_Scene(m_pGraphicDev);
 
     ImGui::EndFrame();
-    ImGui::Render();               
+    ImGui::Render();
     ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 
     CDamageMgr::GetInstance()->Render();
@@ -247,6 +248,9 @@ void CMainApp::Free()
     CProtoMgr::GetInstance()->DestroyInstance();
     CFrameMgr::GetInstance()->DestroyInstance();
     CTimerMgr::GetInstance()->DestroyInstance();
+
+    //네트워크 매니저 해제
+    CNetworkMgr::GetInstance()->DestroyInstance();
 
     // 6. DX9 디바이스는 무조건 마지막
     Safe_Release(m_pDeviceClass);

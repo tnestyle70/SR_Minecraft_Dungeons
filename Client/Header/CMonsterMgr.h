@@ -6,6 +6,8 @@
 //MonsterMgr에서 IronBarMgr의 false 상태로 전환 시키기
 
 class CMonster;
+class CRedStoneGolem;
+class CAncientGuradian;
 
 struct SpawnGroup
 {
@@ -45,8 +47,12 @@ private:
 
 public:
 	void AddMonster(CGameObject* pGameObject, int iTriggerID);
+	void AddGuardian(CAncientGuardian* pBoss) { m_pGuardian = pBoss; }
+	void AddGolem(CRedStoneGolem* pBoss) { m_pGolem = pBoss; }
 	void Clear();
-private: //트리거 박스 밟았을 경우 생성할 ID별 몬스터 목록
+; private: //트리거 박스 밟았을 경우 생성할 ID별 몬스터 목록
+	CAncientGuardian* m_pGuardian = nullptr;
+	CRedStoneGolem* m_pGolem = nullptr;
 	map<int, SpawnGroup> m_mapMonsterGroups;
 	int m_iTriggerID = -1;
 private:

@@ -241,6 +241,7 @@ void CNetworkPlayer::Render_GameObject()
 		float fBlink = sinf(m_fHitTime * D3DX_PI * 8.f);
 		if (fBlink > 0.f)
 		{
+			m_fHp -= 1.f;
 			m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG2);
 			m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
 			m_pGraphicDev->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_RGBA(255, 0, 0, 255));
@@ -1457,8 +1458,8 @@ void CNetworkPlayer::Resolve_BlockCollision()
 
 void CNetworkPlayer::Hit(float fDamage)
 {
-	if (m_bHit)  // 이미 피격 중이면 무시
-		return;
+	//if (m_bHit)  // 이미 피격 중이면 무시
+	//	return;
 
 	m_bHit = true;
 	m_fHitTime = 0.f;

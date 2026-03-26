@@ -21,11 +21,12 @@ public:
 	int Get_HP() { return m_iHp; }
 	int Get_MaxHP() { return m_iMaxHp; }
 
+	CCollider* Get_Collider() { return m_pColliderCom; }
+
 protected:			  
 	virtual HRESULT   Add_Component() = 0;							   // 텍스처/버퍼/파츠를 파생 클래스에서 생성
 	virtual void      Update_AI(const _float& fTimeDelta) = 0;		   // 이동/공격 패턴을 파생 클래스에서 구현
 	virtual void      Render_GameObject() = 0;						   // 파츠 렌더링을 파생 클래스에서 구현
-
 
 protected: 
 	Engine::CTransform* m_pTransformCom = nullptr;					   // 위치, 회전, 크키 관리 
