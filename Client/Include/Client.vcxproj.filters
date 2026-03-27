@@ -243,6 +243,9 @@
     <ClCompile Include="..\Code\CExplosionLight.cpp">
       <Filter>02. GameObject</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CNPC.cpp">
+      <Filter>02. GameObject</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -491,6 +494,9 @@
     </ClInclude>
     <ClInclude Include="..\Header\COceanBuffer.h">
       <Filter>04. Network\03. Ocean</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CNPC.h">
+      <Filter>02. GameObject</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
