@@ -2,6 +2,7 @@
 #include "CGameObject.h"
 #include "CProtoMgr.h"
 #include "CCubeBodyTex.h"
+#include "CFlexibleCubeTex.h"
 
 //드래곤 관절 구조체
 struct DRAGON_BONE
@@ -10,7 +11,7 @@ struct DRAGON_BONE
 	_vec3 vDir; //다음 뼈를 향하는 방향 벡터(정규화)
 	float fBoneLen; //이 뼈에서 다음 뼈까지의 고정 길이
 	_matrix matWorld;
-	CCubeBodyTex* pBuffer; //이 뼈에 해당하는 렌더 버퍼
+	CVIBuffer* pBuffer; //이 뼈에 해당하는 렌더 버퍼
 	D3DXQUATERNION qRot; //현재 회전 상태 보존
 };
 
@@ -79,6 +80,8 @@ private:
 	//fW / H / D : 큐브 크기
 	HRESULT Create_BoneBuffer(DRAGON_BONE& bone,
 		_float fW, _float fH, _float fD, const FACE_UV& uv);
+	HRESULT Create_FlexBoneBuffer(DRAGON_BONE& bone,
+		const MESH& mesh);
 
 	//입력 - WASD : 이동 / RTY : 상태 강제 전환
 	void Handle_Input(const _float& fTimeDelta);

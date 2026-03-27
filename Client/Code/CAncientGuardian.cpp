@@ -24,8 +24,8 @@ HRESULT CAncientGuardian::Ready_GameObject()
         return E_FAIL;
 
     // AG 보스 개별 체력 설정
-    m_iHp = 1;
-    m_iMaxHp = 1; 
+    m_iHp = 100;
+    m_iMaxHp = 100; 
 
    
 

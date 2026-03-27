@@ -243,6 +243,12 @@
     <ClCompile Include="..\Code\CExplosionLight.cpp">
       <Filter>02. GameObject</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CEnderDragon.cpp">
+      <Filter>04. Network\04. EnderDragon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CScreenFX.cpp">
+      <Filter>04. Network\05. Shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -492,6 +498,12 @@
     <ClInclude Include="..\Header\COceanBuffer.h">
       <Filter>04. Network\03. Ocean</Filter>
     </ClInclude>
+    <ClInclude Include="..\Header\CEnderDragon.h">
+      <Filter>04. Network\04. EnderDragon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CScreenFX.h">
+      <Filter>04. Network\05. Shader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico" />
@@ -664,6 +676,9 @@
     </Filter>
     <Filter Include="04. Network\04. EnderDragon">
       <UniqueIdentifier>{2f0b53fe-ee26-4945-8f9b-3bfd162a96d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. Network\05. Shader">
+      <UniqueIdentifier>{859f4db2-0a82-4991-bcc0-68a20518ac4d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

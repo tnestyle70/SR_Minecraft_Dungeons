@@ -70,7 +70,7 @@ _int CLogo::Update_Scene(const _float& fTimeDelta)
             return 0;
         }
     }
-
+    
     m_bF1Toggle = bF1;
     m_bF2Toggle = bF2;
 
@@ -79,7 +79,7 @@ _int CLogo::Update_Scene(const _float& fTimeDelta)
         m_pEditor->Update_Scene(fTimeDelta);
         return 0;
     }
-
+    
     //로고 씬 업데이트
     _int iExit = Engine::CScene::Update_Scene(fTimeDelta);
 
@@ -88,7 +88,7 @@ _int CLogo::Update_Scene(const _float& fTimeDelta)
         //Render Group Clear Before Change Scene!!!!
         CRenderer::GetInstance()->Clear_RenderGroup();
 
-        if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_SQUIDCOAST)))
+        if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_NETWORK)))
         {
             MSG_BOX("SquidCoast Create Failed");
             return -1;

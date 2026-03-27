@@ -438,7 +438,7 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	// ── 서버 접속 — 프로세스 ID 기반 고유 닉네임 (임시, 추후 로비 UI 연동) ─
 	char szNick[32];
 	sprintf_s(szNick, sizeof(szNick), "Player%u", GetCurrentProcessId() % 10000);
-	CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.30", 9000, szNick);
+	CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.11", 9000, szNick);
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
 

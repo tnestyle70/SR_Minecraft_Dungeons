@@ -5,6 +5,7 @@
 class CAncientGuardian;
 class CRedStoneGolem;
 
+
 struct DAMAGE_TEXT
 {
 	_vec3 vWorldPos; //데미지 발생 위치
