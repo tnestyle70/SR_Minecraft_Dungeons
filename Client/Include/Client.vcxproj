@@ -173,6 +173,7 @@
     <ClInclude Include="..\Header\CEditor.h" />
     <ClInclude Include="..\Header\CEffect.h" />
     <ClInclude Include="..\Header\CEmerald.h" />
+    <ClInclude Include="..\Header\CEnderDragon.h" />
     <ClInclude Include="..\Header\CEnvironmentMgr.h" />
     <ClInclude Include="..\Header\CEquipSlot.h" />
     <ClInclude Include="..\Header\CExplosionLight.h" />
@@ -215,6 +216,7 @@
     <ClInclude Include="..\Header\CRedStoneGolemPart.h" />
     <ClInclude Include="..\Header\CRemotePlayer.h" />
     <ClInclude Include="..\Header\CSceneChanger.h" />
+    <ClInclude Include="..\Header\CScreenFX.h" />
     <ClInclude Include="..\Header\CSkyBox.h" />
     <ClInclude Include="..\Header\CSquidCoast.h" />
     <ClInclude Include="..\Header\CStage.h" />
@@ -265,6 +267,7 @@
     <ClCompile Include="..\Code\CEditor.cpp" />
     <ClCompile Include="..\Code\CEffect.cpp" />
     <ClCompile Include="..\Code\CEmerald.cpp" />
+    <ClCompile Include="..\Code\CEnderDragon.cpp" />
     <ClCompile Include="..\Code\CEnvironmentMgr.cpp" />
     <ClCompile Include="..\Code\CEquipSlot.cpp" />
     <ClCompile Include="..\Code\CExplosionLight.cpp" />
@@ -303,6 +306,7 @@
     <ClCompile Include="..\Code\CRedStoneGolemPart.cpp" />
     <ClCompile Include="..\Code\CRemotePlayer.cpp" />
     <ClCompile Include="..\Code\CSceneChanger.cpp" />
+    <ClCompile Include="..\Code\CScreenFX.cpp" />
     <ClCompile Include="..\Code\CSkyBox.cpp" />
     <ClCompile Include="..\Code\CSquidCoast.cpp" />
     <ClCompile Include="..\Code\CStage.cpp" />

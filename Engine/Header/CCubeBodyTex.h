@@ -23,6 +23,26 @@ struct CUBE
 	FACE_UV left;
 };
 
+struct MESH
+{
+	_vec3 corners[8];
+	FACE_UV front, back, top, bottom, left, right;
+};
+
+// CUBE -> MESH 변환 헬퍼 (기존 정육면체 코드 마이그레이션용)
+inline MESH CUBE_To_MESH(const CUBE& c)
+{
+	float hw = c.fWidth * 0.5f, hh = c.fHeight * 0.5f, hd = c.fDepth * 0.5f;
+	MESH m{};
+	m.corners[0] = { -hw,+hh,+hd }; m.corners[1] = { +hw,+hh,+hd };
+	m.corners[2] = { +hw,-hh,+hd }; m.corners[3] = { -hw,-hh,+hd };
+	m.corners[4] = { +hw,+hh,-hd }; m.corners[5] = { -hw,+hh,-hd };
+	m.corners[6] = { -hw,-hh,-hd }; m.corners[7] = { +hw,-hh,-hd };
+	m.front = c.front; m.back = c.back; m.top = c.top;
+	m.bottom = c.bottom; m.right = c.right; m.left = c.left;
+	return m;
+}
+
 BEGIN(Engine)
 
 class ENGINE_DLL CCubeBodyTex : public CVIBuffer

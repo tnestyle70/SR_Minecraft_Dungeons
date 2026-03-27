@@ -147,6 +147,7 @@ call Copy.bat</Command>
   <ItemGroup>
     <ClInclude Include="..\Header\CBoxBottomTex.h" />
     <ClInclude Include="..\Header\CBoxTopTex.h" />
+    <ClInclude Include="..\Header\CFlexibleCubeTex.h" />
     <ClInclude Include="..\Header\CLampBodyTex.h" />
     <ClInclude Include="..\Header\CLampHeadTex.h" />
     <ClInclude Include="..\Header\CParticleEmitter.h" />
@@ -201,6 +202,7 @@ call Copy.bat</Command>
   <ItemGroup>
     <ClCompile Include="..\Code\CBoxBottomTex.cpp" />
     <ClCompile Include="..\Code\CBoxTopTex.cpp" />
+    <ClCompile Include="..\Code\CFlexibleCubeTex.cpp" />
     <ClCompile Include="..\Code\CLampBodyTex.cpp" />
     <ClCompile Include="..\Code\CLampHeadTex.cpp" />
     <ClCompile Include="..\Code\CParticleEmitter.cpp" />

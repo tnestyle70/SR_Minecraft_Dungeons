@@ -115,6 +115,12 @@
     <Filter Include="03. Component\00. VIBuffer\07. Box">
       <UniqueIdentifier>{6dde4542-d4af-4bf2-b3c8-1f517e4edca2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="03. Component\00. VIBuffer\08. Lamp">
+      <UniqueIdentifier>{3ae81656-c192-4fe6-9af5-787e904a079e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Component\00. VIBuffer\09. FlexibleCubeTex">
+      <UniqueIdentifier>{c11a0be1-39ff-4411-9879-41357b03e01b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Code\CGraphicDev.cpp">
@@ -243,11 +249,14 @@
     <ClCompile Include="..\Code\CBoxTopTex.cpp">
       <Filter>03. Component\00. VIBuffer\07. Box</Filter>
     </ClCompile>
-    <ClCompile Include="..\Code\CLampHeadTex.cpp">
-      <Filter>03. Component\00. VIBuffer</Filter>
-    </ClCompile>
     <ClCompile Include="..\Code\CLampBodyTex.cpp">
-      <Filter>03. Component\00. VIBuffer</Filter>
+      <Filter>03. Component\00. VIBuffer\08. Lamp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CLampHeadTex.cpp">
+      <Filter>03. Component\00. VIBuffer\08. Lamp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CFlexibleCubeTex.cpp">
+      <Filter>03. Component\00. VIBuffer\09. FlexibleCubeTex</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -399,11 +408,14 @@
     <ClInclude Include="..\Header\CBoxTopTex.h">
       <Filter>03. Component\00. VIBuffer\07. Box</Filter>
     </ClInclude>
-    <ClInclude Include="..\Header\CLampHeadTex.h">
-      <Filter>03. Component\00. VIBuffer</Filter>
-    </ClInclude>
     <ClInclude Include="..\Header\CLampBodyTex.h">
-      <Filter>03. Component\00. VIBuffer</Filter>
+      <Filter>03. Component\00. VIBuffer\08. Lamp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CLampHeadTex.h">
+      <Filter>03. Component\00. VIBuffer\08. Lamp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CFlexibleCubeTex.h">
+      <Filter>03. Component\00. VIBuffer\09. FlexibleCubeTex</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
