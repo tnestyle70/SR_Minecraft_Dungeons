@@ -229,6 +229,14 @@ _uint CLoading::Loading_SquidCoast()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_BowPulling2",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Player/bow_pulling_2.png"))))
         return E_FAIL;
+    //NPC
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_NPCTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/NPC/T_Knight_Skin.png"))))
+        return E_FAIL;
+    //대화창
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_DialogueBoxTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/NPC/NPCDialogue.png"))))
+        return E_FAIL;
 
     //=======UI=========//
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_HUDTexture",
@@ -335,6 +343,18 @@ _uint CLoading::Loading_SquidCoast()
     //cherry leaves
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CherryLeavesTexture",
         CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/CherryLeaves.dds"))))
+        return E_FAIL;
+    //lava
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_LavaTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/lava.dds"))))
+        return E_FAIL;
+    //planks acacia
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_PlankAcaciaTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/planks_acacia.dds"))))
+        return E_FAIL;
+    //planks spruce
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_PlankSpruceTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/planks_spruce.dds"))))
         return E_FAIL;
 
     //블럭 텍스쳐 아틀라스
