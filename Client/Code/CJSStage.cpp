@@ -1,5 +1,5 @@
-﻿#include "pch.h"
-#include "CCamp.h"
+#include "pch.h"
+#include "CJSStage.h"
 #include "CMonster.h"
 #include "CPlayer.h"
 #include "CIronBar.h"
@@ -18,16 +18,14 @@
 #include "CHUD.h"
 #include "CInventoryMgr.h"
 
-CCamp::CCamp(LPDIRECT3DDEVICE9 pGraphicDev)
+CJSStage::CJSStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
-{
-}
+{}
 
-CCamp::~CCamp()
-{
-}
+CJSStage::~CJSStage()
+{}
 
-HRESULT CCamp::Ready_Scene()
+HRESULT CJSStage::Ready_Scene()
 {
 	if (FAILED(Ready_Light()))
 		return E_FAIL;
@@ -41,12 +39,12 @@ HRESULT CCamp::Ready_Scene()
 	if (FAILED(Ready_UI_Layer(L"UI_Layer")))
 		return E_FAIL;
 
-	Ready_StageData(L"../Bin/Data/Stage2.dat");
+	Ready_StageData(L"../Bin/Data/Stage5.dat");
 
 	return S_OK;
 }
 
-_int CCamp::Update_Scene(const _float& fTimeDelta)
+_int CJSStage::Update_Scene(const _float& fTimeDelta)
 {
 	//인벤토리 먼저 업데이트
 	CInventoryMgr::GetInstance()->Update(fTimeDelta);
@@ -68,14 +66,14 @@ _int CCamp::Update_Scene(const _float& fTimeDelta)
 	if (GetAsyncKeyState(VK_RETURN) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
 	{
 		//Render Group Clear Before Change Scene!!!!
-		CTriggerBoxMgr::GetInstance()->SetSceneChanged(false); 
+		CTriggerBoxMgr::GetInstance()->SetSceneChanged(false);
 		CRenderer::GetInstance()->Clear_RenderGroup();
 		CTriggerBoxMgr::GetInstance()->Clear();
 		CIronBarMgr::GetInstance()->Clear();
 		CMonsterMgr::GetInstance()->Clear();
 		CParticleMgr::GetInstance()->Clear_Emitters();
 		CInventoryMgr::GetInstance()->Clear_Player();
-		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_JS)))
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_TG)))
 		{
 			MSG_BOX("RedStone Create Failed");
 			return -1;
@@ -89,7 +87,7 @@ _int CCamp::Update_Scene(const _float& fTimeDelta)
 	return iExit;
 }
 
-void CCamp::LateUpdate_Scene(const _float& fTimeDelta)
+void CJSStage::LateUpdate_Scene(const _float& fTimeDelta)
 {
 	if (CInventoryMgr::GetInstance()->IsActive())
 	{
@@ -106,7 +104,7 @@ void CCamp::LateUpdate_Scene(const _float& fTimeDelta)
 	CMonsterMgr::GetInstance()->LateUpdate(fTimeDelta);
 }
 
-void CCamp::Render_Scene()
+void CJSStage::Render_Scene()
 {
 	if (CInventoryMgr::GetInstance()->IsActive())
 	{
@@ -117,7 +115,7 @@ void CCamp::Render_Scene()
 	CBlockMgr::GetInstance()->Render();
 }
 
-void CCamp::Render_UI()
+void CJSStage::Render_UI()
 {
 	if (CInventoryMgr::GetInstance()->IsActive())
 	{
@@ -126,7 +124,7 @@ void CCamp::Render_UI()
 	}
 }
 
-HRESULT CCamp::Ready_Environment_Layer(const _tchar* pLayerTag)
+HRESULT CJSStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 {
 	CLayer* pLayer = CLayer::Create();
 
@@ -156,14 +154,14 @@ HRESULT CCamp::Ready_Environment_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	//SkyBox 추가
-	
+
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
 
 	return S_OK;
 }
 
-HRESULT CCamp::Ready_GameLogic_Layer(const _tchar* pLayerTag)
+HRESULT CJSStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 {
 	CLayer* pLayer = CLayer::Create();
 
@@ -225,7 +223,7 @@ HRESULT CCamp::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	return S_OK;
 }
 
-HRESULT CCamp::Ready_UI_Layer(const _tchar* pLayerTag)
+HRESULT CJSStage::Ready_UI_Layer(const _tchar* pLayerTag)
 {
 	CLayer* pLayer = CLayer::Create();
 
@@ -247,12 +245,12 @@ HRESULT CCamp::Ready_UI_Layer(const _tchar* pLayerTag)
 	return S_OK;
 }
 
-HRESULT CCamp::Ready_Light()
+HRESULT CJSStage::Ready_Light()
 {
 	return S_OK;
 }
 
-HRESULT CCamp::Ready_StageData(const _tchar* szPath)
+HRESULT CJSStage::Ready_StageData(const _tchar* szPath)
 {
 	FILE* pFile = nullptr;
 	_wfopen_s(&pFile, szPath, L"rb");
@@ -319,10 +317,10 @@ HRESULT CCamp::Ready_StageData(const _tchar* szPath)
 	return S_OK;
 }
 
-CCamp* CCamp::Create(LPDIRECT3DDEVICE9 pGraphicDev)
+CJSStage* CJSStage::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 {
-	CCamp* pCamp = new CCamp(pGraphicDev);
-	
+	CJSStage* pCamp = new CJSStage(pGraphicDev);
+
 	if (FAILED(pCamp->Ready_Scene()))
 	{
 		Safe_Release(pCamp);
@@ -333,7 +331,7 @@ CCamp* CCamp::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 	return pCamp;
 }
 
-void CCamp::Free()
+void CJSStage::Free()
 {
 	CScene::Free();
 }

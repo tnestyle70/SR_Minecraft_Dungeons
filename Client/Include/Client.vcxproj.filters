@@ -223,31 +223,31 @@
       <Filter>02. GameObject\11. Environment</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\CNetworkStage.cpp">
-      <Filter>04. Network\00. Stage</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\00. Stage</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\CNetworkPlayer.cpp">
-      <Filter>04. Network\01. Player</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\01. Player</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\CRemotePlayer.cpp">
-      <Filter>04. Network\01. Player</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\01. Player</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\CNetworkMgr.cpp">
-      <Filter>04. Network\02. NetworkMgr</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\02. NetworkMgr</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\COcean.cpp">
-      <Filter>04. Network\03. Ocean</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\03. Ocean</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\COceanBuffer.cpp">
-      <Filter>04. Network\03. Ocean</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\03. Ocean</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\CExplosionLight.cpp">
       <Filter>02. GameObject</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\CEnderDragon.cpp">
-      <Filter>04. Network\04. EnderDragon</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\04. EnderDragon</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\CScreenFX.cpp">
-      <Filter>04. Network\05. Shader</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\05. Shader</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\CCrystal.cpp">
       <Filter>02. GameObject\11. Environment</Filter>
@@ -257,6 +257,15 @@
     </ClCompile>
     <ClCompile Include="..\Code\CNPC.cpp">
       <Filter>02. GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CCYStage.cpp">
+      <Filter>01. Scene\01. Stage\06. CY</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSStage.cpp">
+      <Filter>01. Scene\01. Stage\04. JS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CTGStage.cpp">
+      <Filter>01. Scene\01. Stage\05. TG</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -484,34 +493,34 @@
       <Filter>02. GameObject\11. Environment</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CNetworkStage.h">
-      <Filter>04. Network\00. Stage</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\00. Stage</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CNetworkPlayer.h">
-      <Filter>04. Network\01. Player</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\01. Player</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CRemotePlayer.h">
-      <Filter>04. Network\01. Player</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\01. Player</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CNetworkMgr.h">
-      <Filter>04. Network\02. NetworkMgr</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\02. NetworkMgr</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CExplosionLight.h">
       <Filter>02. GameObject</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\COceanTypes.h">
-      <Filter>04. Network\03. Ocean</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\03. Ocean</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\COcean.h">
-      <Filter>04. Network\03. Ocean</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\03. Ocean</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\COceanBuffer.h">
-      <Filter>04. Network\03. Ocean</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\03. Ocean</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CEnderDragon.h">
-      <Filter>04. Network\04. EnderDragon</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\04. EnderDragon</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CScreenFX.h">
-      <Filter>04. Network\05. Shader</Filter>
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\05. Shader</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CCrystal.h">
       <Filter>02. GameObject\11. Environment</Filter>
@@ -521,6 +530,15 @@
     </ClInclude>
     <ClInclude Include="..\Header\CNPC.h">
       <Filter>02. GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSStage.h">
+      <Filter>01. Scene\01. Stage\04. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CTGStage.h">
+      <Filter>01. Scene\01. Stage\05. TG</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CCYStage.h">
+      <Filter>01. Scene\01. Stage\06. CY</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -677,25 +695,37 @@
     <Filter Include="02. GameObject\14. TNT">
       <UniqueIdentifier>{ee906648-4283-4010-8c63-5acab7552df1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="04. Network">
+    <Filter Include="01. Scene\01. Stage\04. JS">
+      <UniqueIdentifier>{329c2971-bac3-4122-9c4c-e37a53d13dea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Scene\01. Stage\05. TG">
+      <UniqueIdentifier>{53800c26-c572-43f7-a5ac-7453e2bce097}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Scene\01. Stage\06. CY">
+      <UniqueIdentifier>{1aebd20a-f04b-44a4-9e67-390946b61ffb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Scene\01. Stage\07. GB">
+      <UniqueIdentifier>{c8d56afd-e9cb-48fc-82d5-e5b3ce5894b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Scene\01. Stage\07. GB\04. Network">
       <UniqueIdentifier>{6ca04b61-c955-4a20-8b73-1abe3ca8d9d7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="04. Network\00. Stage">
+    <Filter Include="01. Scene\01. Stage\07. GB\04. Network\00. Stage">
       <UniqueIdentifier>{306d3d90-988d-4540-8c4c-813f9aef6195}</UniqueIdentifier>
     </Filter>
-    <Filter Include="04. Network\01. Player">
+    <Filter Include="01. Scene\01. Stage\07. GB\04. Network\01. Player">
       <UniqueIdentifier>{ce829bfd-1cc7-4162-87b0-618b914908a6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="04. Network\02. NetworkMgr">
+    <Filter Include="01. Scene\01. Stage\07. GB\04. Network\02. NetworkMgr">
       <UniqueIdentifier>{5d75b8d7-8088-4d3b-bbe2-29990f37f52d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="04. Network\03. Ocean">
+    <Filter Include="01. Scene\01. Stage\07. GB\04. Network\03. Ocean">
       <UniqueIdentifier>{49f8fc79-e1a2-4ada-9146-430bcae8b0da}</UniqueIdentifier>
     </Filter>
-    <Filter Include="04. Network\04. EnderDragon">
+    <Filter Include="01. Scene\01. Stage\07. GB\04. Network\04. EnderDragon">
       <UniqueIdentifier>{2f0b53fe-ee26-4945-8f9b-3bfd162a96d0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="04. Network\05. Shader">
+    <Filter Include="01. Scene\01. Stage\07. GB\04. Network\05. Shader">
       <UniqueIdentifier>{859f4db2-0a82-4991-bcc0-68a20518ac4d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

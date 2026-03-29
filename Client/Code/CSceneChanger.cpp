@@ -12,6 +12,9 @@
 #include "CSquidCoast.h"
 #include "CRedStone.h"
 #include "CObsidian.h"
+#include "CJSStage.h"
+#include "CTGStage.h"
+#include "CCYStage.h"
 #include "CNetworkStage.h"
 
 HRESULT CSceneChanger::ChangeScene(LPDIRECT3DDEVICE9 pGraphicDev, eSceneType eType)
@@ -51,10 +54,31 @@ HRESULT CSceneChanger::ChangeScene(LPDIRECT3DDEVICE9 pGraphicDev, eSceneType eTy
 			SCENE_OBSIDIAN_PLAY,
 			L"Proto_ObsidianLoadingTexture");
 		break;
+	case SCENE_JS:
+		pScene = CLoadingScene::Create(
+			pGraphicDev,
+			CLoading::LOADING_OBSIDIAN,
+			SCENE_JS_PLAY,
+			L"Proto_CampLoadingTexture");
+		break;
+	case SCENE_TG:
+		pScene = CLoadingScene::Create(
+			pGraphicDev,
+			CLoading::LOADING_OBSIDIAN,
+			SCENE_TG_PLAY,
+			L"Proto_CampLoadingTexture");
+		break;
+	case SCENE_CY:
+		pScene = CLoadingScene::Create(
+			pGraphicDev,
+			CLoading::LOADING_OBSIDIAN,
+			SCENE_CY_PLAY,
+			L"Proto_CampLoadingTexture");
+		break;
 	case SCENE_NETWORK:
 		pScene = CLoadingScene::Create(
 			pGraphicDev,
-			CLoading::LOADIND_SQUIDCOAST,
+			CLoading::LOADING_OBSIDIAN,
 			SCENE_NETWORK_PLAY,
 			L"Proto_SquidCoastLoadingTexture");
 		break;
@@ -70,6 +94,15 @@ HRESULT CSceneChanger::ChangeScene(LPDIRECT3DDEVICE9 pGraphicDev, eSceneType eTy
 	case SCENE_OBSIDIAN_PLAY:
 		pScene = CObsidian::Create(pGraphicDev);
 		break;	
+	case SCENE_JS_PLAY:
+		pScene = CJSStage::Create(pGraphicDev);
+		break;
+	case SCENE_TG_PLAY:
+		pScene = CTGStage::Create(pGraphicDev);
+		break;
+	case SCENE_CY_PLAY:
+		pScene = CCYStage::Create(pGraphicDev);
+		break;
 	case SCENE_NETWORK_PLAY:
 		pScene = CNetworkStage::Create(pGraphicDev);
 		break;

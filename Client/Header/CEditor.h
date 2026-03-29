@@ -20,6 +20,10 @@ enum eStageType
     STAGE_CAMP,
     STAGE_REDSTONE,
     STAGE_OBSIDIAN,
+    STAGE_JS,
+    STAGE_TG,
+    STAGE_CY,
+    STAGE_GB,
     STAGE_END
 };
 
