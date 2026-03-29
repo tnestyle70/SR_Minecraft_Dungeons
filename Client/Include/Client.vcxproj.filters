@@ -267,6 +267,9 @@
     <ClCompile Include="..\Code\CTGStage.cpp">
       <Filter>01. Scene\01. Stage\05. TG</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CDialogueBox.cpp">
+      <Filter>02. GameObject\12. UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -539,6 +542,9 @@
     </ClInclude>
     <ClInclude Include="..\Header\CCYStage.h">
       <Filter>01. Scene\01. Stage\06. CY</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CDialogueBox.h">
+      <Filter>02. GameObject\12. UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
