@@ -89,14 +89,6 @@ _int COcean::Update_GameObject(const _float& fTimeDelta)
 void COcean::LateUpdate_GameObject(const _float& fTimeDelta)
 {
     CGameObject::LateUpdate_GameObject(fTimeDelta);
-
-    //카메라 시점 기준으로 X Z 이동
-    _matrix matCamWorld;
-    m_pGraphicDev->GetTransform(D3DTS_VIEW, &matCamWorld);
-    
-    D3DXMatrixInverse(&matCamWorld, 0, &matCamWorld);
-
-    m_pTransformCom->Set_Pos(matCamWorld._41, 0.f, matCamWorld._43);
 }
 
 void COcean::Render_GameObject()

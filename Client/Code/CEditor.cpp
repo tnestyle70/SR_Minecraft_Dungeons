@@ -195,7 +195,12 @@ const _tchar* CEditor::GetStagePath(eStageType eStage) const
 		L"../Bin/Data/Stage1.dat",
 		L"../Bin/Data/Stage2.dat",
 		L"../Bin/Data/Stage3.dat",
-		L"../Bin/Data/Stage4.dat"
+		L"../Bin/Data/Stage4.dat",
+		L"../Bin/Data/Stage5.dat",
+		L"../Bin/Data/Stage6.dat",
+		L"../Bin/Data/Stage7.dat",
+		L"../Bin/Data/Stage8.dat"
+
 	};
 
 	if (eStage < 0 || eStage >= STAGE_END)
@@ -356,7 +361,8 @@ void CEditor::Render_Viewport()
 void CEditor::Render_StageSelector()
 {
 	static const char* s_aIDs[STAGE_END] =
-	{ "Squid Coast##stage", "Camp##stage", "RedStone##stage", "Obsidian##stage" };
+	{ "Squid Coast##stage", "Camp##stage", "RedStone##stage", "Obsidian##stage",
+	"JS##stage", "TG##stage","CY##stage","GB##stage" };
 
 	ImGui::Text("Stage");
 	for (int i = 0; i < STAGE_END; ++i)
