@@ -32,6 +32,7 @@
 #include "CSkyBox.h"
 #include "CObjectEditor.h"
 #include "CSoundMgr.h"
+#include "CCrystal.h"
 
 CSquidCoast::CSquidCoast(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -292,13 +293,13 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		//if (FAILED(pLayer->Add_GameObject(L"Box", pGameObject)))
 		//	return E_FAIL;
 
-		//pGameObject = CLamp::Create(m_pGraphicDev);
+		pGameObject = CCrystal::Create(m_pGraphicDev);
 
-		//if (!pGameObject)
-		//	return E_FAIL;
+		if (!pGameObject)
+			return E_FAIL;
 
-		//if (FAILED(pLayer->Add_GameObject(L"Lamp", pGameObject)))
-		//	return E_FAIL;
+		if (FAILED(pLayer->Add_GameObject(L"Crystal", pGameObject)))
+			return E_FAIL;
 
 		m_mapLayer.insert({ pLayerTag, pLayer });
 		
