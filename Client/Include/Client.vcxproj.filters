@@ -282,6 +282,12 @@
     <ClCompile Include="..\Code\CEnderEye.cpp">
       <Filter>02. GameObject\11. Environment</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CJSChunkMgr.cpp">
+      <Filter>03. Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSChunk.cpp">
+      <Filter>03. Manager</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -569,6 +575,12 @@
     <ClInclude Include="..\Header\CBlockRenderer.h" />
     <ClInclude Include="..\Header\CEnderEye.h">
       <Filter>02. GameObject\11. Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSChunkMgr.h">
+      <Filter>03. Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSChunk.h">
+      <Filter>03. Manager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

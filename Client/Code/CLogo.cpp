@@ -94,6 +94,16 @@ _int CLogo::Update_Scene(const _float& fTimeDelta)
             return -1;
         }
     }
+    else if (GetAsyncKeyState('J'))
+    {
+        CRenderer::GetInstance()->Clear_RenderGroup();
+
+        if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_JS_PLAY)))
+        {
+            MSG_BOX("JS Create Failed");
+            return -1;
+        }
+    }
     
     return iExit;
 }
