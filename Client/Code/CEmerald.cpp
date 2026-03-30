@@ -3,6 +3,7 @@
 #include "CRenderer.h"
 #include "CManagement.h"
 #include "CSoundMgr.h"
+#include "CEventBus.h"
 
 CEmerald::CEmerald(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -160,6 +161,13 @@ void CEmerald::Chase_Player(const _float fTimeDelta)
 	{
 		m_bDead = true;
 
+		//EventBus에 이벤트 전달 <- 구독자 InventoryMgr이 뭔지 몰라도 상관 없음
+		FGameEvent event;
+		event.eType = eEventType::CURRENCY_COLLECTED;
+		event.iSubType = 0;
+		event.iValue = 1; //에메랄드 1개 획득
+		CEventBus::GetInstance()->Publish(event);
+		
 		CSoundMgr::GetInstance()->PlayEffect(L"Emerald/sfx_item_emeraldCollect-001_soundWave.wav", 0.6f);
 	}
 	else

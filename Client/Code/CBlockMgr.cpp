@@ -50,8 +50,11 @@ void CBlockMgr::Update(const _float& fTimeDelta)
 			BuildQuadTree();
 		m_bDirty = false;
 	}
-
+	
 	for (auto& pair : m_mapBlocks)
+		pair.second->Update_GameObject(fTimeDelta);
+	//Edit 블럭 개별 렌더링 
+	for (auto& pair : m_mapEditBlocks)
 		pair.second->Update_GameObject(fTimeDelta);
 }
 
@@ -59,7 +62,7 @@ void CBlockMgr::Render()
 {
 	switch (m_eRenderMode)
 	{
-	case RENDER_EDITOR:   Render_QuadTree();    break;
+	case RENDER_EDITOR:   Render_Stage();    break;
 	case RENDER_BATCH:    Render_Stage();     break;
 	case RENDER_QUADTREE: Render_QuadTree(); break;
 	default: break;
@@ -225,7 +228,6 @@ void CBlockMgr::Render_QuadTree()
 	Render_Node(m_pQuadRoot, planes);
 }
 
-
 void CBlockMgr::Render_Node(QuadNode * pNode, const D3DXPLANE * pPlanes)
 {
 	if (!IsAABBInFrustum(pPlanes, pNode->fMinX, pNode->fMinZ,
@@ -354,12 +356,14 @@ void CBlockMgr::AddBlock(const _vec3& vPos, eBlockType eType)
 
 	if (m_mapBlocks.find(tPos) != m_mapBlocks.end())
 		return;
+	if (m_mapEditBlocks.find(tPos) != m_mapEditBlocks.end())
+		return;
 
 	CBlock* pBlock = CBlock::Create(m_pGraphicDev, vPos, eType);
 	if (!pBlock)
 		return;
-
-	m_mapBlocks.insert({ tPos, pBlock });
+	pBlock->SetIndividualRender(true);
+	m_mapEditBlocks.insert({ tPos, pBlock });
 }
 
 void CBlockMgr::AddBlock(int x, int y, int z, eBlockType eType)
@@ -368,20 +372,30 @@ void CBlockMgr::AddBlock(int x, int y, int z, eBlockType eType)
 
 	if (m_mapBlocks.find(tPos) != m_mapBlocks.end())
 		return;
+	if (m_mapEditBlocks.find(tPos) != m_mapEditBlocks.end())
+		return;
 
 	_vec3 vPos = { (float)x, (float)y, (float)z };
 	CBlock* pBlock = CBlock::Create(m_pGraphicDev, vPos, eType);
 	if (!pBlock)
 		return;
-
-	m_mapBlocks.insert({ tPos, pBlock });
-
-	m_bDirty = true;
+	pBlock->SetIndividualRender(true);
+	//m_mapBlocks.insert({ tPos, pBlock });
+	m_mapEditBlocks.insert({ tPos, pBlock });
 }
 
 void CBlockMgr::RemoveBlock(const _vec3& vPos)
 {
 	BlockPos tPos = ToPos(vPos);
+
+	//Edit 블럭 먼저
+	auto editIter = m_mapEditBlocks.find(tPos);
+	if (editIter != m_mapEditBlocks.end())
+	{
+		Safe_Release(editIter->second);
+		m_mapEditBlocks.erase(editIter);
+		return;
+	}
 
 	auto iter = m_mapBlocks.find(tPos);
 	if (iter == m_mapBlocks.end())
@@ -389,18 +403,27 @@ void CBlockMgr::RemoveBlock(const _vec3& vPos)
 
 	Safe_Release(iter->second);
 	m_mapBlocks.erase(iter);
+	m_bDirty = true;
 }
 
 void CBlockMgr::RemoveBlockByPos(const BlockPos& pos)
 {
+	auto editIter = m_mapEditBlocks.find(pos);
+	if (editIter != m_mapEditBlocks.end())
+	{
+		Safe_Release(editIter->second);
+		m_mapEditBlocks.erase(editIter);
+		return;  // Edit 블럭 삭제 완료
+	}
+
+	//  Base 블럭 검색
 	auto iter = m_mapBlocks.find(pos);
 	if (iter == m_mapBlocks.end())
 		return;
 
 	Safe_Release(iter->second);
 	m_mapBlocks.erase(iter);
-
-	m_bDirty = true;
+	m_bDirty = true;  // Base 블럭 삭제 → Base 배치버퍼 재빌드
 }
 
 void CBlockMgr::ClearBlocks()
@@ -412,12 +435,19 @@ void CBlockMgr::ClearBlocks()
 		});
 	m_mapBlocks.clear();
 
+	for_each(m_mapEditBlocks.begin(), m_mapEditBlocks.end(), [](auto& pair)
+		{
+			if (pair.second)
+				Safe_Release(pair.second);
+		});
+	m_mapEditBlocks.clear();
+
 	m_bDirty = true;
 }
 
 HRESULT CBlockMgr::SaveBlocks(FILE* pFile)
 {
-	int iCount = (int)m_mapBlocks.size();
+	int iCount = (int)m_mapBlocks.size() + m_mapEditBlocks.size();
 	fwrite(&iCount, sizeof(int), 1, pFile);
 
 	for (auto& pair : m_mapBlocks)
@@ -429,6 +459,17 @@ HRESULT CBlockMgr::SaveBlocks(FILE* pFile)
 		tData.eType = (int)pair.second->GetBlockType();
 		fwrite(&tData, sizeof(BlockData), 1, pFile);
 	}
+	//Edit도 같은 섹션에 저장
+	for (auto& pair : m_mapEditBlocks)
+	{
+		BlockData tData;
+		tData.x = pair.first.x;
+		tData.y = pair.first.y;
+		tData.z = pair.first.z;
+		tData.eType = (int)pair.second->GetBlockType();
+		fwrite(&tData, sizeof(BlockData), 1, pFile);
+	}
+
 	return S_OK;
 }
 
@@ -439,6 +480,12 @@ HRESULT CBlockMgr::LoadBlocks(FILE* pFile)
 			if (pair.second) Safe_Release(pair.second);
 		});
 	m_mapBlocks.clear();
+
+	for_each(m_mapEditBlocks.begin(), m_mapEditBlocks.end(), [](auto& pair)
+		{
+			if (pair.second) Safe_Release(pair.second);
+		});
+	m_mapEditBlocks.clear();
 
 	int iCount = 0;
 	fread(&iCount, sizeof(int), 1, pFile);
@@ -480,6 +527,44 @@ bool CBlockMgr::RayAABBIntersect(const _vec3& vRayPos, const _vec3& vRayDir,
 	bool  bHit = false;
 
 	for (auto& pair : m_mapBlocks)
+	{
+		AABB  tAABB = Get_BlockAABB(pair.first);
+		float tMin = 0.f, tMax = FLT_MAX;
+
+		// X축
+		float t1 = (tAABB.vMin.x - vRayPos.x) / vRayDir.x;
+		float t2 = (tAABB.vMax.x - vRayPos.x) / vRayDir.x;
+		if (t1 > t2) swap(t1, t2);
+		tMin = max(tMin, t1);
+		tMax = min(tMax, t2);
+		if (tMin > tMax) continue;
+
+		// Y축
+		t1 = (tAABB.vMin.y - vRayPos.y) / vRayDir.y;
+		t2 = (tAABB.vMax.y - vRayPos.y) / vRayDir.y;
+		if (t1 > t2) swap(t1, t2);
+		tMin = max(tMin, t1);
+		tMax = min(tMax, t2);
+		if (tMin > tMax) continue;
+
+		// Z축
+		t1 = (tAABB.vMin.z - vRayPos.z) / vRayDir.z;
+		t2 = (tAABB.vMax.z - vRayPos.z) / vRayDir.z;
+		if (t1 > t2) swap(t1, t2);
+		tMin = max(tMin, t1);
+		tMax = min(tMax, t2);
+		if (tMin > tMax) continue;
+
+		if (tMin < fMinT)
+		{
+			fMinT = tMin;
+			*pOutBlockPos = pair.first;
+			*pOutT = tMin;
+			bHit = true;
+		}
+	}
+
+	for (auto& pair : m_mapEditBlocks)
 	{
 		AABB  tAABB = Get_BlockAABB(pair.first);
 		float tMin = 0.f, tMax = FLT_MAX;
@@ -583,6 +668,62 @@ bool CBlockMgr::RayAABBIntersectWithNormal(const _vec3& vRayPos, const _vec3& vR
 		}
 	}
 
+	for (auto& pair : m_mapEditBlocks)
+	{
+		AABB  tAABB = Get_BlockAABB(pair.first);
+		float tMin = 0.f, tMax = FLT_MAX;
+		int   iHitAxis = -1;
+		bool  bNegative = false;
+
+		// X축
+		if (fabsf(vRayDir.x) > 0.0001f)
+		{
+			float t1 = (tAABB.vMin.x - vRayPos.x) / vRayDir.x;
+			float t2 = (tAABB.vMax.x - vRayPos.x) / vRayDir.x;
+			if (t1 > t2) swap(t1, t2);
+			if (t1 > tMin) { tMin = t1; iHitAxis = 0; bNegative = vRayDir.x > 0; }
+			tMax = min(tMax, t2);
+			if (tMin > tMax) continue;
+		}
+
+		// Y축
+		if (fabsf(vRayDir.y) > 0.0001f)
+		{
+			float t1 = (tAABB.vMin.y - vRayPos.y) / vRayDir.y;
+			float t2 = (tAABB.vMax.y - vRayPos.y) / vRayDir.y;
+			if (t1 > t2) swap(t1, t2);
+			if (t1 > tMin) { tMin = t1; iHitAxis = 1; bNegative = vRayDir.y > 0; }
+			tMax = min(tMax, t2);
+			if (tMin > tMax) continue;
+		}
+
+		// Z축
+		if (fabsf(vRayDir.z) > 0.0001f)
+		{
+			float t1 = (tAABB.vMin.z - vRayPos.z) / vRayDir.z;
+			float t2 = (tAABB.vMax.z - vRayPos.z) / vRayDir.z;
+			if (t1 > t2) swap(t1, t2);
+			if (t1 > tMin) { tMin = t1; iHitAxis = 2; bNegative = vRayDir.z > 0; }
+			tMax = min(tMax, t2);
+			if (tMin > tMax) continue;
+		}
+
+		if (tMin < fMinT)
+		{
+			fMinT = tMin;
+			*pOutBlockPos = pair.first;
+			*pOutT = tMin;
+
+			// 법선 계산 - 충돌한 면의 반대 방향
+			pOutNormal->x = pOutNormal->y = pOutNormal->z = 0;
+			if (iHitAxis == 0) pOutNormal->x = bNegative ? -1 : 1;
+			else if (iHitAxis == 1) pOutNormal->y = bNegative ? -1 : 1;
+			else if (iHitAxis == 2) pOutNormal->z = bNegative ? -1 : 1;
+
+			bHit = true;
+		}
+	}
+
 	return bHit;
 }
 
@@ -596,7 +737,8 @@ AABB CBlockMgr::Get_BlockAABB(const BlockPos& tPos)
 
 bool CBlockMgr::HasBlock(const BlockPos& tPos)
 {
-	return m_mapBlocks.find(tPos) != m_mapBlocks.end();
+	return m_mapBlocks.find(tPos) != m_mapBlocks.end()
+		 || m_mapEditBlocks.find(tPos) != m_mapEditBlocks.end();
 }
 
 BlockPos CBlockMgr::ToPos(const _vec3& vPos)
@@ -651,6 +793,23 @@ vector<BlockData> CBlockMgr::GetBlocksInRange(BlockPos pos1, BlockPos pos2)
 			vecResult.push_back(tData);
 		}
 	}
+
+	for (auto& pair : m_mapEditBlocks)
+	{
+		const BlockPos& p = pair.first;
+		if (p.x >= iMinX && p.x <= iMaxX &&
+			p.y >= iMinY && p.y <= iMaxY &&
+			p.z >= iMinZ && p.z <= iMaxZ)
+		{
+			BlockData tData;
+			tData.x = p.x;
+			tData.y = p.y;
+			tData.z = p.z;
+			tData.eType = (int)pair.second->GetBlockType();
+			vecResult.push_back(tData);
+		}
+	}
+
 	return vecResult;
 }
 

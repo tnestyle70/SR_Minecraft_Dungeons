@@ -178,7 +178,7 @@ private:
 	_vec3 m_vTargetPos;
 	_bool  m_bHasTarget = false;
 
-	_float m_fGravity = -50.f;
+	_float m_fGravity = -25.f;
 	_float m_fJumpPower = 8.f;
 	_float m_fMaxFall = -20.f;
 

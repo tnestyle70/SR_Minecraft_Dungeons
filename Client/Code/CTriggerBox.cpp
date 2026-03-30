@@ -142,7 +142,7 @@ void CTriggerBox::Trigger_SceneChange()
 
 void CTriggerBox::Trigger_JumpingTrap()
 {
-	CJumpingTarpMgr::GetInstance()->Activate(m_iTriggerID);
+	CJumpingTrapMgr::GetInstance()->Activate(m_iTriggerID);
 }
 
 CTriggerBox* CTriggerBox::Create(LPDIRECT3DDEVICE9 pGraphicDev, 

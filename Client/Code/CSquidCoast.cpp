@@ -89,7 +89,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 
 	CMonsterMgr::GetInstance()->Update(fTimeDelta);
 	
-	CJumpingTarpMgr::GetInstance()->Update(fTimeDelta);
+	CJumpingTrapMgr::GetInstance()->Update(fTimeDelta);
 
 	CParticleMgr::GetInstance()->Update(fTimeDelta);
 
@@ -119,7 +119,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		CTriggerBoxMgr::GetInstance()->Clear();
 		CIronBarMgr::GetInstance()->Clear();
 		CMonsterMgr::GetInstance()->Clear();
-		CJumpingTarpMgr::GetInstance()->Clear();
+		CJumpingTrapMgr::GetInstance()->Clear();
 		CParticleMgr::GetInstance()->Clear_Emitters();
 		CInventoryMgr::GetInstance()->Clear_Player();
 		CDamageMgr::GetInstance()->Clear_Boss();
@@ -177,7 +177,7 @@ void CSquidCoast::LateUpdate_Scene(const _float& fTimeDelta)
 
 	CMonsterMgr::GetInstance()->LateUpdate(fTimeDelta);
 
-	CJumpingTarpMgr::GetInstance()->Update(fTimeDelta);
+	CJumpingTrapMgr::GetInstance()->Update(fTimeDelta);
 }
 
 void CSquidCoast::Render_Scene()
@@ -271,7 +271,7 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	CPlayer* pPlayer = dynamic_cast<CPlayer*>(pGameObject);
 
 	//JumpingTrap
-	CJumpingTarpMgr::GetInstance()->Set_Player(pPlayer);
+	CJumpingTrapMgr::GetInstance()->Set_Player(pPlayer);
 
 	// NPC	
 	// DialogueBox
@@ -500,7 +500,7 @@ HRESULT CSquidCoast::Ready_StageData(const _tchar* szPath)
 
 		CGameObject* pJumpingTrap = CJumpingTrap::Create(m_pGraphicDev, vPos);
 		if (pJumpingTrap)
-			CJumpingTarpMgr::GetInstance()->Add_JumpingTrap(pJumpingTrap, tData.iTriggerID);
+			CJumpingTrapMgr::GetInstance()->Add_JumpingTrap(pJumpingTrap, tData.iTriggerID);
 	}
 
 	fclose(pFile);

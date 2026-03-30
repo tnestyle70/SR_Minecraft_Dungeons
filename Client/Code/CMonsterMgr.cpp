@@ -3,6 +3,7 @@
 #include "CCursorMgr.h"
 #include "CRedStoneGolem.h"
 #include "CAncientGuardian.h"
+#include "CEventBus.h"
 
 IMPLEMENT_SINGLETON(CMonsterMgr)
 
@@ -29,9 +30,24 @@ _int CMonsterMgr::Update(const _float& fTimeDelta)
 		//활성된 몬스터만 Update
 		for (auto& pMonster : group.vecMonsters)
 		{
-			if (pMonster->IsActive())
+			if (!pMonster->IsActive())
 			{
-				pMonster->Update_GameObject(fTimeDelta);
+				continue;
+			}
+
+			pMonster->Update_GameObject(fTimeDelta);
+
+			//몬스터 죽었는지 체크, 죽었으면 EventBus에 메시지 날리기
+			if (pMonster->Is_Dead())
+			{
+				FGameEvent event;
+				event.eType = eEventType::MONSTER_DEAD;
+				event.iValue = 1; //몬스터 처치 1 증가 -> 이거를 거미, 크리퍼, 좀비, 
+				event.iSubType = static_cast<int>(pMonster->Get_Type());
+				CEventBus::GetInstance()->Publish(event);
+
+				//이벤트 발생 후 비활성 처리
+				pMonster->SetActive(false);
 			}
 		}
 
@@ -52,6 +68,7 @@ _int CMonsterMgr::Update(const _float& fTimeDelta)
 			group.bAllSpawned = true;
 		}
 	}
+
 	//커서 업데이트
 	CheckCursorHover();
 

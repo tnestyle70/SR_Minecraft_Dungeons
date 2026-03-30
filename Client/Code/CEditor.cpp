@@ -294,7 +294,8 @@ void CEditor::Render_Hierarchy()
 {
 	ImGui::Begin("Hierarchy");
 
-	ImGui::Text("Block Count: %d", (int)CBlockMgr::GetInstance()->Get_Blocks().size());
+	ImGui::Text("Block Count: %d", (int)CBlockMgr::GetInstance()->Get_Blocks().size() +
+	(int)CBlockMgr::GetInstance()->Get_EditorBlocks().size());
 	ImGui::Text("Monster Spawn: %d", (int)m_mapMonsters.size());
 	ImGui::Text("IronBar: %d", (int)m_mapIronBars.size());
 	ImGui::Text("TriggerBox: %d", (int)m_mapTriggerBoxes.size());
@@ -1623,12 +1624,13 @@ HRESULT CEditor::LoadStageData(const _tchar* szPath)
 	_wfopen_s(&pFile, szPath, L"rb");
 	if (!pFile) return E_FAIL;
 	//블럭
+	CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_BATCH);
 	CBlockMgr::GetInstance()->LoadBlocks(pFile);
 	//몬스터
 	for (auto& pair : m_mapMonsters)
 		Safe_Release(pair.second);
 	m_mapMonsters.clear();
-
+	
 	int iCount = 0;
 	fread(&iCount, sizeof(int), 1, pFile);
 	for (int i = 0; i < iCount; ++i)
@@ -1718,11 +1720,12 @@ HRESULT CEditor::Ready_ProtoType()
 		return E_FAIL;
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TerrainTex", Engine::CTerrainTex::Create(m_pGraphicDev))))
 		return E_FAIL;
-	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CubeTex", Engine::CCubeTex::Create(m_pGraphicDev))))  
-		return E_FAIL;
+	//if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CubeTex", Engine::CCubeTex::Create(m_pGraphicDev))))
+	//	return E_FAIL;
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_NormalCubeTex",
 		Engine::CNormalCubeTex::Create(m_pGraphicDev, 1.f, 1.f, 1.f))))
 		return E_FAIL;
+  
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemBodyTex", Engine::CRedStoneGolemBodyTex::Create(m_pGraphicDev))))
 		return E_FAIL;
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemHeadTex", Engine::CRedStoneGolemHeadTex::Create(m_pGraphicDev))))
@@ -1902,9 +1905,9 @@ HRESULT CEditor::Ready_ProtoType()
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Spider_LBLeg",
 		Engine::CCubeBodyTex::Create(m_pGraphicDev, SpiderUV::LEG))))
 		return E_FAIL;
-	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Transform",
-		Engine::CTransform::Create(m_pGraphicDev))))
-		return E_FAIL;
+	//if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Transform",
+	//	Engine::CTransform::Create(m_pGraphicDev))))
+	//	return E_FAIL;
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Calculator",
 		Engine::CCalculator::Create(m_pGraphicDev))))
 		return E_FAIL; 

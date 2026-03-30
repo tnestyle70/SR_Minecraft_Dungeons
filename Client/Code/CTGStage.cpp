@@ -315,7 +315,7 @@ CTGStage* CTGStage::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 	if (FAILED(pCamp->Ready_Scene()))
 	{
 		Safe_Release(pCamp);
-		MSG_BOX("pCamp Create Failed");
+		MSG_BOX("TGStage Create Failed");
 		return nullptr;
 	}
 

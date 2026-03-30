@@ -125,10 +125,12 @@ private:
     ParticleDesc m_tEditDesc;
     LPDIRECT3DTEXTURE9 m_pPreviewTexture = nullptr;
     eParticlePreset m_eSelectedPreset = PARTICLE_FOOTSTEP;
+
     map<MonsterData, CMonster*>     m_mapMonsters;
     map<IronBarData, CIronBar*>     m_mapIronBars;
     map<TriggerBoxData, CTriggerBox*> m_mapTriggerBoxes;
     map<JumpingTrapData, CJumpingTrap*> m_mapJumpingTraps;
+
     CBlockPlacer* m_pBlockPlacer = nullptr;
     bool m_bEditorMode = true;
     eEditMode  m_eEditMode = MODE_BLOCK;

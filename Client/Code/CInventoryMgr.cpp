@@ -2,6 +2,8 @@
 #include "CInventoryMgr.h"
 #include "CPlayer.h"
 #include "CInventoryBackground.h"
+#include "CEventBus.h"
+#include "CFontMgr.h"
 
 IMPLEMENT_SINGLETON(CInventoryMgr)
 
@@ -18,7 +20,13 @@ HRESULT CInventoryMgr::Ready_InventoryMgr(LPDIRECT3DDEVICE9 pGraphicDev)
 {
 	m_pGraphicDev = pGraphicDev;
 	m_pGraphicDev->AddRef();
-	
+
+	//재화 새팅
+	for (int currency = 0; currency < (int)eCurrencyType::CURRENCY_END; ++currency)
+	{
+		m_arrCurrency[currency] = CCurrencyHUD::Create(m_pGraphicDev,
+		(eCurrencyType)currency, 45.f + 45.f * currency, 50.f, 45.f, 45.f);
+	}
 	//InventorySlot들 전부 세팅
 	for(int tab = 0; tab < (int)eInventoryTab::INVENTORY_END; tab++)
 	{
@@ -85,6 +93,17 @@ HRESULT CInventoryMgr::Ready_InventoryMgr(LPDIRECT3DDEVICE9 pGraphicDev)
 	//배경
 	m_pInventoryBG = CInventoryBackground::Create(m_pGraphicDev,
 		0.f, 0.f, 1280.f, 720.f);
+
+	//이벤트 버스 연결, 획득한 에메랄드, 유물 증가 시키기!
+	CEventBus::GetInstance()->Subscribe(eEventType::CURRENCY_COLLECTED, this,
+		[this](const FGameEvent& event)
+		{
+			switch (static_cast<eCurrencyType>(event.iSubType))
+			{
+			case eCurrencyType::EMERALD:    m_iEmeraldCount += event.iValue; break;
+			case eCurrencyType::ARTIFACT:   m_iArtifactCount += event.iValue; break;
+			}
+		});
 	
 	return S_OK;
 }
@@ -101,10 +120,15 @@ _int CInventoryMgr::Update(const _float& fTimeDelta)
 	if (!m_bActive) return 0;
 
 	//배경 업데이트
-	//m_pInventoryBG->Update_GameObject(fTimeDelta);
+	m_pInventoryBG->Update_GameObject(fTimeDelta);
 
 	//맵 버튼 업데이트
 
+	//재화 
+	for (int i = 0; i < (int)eCurrencyType::CURRENCY_END; ++i)
+	{
+		m_arrCurrency[i]->Update_GameObject(fTimeDelta);
+	}
 	//슬롯 Update
 	for (auto& pSlot : m_vecSlots[(int)m_eTab])
 		pSlot->Update_GameObject(fTimeDelta);
@@ -137,7 +161,13 @@ void CInventoryMgr::LateUpdate(const _float& fTimeDelta)
 	if (!m_bActive)
 		return;
 	//BackGround
-	//m_pInventoryBG->LateUpdate_GameObject(fTimeDelta);
+	m_pInventoryBG->LateUpdate_GameObject(fTimeDelta);
+	
+	//Currency
+	for (int i = 0; i < (int)eCurrencyType::CURRENCY_END; ++i)
+	{
+		m_arrCurrency[i]->LateUpdate_GameObject(fTimeDelta);
+	}
 	//Slot
 	for (auto& pSlot : m_vecSlots[(int)m_eTab])
 		pSlot->LateUpdate_GameObject(fTimeDelta);
@@ -166,7 +196,7 @@ void CInventoryMgr::Render()
 	//BackGround
 	//GPU에게 다음에 그려질 텍스쳐 설정 GPU의 0번 소켓에 사용자가 지정한 텍스쳐 m_vecTexture[index]의 주소가 지정
 	//위에서 저장한 텍스쳐로 DrawPrimitive 호출시 실질적으로 그리기
-	//m_pInventoryBG->Render_GameObject();
+	m_pInventoryBG->Render_GameObject();
 	//Slot
 	for (auto& pSlot : m_vecSlots[(int)m_eTab])
 		pSlot->Render_GameObject();
@@ -187,6 +217,13 @@ void CInventoryMgr::Render()
 	}
 	//Player Preview
 	Render_PlayerPreview();
+	//Currency
+	for (int i = 0; i < (int)eCurrencyType::CURRENCY_END; ++i)
+	{
+		m_arrCurrency[i]->Render_GameObject();
+	}
+	//Currency
+	Render_Currency();
 
 	return;
 }
@@ -287,6 +324,24 @@ void CInventoryMgr::Update_EquipSlot()
 	}
 }
 
+void CInventoryMgr::Render_Currency()
+{
+	_vec2 vPos{ 50.f, 50.f };
+
+	_tchar buf[32];
+	swprintf_s(buf, L"%d", m_iEmeraldCount);
+
+	CFontMgr::GetInstance()->Render_Font(
+		L"Font_Minecraft", buf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+
+	vPos.x += 100.f;
+	
+	swprintf_s(buf, L"%d", m_iArtifactCount);
+
+	CFontMgr::GetInstance()->Render_Font(
+		L"Font_Minecraft", buf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+}
+
 void CInventoryMgr::Render_PlayerPreview()
 {
 	if (!m_pPlayer) return;
@@ -356,6 +411,14 @@ void CInventoryMgr::Clear_ClickedSlot()
 
 void CInventoryMgr::Free()
 {
+	//이벤트 버스 소멸전 반드시 해제!
+	CEventBus::GetInstance()->Unsubscribe(eEventType::CURRENCY_COLLECTED, this);
+	
+	//재화
+	for (int i = 0; i < (int)eCurrencyType::CURRENCY_END; ++i)
+	{
+		Safe_Release(m_arrCurrency[i]);
+	}
 	//인벤토리
 	for (int i = 0; i < (int)eInventoryTab::INVENTORY_END; ++i)
 	{

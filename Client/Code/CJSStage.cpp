@@ -34,6 +34,36 @@ _int CJSStage::Update_Scene(const _float& fTimeDelta)
 {
 	_int iExit = CScene::Update_Scene(fTimeDelta);
 
+
+	CBlockMgr::GetInstance()->Update(fTimeDelta);
+
+	CTriggerBoxMgr::GetInstance()->Update(fTimeDelta);
+
+	CIronBarMgr::GetInstance()->Update(fTimeDelta);
+
+	CMonsterMgr::GetInstance()->Update(fTimeDelta);
+
+	if (GetAsyncKeyState(VK_RETURN) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
+	{
+		//Render Group Clear Before Change Scene!!!!
+		CTriggerBoxMgr::GetInstance()->SetSceneChanged(false);
+		CRenderer::GetInstance()->Clear_RenderGroup();
+		CTriggerBoxMgr::GetInstance()->Clear();
+		CIronBarMgr::GetInstance()->Clear();
+		CMonsterMgr::GetInstance()->Clear();
+		CParticleMgr::GetInstance()->Clear_Emitters();
+		CInventoryMgr::GetInstance()->Clear_Player();
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_TJ)))
+		{
+			MSG_BOX("RedStone Create Failed");
+			return -1;
+		}
+		return iExit;
+	}
+	auto iter = m_mapLayer.find(L"GameLogic_Layer");
+	if (iter != m_mapLayer.end())
+		iter->second->Delete_GameObject(fTimeDelta);
+
 	return iExit;
 }
 

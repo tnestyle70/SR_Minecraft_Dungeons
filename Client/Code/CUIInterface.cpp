@@ -4,7 +4,10 @@
 
 CUIInterface::CUIInterface(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CGameObject(pGraphicDev)
-{}
+{
+	D3DXMatrixIdentity(&m_matOriginView);
+	D3DXMatrixIdentity(&m_matOriginProj);
+}
 
 CUIInterface::~CUIInterface()
 {}

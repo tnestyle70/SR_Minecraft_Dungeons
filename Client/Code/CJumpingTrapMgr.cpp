@@ -2,23 +2,23 @@
 #include "CJumpingTrapMgr.h"
 #include "CPlayer.h"
 
-IMPLEMENT_SINGLETON(CJumpingTarpMgr)
+IMPLEMENT_SINGLETON(CJumpingTrapMgr)
 
-CJumpingTarpMgr::CJumpingTarpMgr()
+CJumpingTrapMgr::CJumpingTrapMgr()
 {
 }
 
-CJumpingTarpMgr::~CJumpingTarpMgr()
+CJumpingTrapMgr::~CJumpingTrapMgr()
 {
 	Free();
 }
 
-HRESULT CJumpingTarpMgr::Ready_JumpingTrapMgr()
+HRESULT CJumpingTrapMgr::Ready_JumpingTrapMgr()
 {
 	return S_OK;
 }
 
-_int CJumpingTarpMgr::Update(const _float& fTimeDelta)
+_int CJumpingTrapMgr::Update(const _float& fTimeDelta)
 {
 	for (auto& pair : m_mapJumpingTrapGroups)
 	{
@@ -30,7 +30,7 @@ _int CJumpingTarpMgr::Update(const _float& fTimeDelta)
 	return 0;
 }
 
-void CJumpingTarpMgr::LateUpdate(const _float& fTimeDelta)
+void CJumpingTrapMgr::LateUpdate(const _float& fTimeDelta)
 {
 	for (auto& pair : m_mapJumpingTrapGroups)
 	{
@@ -41,7 +41,7 @@ void CJumpingTarpMgr::LateUpdate(const _float& fTimeDelta)
 	}
 }
 
-void CJumpingTarpMgr::Render()
+void CJumpingTrapMgr::Render()
 {
 	for (auto& pair : m_mapJumpingTrapGroups)
 	{
@@ -52,7 +52,7 @@ void CJumpingTarpMgr::Render()
 	}
 }
 
-void CJumpingTarpMgr::Activate(int iTriggerID)
+void CJumpingTrapMgr::Activate(int iTriggerID)
 {
 	auto it = m_mapJumpingTrapGroups.find(iTriggerID);
 	if (it == m_mapJumpingTrapGroups.end())
@@ -61,10 +61,17 @@ void CJumpingTarpMgr::Activate(int iTriggerID)
 	for (auto* pTrap : it->second)
 		pTrap->Set_Active(true);
 	//플레이어 점프
-	m_pPlayer->LaunchByTrap(50.f);
+	if (iTriggerID == 1)
+	{
+		m_pPlayer->LaunchByTrap(80.f);
+	}
+	if (iTriggerID == 0)
+	{
+		m_pPlayer->LaunchByTrap(30.f);
+	}
 }
 
-void CJumpingTarpMgr::Add_JumpingTrap(CGameObject * pGameObject, int iTriggerID)
+void CJumpingTrapMgr::Add_JumpingTrap(CGameObject * pGameObject, int iTriggerID)
 {
 	CJumpingTrap* pJumpingTrap = dynamic_cast<CJumpingTrap*>(pGameObject);
 
@@ -80,7 +87,7 @@ void CJumpingTarpMgr::Add_JumpingTrap(CGameObject * pGameObject, int iTriggerID)
 	}
 }
 
-void CJumpingTarpMgr::Clear()
+void CJumpingTrapMgr::Clear()
 {
 	for (auto& [id, vecTraps] : m_mapJumpingTrapGroups)
 		for (auto* pTrap : vecTraps)
@@ -91,15 +98,15 @@ void CJumpingTarpMgr::Clear()
 	m_pPlayer = nullptr;
 }
 
-void CJumpingTarpMgr::Set_Player(CPlayer * pPlayer)
+void CJumpingTrapMgr::Set_Player(CPlayer * pPlayer)
 {
 	m_pPlayer = pPlayer;
 }
 
-bool CJumpingTarpMgr::Is_Active(int iTriggerID)
+bool CJumpingTrapMgr::Is_Active(int iTriggerID)
 {
 	return false;
 }
 
-void CJumpingTarpMgr::Free()
+void CJumpingTrapMgr::Free()
 {}

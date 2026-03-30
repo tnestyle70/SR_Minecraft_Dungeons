@@ -238,7 +238,7 @@ void CMainApp::Free()
     CMonsterMgr::GetInstance()->DestroyInstance();
     CIronBarMgr::GetInstance()->DestroyInstance();
     CTriggerBoxMgr::GetInstance()->DestroyInstance();
-    CJumpingTarpMgr::GetInstance()->DestroyInstance();
+    CJumpingTrapMgr::GetInstance()->DestroyInstance();
     CParticleMgr::GetInstance()->DestroyInstance();
     CBlockMgr::GetInstance()->DestroyInstance();
     CInventoryMgr::GetInstance()->DestroyInstance();

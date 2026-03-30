@@ -3,6 +3,10 @@
 #include "CRenderer.h"
 #include "CPlayer.h"
 #include "CNetworkPlayer.h"
+#include "CInventoryMgr.h"
+#include "CFontMgr.h"
+#include "CEventBus.h"
+#include "CMonster.h"
 
 CHUD::CHUD(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CGameObject(pGraphicDev)
@@ -25,14 +29,28 @@ HRESULT CHUD::Ready_GameObject()
 	if (FAILED(Add_Component()))
 		return E_FAIL;
 
-	//í•˜íŠ¸ ìœ„ì¹˜ ì‚¬ì´ì¦ˆ ì§€ì •
+	//ÇÏÆ® À§Ä¡ »çÀÌÁî ÁöÁ¤
 	m_fX = 595.f; m_fY = 622.f;
 	m_fW = 90.f; m_fH = 80.f;
 
-	//í¬ì…˜ ì¿¨íƒ€ìž„ ìœ„ì¹˜ ì‚¬ì´ì¦ˆ ì§€ì •
+	//Æ÷¼Ç ÄðÅ¸ÀÓ À§Ä¡ »çÀÌÁî ÁöÁ¤
 	m_fPosionX = 690.f; m_fPosionY = 694.f;
 	m_fPosionW = 53.f; m_fPosionH = 65.f;
-	
+
+	//ÀÌº¥Æ® ¹ö½º ¿¬°á, Ã³Ä¡µÈ ¸ó½ºÅÍ ¼ö ¹Þ±â
+	CEventBus::GetInstance()->Subscribe(eEventType::MONSTER_DEAD, this,
+		[this](const FGameEvent& event)
+		{
+			switch (static_cast<EMonsterType>(event.iSubType))
+			{
+			case EMonsterType::ZOMBIE:    m_iZombieCount += event.iValue; break;
+			case EMonsterType::CREEPER:   m_iCreeperCount += event.iValue; break;
+			case EMonsterType::SKELETON:  m_iSkeletonCount += event.iValue; break;
+			case EMonsterType::SPIDER:    m_iSpiderCount += event.iValue; break;
+			}
+
+		});
+
 	return S_OK;
 }
 
@@ -56,7 +74,7 @@ void CHUD::Render_GameObject()
 {
 	if (!m_pPlayer && !m_pNetworkPlayer)
 		return;
-	//í”Œë ˆì´ì–´ ì²´ë ¥ ì—°ë™
+	//ÇÃ·¹ÀÌ¾î Ã¼·Â ¿¬µ¿
 	if (m_pPlayer)
 	{
 		m_iHP = m_pPlayer->Get_Hp();
@@ -72,45 +90,47 @@ void CHUD::Render_GameObject()
 		return;
 	}
 	
-	//ì²´ë ¥ ë¹„ìœ¨ì— ë”°ë¥¸ ë°ë¯¸ì§€ ë¹„ìœ¨, ì¦‰ Empty Heart ë Œë” ë¹„ìœ¨ ì„¤ì •
+	//Ã¼·Â ºñÀ²¿¡ µû¸¥ µ¥¹ÌÁö ºñÀ², Áï Empty Heart ·»´õ ºñÀ² ¼³Á¤
 	float fRatio = (m_iMaxHP > 0) ? (float)m_iHP / (float)m_iMaxHP : 0.f;
 	float fDamageRatio = 1.f - fRatio;
 
 	Render_BeginUI();
 
-	//ê¸°ë³¸ HUD Render
+	//±âº» HUD Render
 	m_pTextureCom->Set_Texture(0);
 	m_pBufferCom->Render_Buffer();
 
 	Render_PosionCoolTime();
+	Render_EmeraldCount(); 
+	Render_Mission();
 
-	//Empty Heart ë¹„ìœ¨ì— ë”°ë¥¸ ë Œë”
+	//Empty Heart ºñÀ²¿¡ µû¸¥ ·»´õ
 	if (fDamageRatio > 0.f)
 	{
-		//ì¿¼ë“œì˜ ë†’ì´ëŠ” fEmptyHë¡œ ì¤„ì´ë˜, UVë„ fDamageRatioë§Œí¼ë§Œ ì¤„ì´ê¸°
+		//ÄõµåÀÇ ³ôÀÌ´Â fEmptyH·Î ÁÙÀÌµÇ, UVµµ fDamageRatio¸¸Å­¸¸ ÁÙÀÌ±â
 		float fEmptyH = m_fH * fDamageRatio;
-		//ìƒë‹¨ì„ ê³ ì •í•˜ê¸° ìœ„í•´ì„œ Yë¥¼ fEmptyH * 0.5ë¥¼ ê¸°ì¤€ìœ¼ë¡œ ìž¡ëŠ”ë‹¤?
+		//»ó´ÜÀ» °íÁ¤ÇÏ±â À§ÇØ¼­ Y¸¦ fEmptyH * 0.5¸¦ ±âÁØÀ¸·Î Àâ´Â´Ù?
 		float fNDCX = (m_fX + m_fW * 0.5f) / (WINCX * 0.5f) - 1.f;
 		float fNDCY = 1.f - (m_fY + fEmptyH * 0.5f) / (WINCY * 0.5f);
 		
 		_matrix matWorld;
 		D3DXMatrixTransformation2D(&matWorld,
 			nullptr, 0.f,
-			&_vec2(m_fW / WINCX, fEmptyH / WINCY), //ë†’ì´ ë¹„ìœ¨ ì¡°ì •
+			&_vec2(m_fW / WINCX, fEmptyH / WINCY), //³ôÀÌ ºñÀ² Á¶Á¤
 			nullptr, 0.f,
 			&_vec2(fNDCX, fNDCY));
 		m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
-		//UVë„ DamageRatioë§Œí¼ë§Œ ìƒ˜í”Œë§
+		//UVµµ DamageRatio¸¸Å­¸¸ »ùÇÃ¸µ
 		_matrix matTexture;
 		D3DXMatrixScaling(&matTexture, 1.f, fDamageRatio, 1.f);
 		m_pGraphicDev->SetTransform(D3DTS_TEXTURE0, &matTexture);
 		m_pGraphicDev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
-		//í…ìŠ¤ì³ë§Œ êµì²´í•˜ê³ , BufferëŠ” ê·¸ëŒ€ë¡œ ì¨ë„ ë¬´ê´€
+		//ÅØ½ºÃÄ¸¸ ±³Ã¼ÇÏ°í, Buffer´Â ±×´ë·Î ½áµµ ¹«°ü
 		m_pEmptyHeart->Set_Texture(0);
 		m_pBufferCom->Render_Buffer();
 	}
 
-	//UV Transform ë³µêµ¬
+	//UV Transform º¹±¸
 	m_pGraphicDev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
 	
 	Render_EndUI();
@@ -118,16 +138,16 @@ void CHUD::Render_GameObject()
 
 void CHUD::Render_BeginUI()
 {
-	//ì›ë³¸ í–‰ë ¬ ì €ìž¥
+	//¿øº» Çà·Ä ÀúÀå
 	m_pGraphicDev->GetTransform(D3DTS_VIEW, &m_matOriginView);
 	m_pGraphicDev->GetTransform(D3DTS_PROJECTION, &m_matOriginProj);
 
-	//ì›”ë“œ í–‰ë ¬ Identityë¡œ ì„¤ì •
+	//¿ùµå Çà·Ä Identity·Î ¼³Á¤
 	_matrix matWorld;
 	D3DXMatrixIdentity(&matWorld);
 	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
 	
-	//View / Proj í–‰ë ¬ í’€ì–´ì£¼ê¸°
+	//View / Proj Çà·Ä Ç®¾îÁÖ±â
 	_matrix matIdentity;
 	D3DXMatrixIdentity(&matIdentity);
 	m_pGraphicDev->SetTransform(D3DTS_VIEW, &matIdentity);
@@ -145,7 +165,7 @@ void CHUD::Render_BeginUI()
 
 void CHUD::Render_EndUI()
 {
-	//ë Œë”ë§ ìƒíƒœ ë³µêµ¬ - ì›”ë“œ í–‰ë ¬ì€ ê°œë³„ í´ëž˜ìŠ¤ Renderì‹œì— World í–‰ë ¬ ì„¸íŒ…
+	//·»´õ¸µ »óÅÂ º¹±¸ - ¿ùµå Çà·ÄÀº °³º° Å¬·¡½º Render½Ã¿¡ World Çà·Ä ¼¼ÆÃ
 	m_pGraphicDev->SetTransform(D3DTS_VIEW, &m_matOriginView);
 	m_pGraphicDev->SetTransform(D3DTS_PROJECTION, &m_matOriginProj);
 
@@ -157,32 +177,32 @@ void CHUD::Render_EndUI()
 
 void CHUD::Render_PosionCoolTime()
 {
-	//ì‹œê°„ì— ë”°ë¥¸ í¬ì…˜ ì¿¨íƒ€ìž„ ë Œë”ë§ ì •ë„ ì„¤ì •
+	//½Ã°£¿¡ µû¸¥ Æ÷¼Ç ÄðÅ¸ÀÓ ·»´õ¸µ Á¤µµ ¼³Á¤
 	float fRatio = m_fPosionCooltime / m_fPosionDuration;
 	//float fCooltimeRatio = 1.f - fRatio;
 
-	//í¬ì…˜ ì¿¨íƒ€ìž„ ë Œë”ë§
+	//Æ÷¼Ç ÄðÅ¸ÀÓ ·»´õ¸µ
 	if (m_bIsPosionCoolTime)
 	{
-		//ì¿¼ë“œì˜ ë†’ì´ëŠ” fEmptyHë¡œ ì¤„ì´ë˜, UVë„ fDamageRatioë§Œí¼ë§Œ ì¤„ì´ê¸°
+		//ÄõµåÀÇ ³ôÀÌ´Â fEmptyH·Î ÁÙÀÌµÇ, UVµµ fDamageRatio¸¸Å­¸¸ ÁÙÀÌ±â
 		float fCoolTimeH = 1.f - m_fPosionH * fRatio;
-		//ìƒë‹¨ì„ ê³ ì •í•˜ê¸° ìœ„í•´ì„œ Yë¥¼ fEmptyH * 0.5ë¥¼ ê¸°ì¤€ìœ¼ë¡œ ìž¡ëŠ”ë‹¤?
+		//»ó´ÜÀ» °íÁ¤ÇÏ±â À§ÇØ¼­ Y¸¦ fEmptyH * 0.5¸¦ ±âÁØÀ¸·Î Àâ´Â´Ù?
 		float fNDCX = (m_fPosionX + m_fPosionW * 0.5f) / (WINCX * 0.5f) - 1.f;
 		float fNDCY = 1.f - (m_fPosionY + fCoolTimeH * 0.5f) / (WINCY * 0.5f);
 
 		_matrix matWorld;
 		D3DXMatrixTransformation2D(&matWorld,
 			nullptr, 0.f,
-			&_vec2(m_fPosionW / WINCX, fCoolTimeH / WINCY), //ë†’ì´ ë¹„ìœ¨ ì¡°ì •
+			&_vec2(m_fPosionW / WINCX, fCoolTimeH / WINCY), //³ôÀÌ ºñÀ² Á¶Á¤
 			nullptr, 0.f,
 			&_vec2(fNDCX, fNDCY));
 		m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
-		//UVë„ DamageRatioë§Œí¼ë§Œ ìƒ˜í”Œë§
+		//UVµµ DamageRatio¸¸Å­¸¸ »ùÇÃ¸µ
 		_matrix matTexture;
 		D3DXMatrixScaling(&matTexture, 1.f, fCoolTimeH, 1.f);
 		m_pGraphicDev->SetTransform(D3DTS_TEXTURE0, &matTexture);
 		m_pGraphicDev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
-		//í…ìŠ¤ì³ë§Œ êµì²´í•˜ê³ , BufferëŠ” ê·¸ëŒ€ë¡œ ì¨ë„ ë¬´ê´€
+		//ÅØ½ºÃÄ¸¸ ±³Ã¼ÇÏ°í, Buffer´Â ±×´ë·Î ½áµµ ¹«°ü
 		m_pPosionCoolTime->Set_Texture(0);
 		m_pBufferCom->Render_Buffer();
 	}
@@ -190,15 +210,61 @@ void CHUD::Render_PosionCoolTime()
 		return;
 }
 
+void CHUD::Render_EmeraldCount()
+{
+	_vec2 vPos{ 1000.f, 680.f };
+	m_iEmerald = CInventoryMgr::GetInstance()->Get_EmeraldCount();
+	_tchar buf[32];
+	swprintf_s(buf, L"%d", m_iEmerald);
+
+	CFontMgr::GetInstance()->Render_Font(
+		L"Font_Minecraft", buf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+}
+
+void CHUD::Render_Mission()
+{
+	_vec2 vPos{ 800.f, 50.f };
+	//Á»ºñ 
+	_tchar missionBuf[32];
+	swprintf_s(missionBuf, L"Á»ºñ¸¦ Ã³Ä¡ÇÏ¼¼¿ä %d / 10", m_iZombieCount);
+	
+	CFontMgr::GetInstance()->Render_Font(
+		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+	
+	//Å©¸®ÆÛ
+	vPos.y += 20.f;
+
+	swprintf_s(missionBuf, L"Å©¸®ÆÛ¸¦ Ã³Ä¡ÇÏ¼¼¿ä %d / 10", m_iCreeperCount);
+
+	CFontMgr::GetInstance()->Render_Font(
+		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+	
+	//½ºÄÌ·¹Åæ
+	vPos.y += 20.f;
+
+	swprintf_s(missionBuf, L"½ºÄÌ·¹ÅæÀ» Ã³Ä¡ÇÏ¼¼¿ä %d / 10", m_iSkeletonCount);
+
+	CFontMgr::GetInstance()->Render_Font(
+		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+
+	//°Å¹Ì
+	vPos.y += 20.f;
+
+	swprintf_s(missionBuf, L"°Å¹Ì¸¦ Ã³Ä¡ÇÏ¼¼¿ä %d / 10", m_iSpiderCount);
+
+	CFontMgr::GetInstance()->Render_Font(
+		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+}
+
 void CHUD::Use_Posion(const _float fTimeDelta)
 {
-	//í¬ì…˜ ì‚¬ìš©ì‹œ ì¿¨íƒ€ìž„ ëŒë¦¬ê¸°
+	//Æ÷¼Ç »ç¿ë½Ã ÄðÅ¸ÀÓ µ¹¸®±â
 	if (GetAsyncKeyState('T') & 0x8000)
 	{
 		m_bIsPosionCoolTime = true;
 		m_fPosionCooltime = m_fPosionDuration;
 	}
-	//í¬ì…˜ ì¿¨íƒ€ìž„ ëŒë¦¬ê¸°
+	//Æ÷¼Ç ÄðÅ¸ÀÓ µ¹¸®±â
 	if (m_bIsPosionCoolTime)
 	{
 		m_fPosionCooltime -= fTimeDelta;
@@ -278,5 +344,7 @@ CHUD* CHUD::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 
 void CHUD::Free()
 {
-
+	//ÀÌº¥Æ® ¹ö½º ¼Ò¸êÀü ¹Ýµå½Ã ÇØÁ¦!
+	CEventBus::GetInstance()->Unsubscribe(eEventType::MONSTER_DEAD, this);
+	CGameObject::Free();
 }

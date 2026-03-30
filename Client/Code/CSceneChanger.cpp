@@ -4,7 +4,6 @@
 #include "CLoadingScene.h"
 // Object Editor
 #include "CObjectEditor.h"
-
 //stages
 #include "CLogo.h"
 #include "CStage.h"
@@ -61,8 +60,12 @@ HRESULT CSceneChanger::ChangeScene(LPDIRECT3DDEVICE9 pGraphicDev, eSceneType eTy
 			SCENE_JS_PLAY,
 			L"Proto_CampLoadingTexture");
 		break;
-	case SCENE_TG:
-		pScene = CTGStage::Create(pGraphicDev);
+	case SCENE_TJ:
+		pScene = CLoadingScene::Create(
+			pGraphicDev,
+			CLoading::LOADING_OBSIDIAN,
+			SCENE_TJ_PLAY,
+			L"Proto_CampLoadingTexture");
 		break;
 	case SCENE_CY:
 		pScene = CLoadingScene::Create(
@@ -74,7 +77,7 @@ HRESULT CSceneChanger::ChangeScene(LPDIRECT3DDEVICE9 pGraphicDev, eSceneType eTy
 	case SCENE_NETWORK:
 		pScene = CLoadingScene::Create(
 			pGraphicDev,
-			CLoading::LOADING_OBSIDIAN,
+			CLoading::LOADIND_SQUIDCOAST,
 			SCENE_NETWORK_PLAY,
 			L"Proto_SquidCoastLoadingTexture");
 		break;
@@ -93,7 +96,7 @@ HRESULT CSceneChanger::ChangeScene(LPDIRECT3DDEVICE9 pGraphicDev, eSceneType eTy
 	case SCENE_JS_PLAY:
 		pScene = CJSStage::Create(pGraphicDev);
 		break;
-	case SCENE_TG_PLAY:
+	case SCENE_TJ_PLAY:
 		pScene = CTGStage::Create(pGraphicDev);
 		break;
 	case SCENE_CY_PLAY:

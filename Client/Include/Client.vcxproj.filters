@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -278,6 +278,18 @@
     </ClCompile>
     <ClCompile Include="..\Code\CJumpingTrap.cpp">
       <Filter>01. Scene\03. Editor\08. JumpingTrapMgr\00. JumpingTrap</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CEventBus.cpp">
+      <Filter>03. Manager\05. EventBus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CCurrencyHUD.cpp">
+      <Filter>02. GameObject\12. UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CLoadingBlock.cpp">
+      <Filter>01. Scene\02. Loading</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CLoadingTexture.cpp">
+      <Filter>01. Scene\02. Loading</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\CTGSkyBox.cpp">
       <Filter>02. GameObject\05. SkyBox</Filter>
@@ -575,6 +587,18 @@
     <ClInclude Include="..\Header\CJumpingTrap.h">
       <Filter>01. Scene\03. Editor\08. JumpingTrapMgr\00. JumpingTrap</Filter>
     </ClInclude>
+    <ClInclude Include="..\Header\CEventBus.h">
+      <Filter>03. Manager\05. EventBus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CCurrencyHUD.h">
+      <Filter>02. GameObject\12. UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CLoadingBlock.h">
+      <Filter>01. Scene\02. Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CLoadingTexture.h">
+      <Filter>01. Scene\02. Loading</Filter>
+    </ClInclude>
     <ClInclude Include="..\Header\CTGSkyBox.h">
       <Filter>02. GameObject\05. SkyBox</Filter>
     </ClInclude>
@@ -781,6 +805,9 @@
     </Filter>
     <Filter Include="01. Scene\03. Editor\08. JumpingTrapMgr\00. JumpingTrap">
       <UniqueIdentifier>{8c369960-3d3a-4764-be1a-6051e00e8204}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. Manager\05. EventBus">
+      <UniqueIdentifier>{7a43042b-503e-426b-a3b0-14cc490d62af}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

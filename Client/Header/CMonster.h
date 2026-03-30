@@ -41,6 +41,8 @@ public:
     bool IsActive() { return m_bActive; }
     void SetActive(bool bActive) { m_bActive = bActive; }
 
+    EMonsterType Get_Type() { return m_eType; }
+
     CCollider* Get_Collider() const { return m_pColliderCom; }
 
 private:
