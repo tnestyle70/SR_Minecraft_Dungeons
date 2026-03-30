@@ -176,6 +176,7 @@
     <ClInclude Include="..\Header\CEffect.h" />
     <ClInclude Include="..\Header\CEmerald.h" />
     <ClInclude Include="..\Header\CEnderDragon.h" />
+    <ClInclude Include="..\Header\CEnderEye.h" />
     <ClInclude Include="..\Header\CEnvironmentMgr.h" />
     <ClInclude Include="..\Header\CEquipSlot.h" />
     <ClInclude Include="..\Header\CExplosionLight.h" />
@@ -277,6 +278,7 @@
     <ClCompile Include="..\Code\CEffect.cpp" />
     <ClCompile Include="..\Code\CEmerald.cpp" />
     <ClCompile Include="..\Code\CEnderDragon.cpp" />
+    <ClCompile Include="..\Code\CEnderEye.cpp" />
     <ClCompile Include="..\Code\CEnvironmentMgr.cpp" />
     <ClCompile Include="..\Code\CEquipSlot.cpp" />
     <ClCompile Include="..\Code\CExplosionLight.cpp" />
