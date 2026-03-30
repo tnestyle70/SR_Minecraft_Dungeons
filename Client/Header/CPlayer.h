@@ -239,6 +239,7 @@ private: //중력 적용과 충돌시 위치값 보정
 	//공격 모션 계산함수
 	void Calc_AttackMotion(float& fAtkX, float& fAtkY, float& fTorsoY);
 
+	void Use_Posion();
 
 public:
 	static CPlayer* Create(LPDIRECT3DDEVICE9 pGraphicDev);
