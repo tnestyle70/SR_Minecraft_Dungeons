@@ -567,6 +567,11 @@ _uint CLoading::Loading_SquidCoast()
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI/Materials/Hotbar2/Heart/heart_main.png"))) )
         return E_FAIL;
 
+    // 콜로세움 스카이박스
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ColosseumSkyBoxTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/SkyBox/Colosseum.dds"))))
+        return E_FAIL;
+
 
     lstrcpy(m_szLoading, L"기타 등등 로딩");
 
