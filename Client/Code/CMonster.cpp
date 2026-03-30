@@ -37,22 +37,22 @@ HRESULT CMonster::Ready_GameObject(_vec3& vPos)
     {
     case EMonsterType::ZOMBIE:
         m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
-        m_iHp = 200;
+        m_iHp = 20;
         m_iAtkDamage = 10;
         break;
     case EMonsterType::SKELETON:
         m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
-        m_iHp = 200;
-        m_iAtkDamage = 0;
+        m_iHp = 20;
+        m_iAtkDamage = 10;
         break;
     case EMonsterType::CREEPER:
         m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
-        m_iHp = 100;
-        m_iAtkDamage = 100;
+        m_iHp = 10;
+        m_iAtkDamage = 10;
         break;
     case EMonsterType::SPIDER:
         m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
-        m_iHp = 200;
+        m_iHp = 20;
         m_iAtkDamage = 10;
         break;
     }

@@ -54,6 +54,8 @@ HRESULT CPlayer::Ready_GameObject()
 
 	m_pTransformCom->Set_Pos(0.f, 10.f, 0.f);
 
+	//m_pTransformCom->Set_Pos(48.f, 9.f, 97.f);
+
 	m_eArmorType = ARMOR_BARDSGARD;
 
 #pragma region 파트별 크기, 오프셋
@@ -1360,8 +1362,7 @@ void CPlayer::UnEquip(eEquipType eType)
 
 void CPlayer::LaunchByTrap(_float fForce)
 {
-	//m_fVelocityY = fForce;
-	m_fVelocityY = 30.f;
+	m_fVelocityY = fForce;
 	m_bOnGround = false;
 }
 

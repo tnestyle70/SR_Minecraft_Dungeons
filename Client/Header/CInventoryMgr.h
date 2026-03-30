@@ -5,6 +5,7 @@
 #include "CTabButton.h"
 #include "CEquipSlot.h"
 #include "CItemPanel.h"
+#include "CCurrencyHUD.h"
 
 class CPlayer;
 class CInventoryBackground;
@@ -40,6 +41,9 @@ public:
 
 	void Set_Player(CPlayer* pPlayer) { m_pPlayer = pPlayer; }
 	void Clear_Player() { m_pPlayer = nullptr; }
+
+	int Get_EmeraldCount() { return m_iEmeraldCount; }
+
 private:
 	void Init_Items();
 
@@ -51,8 +55,12 @@ private:
 	void Update_EquipSlot(); //장착 슬롯 <-> 인벤토리 슬롯 연결
 
 	void Render_PlayerPreview();
+	
+	void Render_Currency();
 
 	void Clear_ClickedSlot();
+	//재화 - 에메랄드, 유물
+	CCurrencyHUD* m_arrCurrency[(int)eCurrencyType::CURRENCY_END] = {};
 	//장착 슬롯
 	CEquipSlot* m_arrEquipSlot[(int)eEquipType::EQUIP_END] = {};
 	//탭 슬롯
@@ -68,6 +76,10 @@ private:
 	CPlayer* m_pPlayer = nullptr;
 	//인벤토리 배경
 	CInventoryBackground* m_pInventoryBG = nullptr;
+	
+	//에메랄드, 유물 카운터
+	int m_iEmeraldCount = 0;
+	int m_iArtifactCount = 0;
 	
 private:
 	LPDIRECT3DDEVICE9 m_pGraphicDev = nullptr;

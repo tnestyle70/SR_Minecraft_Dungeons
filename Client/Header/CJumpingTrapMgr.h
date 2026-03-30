@@ -3,12 +3,12 @@
 
 class CPlayer;
 
-class CJumpingTarpMgr : public CBase
+class CJumpingTrapMgr : public CBase
 {
-	DECLARE_SINGLETON(CJumpingTarpMgr)
+	DECLARE_SINGLETON(CJumpingTrapMgr)
 private:
-	explicit CJumpingTarpMgr();
-	virtual ~CJumpingTarpMgr();
+	explicit CJumpingTrapMgr();
+	virtual ~CJumpingTrapMgr();
 public:
 	HRESULT Ready_JumpingTrapMgr();
 	_int Update(const _float& fTimeDelta);

@@ -39,7 +39,7 @@ _int CLogo::Update_Scene(const _float& fTimeDelta)
 {
     bool bF1 = CDInputMgr::GetInstance()->Get_DIKeyState(DIK_F1);
     bool bF2 = CDInputMgr::GetInstance()->Get_DIKeyState(DIK_F2);
-
+    
     //에디터 모드로 변경
     if (bF1 && !m_bF1Toggle)
     {
@@ -157,6 +157,25 @@ HRESULT CLogo::Ready_Prototype()
 
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SquidCoastLoadingTexture",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Logo/Loading_Screen_Squid_Coast.png"))))
+        return E_FAIL;
+
+    //로딩 블럭
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_LoadingBlockTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/LoadingBlock2.dds"))))
+        return E_FAIL;
+    //블럭 - Transform
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Transform", Engine::CTransform::Create(m_pGraphicDev))))
+        return E_FAIL;
+    //블럭 - CubeTex
+    if (nullptr == CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_CubeTex"))
+    {
+        if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CubeTex", Engine::CCubeTex::Create(m_pGraphicDev))))
+            return E_FAIL;
+    }
+
+    //SquidCoast Scene Text
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SquidCoastText",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_SquidCoast.png"))))
         return E_FAIL;
 
     return S_OK;

@@ -75,7 +75,7 @@ _int CCamp::Update_Scene(const _float& fTimeDelta)
 		CMonsterMgr::GetInstance()->Clear();
 		CParticleMgr::GetInstance()->Clear_Emitters();
 		CInventoryMgr::GetInstance()->Clear_Player();
-		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_JS)))
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_TJ)))
 		{
 			MSG_BOX("RedStone Create Failed");
 			return -1;

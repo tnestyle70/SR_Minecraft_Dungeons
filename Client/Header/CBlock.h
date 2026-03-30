@@ -19,6 +19,8 @@ public:
 	eBlockType GetBlockType() { return m_eType; }
 	_vec3 Get_Pos() { return m_vPos; }
 
+	void SetIndividualRender(bool bEnable) { m_bIndividualRender = bEnable; }
+
 private:
 	HRESULT			Add_Component();
 	HRESULT			Set_Material();
@@ -33,6 +35,10 @@ private:
 
 	_vec3 m_vPos = { 0.f, 0.f, 0.f };
 	eBlockType m_eType = eBlockType::BLOCK_END;
+
+	//개별 렌더링 여부
+	bool m_bIndividualRender = false;
+
 public:
 	static CBlock* Create(LPDIRECT3DDEVICE9 pGraphicDev,
 		const _vec3& vPos, eBlockType eType);

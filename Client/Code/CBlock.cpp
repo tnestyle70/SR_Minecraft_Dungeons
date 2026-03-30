@@ -58,9 +58,9 @@ _int CBlock::Update_GameObject(const _float& fTimeDelta)
 	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
 
 	//개별 블럭 렌더링용
-	if(CBlockMgr::GetInstance()->GetRenderMode() !=  eRenderMode::RENDER_BATCH)
+	if (m_bIndividualRender)
 		CRenderer::GetInstance()->Add_RenderGroup(RENDER_NONALPHA, this);
-
+	
 	return iExit;
 }
 

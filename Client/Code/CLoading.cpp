@@ -52,12 +52,6 @@ _uint CLoading::Loading_SquidCoast()
             return E_FAIL;
     }
 
-    if (nullptr == CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_CubeTex"))
-    {
-        if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CubeTex", Engine::CCubeTex::Create(m_pGraphicDev))))
-            return E_FAIL;
-    }
-
     if (nullptr == CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_RcTex"))
     {
         if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RcTex", Engine::CRcTex::Create(m_pGraphicDev))))
@@ -96,6 +90,10 @@ _uint CLoading::Loading_SquidCoast()
     //Player Rob
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RobeTexture",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Robe.png"))))
+        return E_FAIL;
+    //Artifact
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ArtifactTexture",
+        Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/enchant_counter.png"))))
         return E_FAIL;
     //Upgrade Lock
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_UpgradeTexture",
@@ -145,7 +143,7 @@ _uint CLoading::Loading_SquidCoast()
 
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_LampHeadTex", Engine::CLampHeadTex::Create(m_pGraphicDev))))
         return E_FAIL;
-
+    
     lstrcpy(m_szLoading, L"텍스쳐 로딩중");
 
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TerrainTexture",
@@ -255,13 +253,34 @@ _uint CLoading::Loading_SquidCoast()
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Boss_HealthBar_Empty.png"))))
         return E_FAIL;
 
+    //Scene Text
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CampText",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_Camp.png"))))
+        return E_FAIL;
+    //Scene Text
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSText",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_JS.png"))))
+        return E_FAIL;
+    //Scene Text
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TJText",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_TJ.png"))))
+        return E_FAIL;
+    //Scene Text
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CYText",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_CY.png"))))
+        return E_FAIL;
+    //Scene Text
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_GBText",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_GB.png"))))
+        return E_FAIL;
+
     //UI - 하트 
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_FilledHeart",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/filled_heart.png"))))
         return E_FAIL;
     //Gray Heart
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_EmptyHeart",
-        Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/gray_heart.png"))))
+        Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/heart_main_cropped.png"))))
         return E_FAIL;
     //Posion CoolDown
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_PosionCoolDown",
@@ -564,9 +583,6 @@ _uint CLoading::Loading_SquidCoast()
 
 
     lstrcpy(m_szLoading, L"기타 등등 로딩");
-
-    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Transform", Engine::CTransform::Create(m_pGraphicDev))))
-        return E_FAIL;
 
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Calculator", Engine::CCalculator::Create(m_pGraphicDev))))
         return E_FAIL;

@@ -54,6 +54,7 @@ public:
     void BuildQuadTree();
 
     const map<BlockPos, CBlock*>& Get_Blocks() { return m_mapBlocks; }
+    const map<BlockPos, CBlock*>& Get_EditorBlocks() { return m_mapEditBlocks; }
 
     void AddBlock(const _vec3& vPos, eBlockType eType);
     void AddBlock(int x, int y, int z, eBlockType eType);
@@ -82,7 +83,11 @@ public:
     void RebuildBatchMesh();
 private:
     LPDIRECT3DDEVICE9      m_pGraphicDev;
+    //기존 스테이지 블럭
     map<BlockPos, CBlock*> m_mapBlocks;
+    //에디터에서 추가하는 블럭
+    map<BlockPos, CBlock*> m_mapEditBlocks;
+
     CTexture* m_pTexture = nullptr;
     CBatchBuffer* m_pBatchBuffer = nullptr;
     eRenderMode            m_eRenderMode = eRenderMode::RENDER_EDITOR;
