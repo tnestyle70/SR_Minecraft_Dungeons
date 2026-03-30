@@ -258,6 +258,9 @@
     <ClCompile Include="..\Code\CFlexibleCubeTex.cpp">
       <Filter>03. Component\00. VIBuffer\09. FlexibleCubeTex</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CJSCubeTex.cpp">
+      <Filter>03. Component\00. VIBuffer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\CGraphicDev.h">
@@ -416,6 +419,9 @@
     </ClInclude>
     <ClInclude Include="..\Header\CFlexibleCubeTex.h">
       <Filter>03. Component\00. VIBuffer\09. FlexibleCubeTex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSCubeTex.h">
+      <Filter>03. Component\00. VIBuffer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

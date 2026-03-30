@@ -3,6 +3,7 @@
 #include "CBox.h"
 #include "CLamp.h"
 #include "CCrystal.h"
+#include "CEnderEye.h"
 #include "CDynamicCamera.h"
 #include "CBlockMgr.h"
 #include "CMonsterUV.h"
@@ -198,6 +199,7 @@ HRESULT CObjectEditor::SaveObjectData(const char* pFileName)
         if (dynamic_cast<CBox*>(pObj)) data.eType = OBJECT_BOX;
         else if (dynamic_cast<CLamp*>(pObj)) data.eType = OBJECT_LAMP;
         else if (dynamic_cast<CCrystal*>(pObj)) data.eType = OBJECT_CRYSTAL;
+        else if (dynamic_cast<CEnderEye*>(pObj)) data.eType = OBJECT_ENDEREYE;
         else data.eType = OBJECT_END;
 
         data.vPos[0] = vPos.x;
@@ -246,6 +248,9 @@ HRESULT CObjectEditor::LoadObjectData(const char* pFileName)
             break;
         case OBJECT_CRYSTAL:
             pObj = CCrystal::Create(m_pGraphicDev);
+            break;
+        case OBJECT_ENDEREYE:
+            pObj = CEnderEye::Create(m_pGraphicDev);
             break;
         default:
             continue;
@@ -318,6 +323,11 @@ void CObjectEditor::Render_CreateUI()
     if (ImGui::Button("Crystal"))
     {
         Start_CreateMode(L"Crystal");
+    }
+
+    if (ImGui::Button("EnderEye"))
+    {
+        Start_CreateMode(L"EnderEye");
     }
 
     ImGui::End();
@@ -416,6 +426,8 @@ void CObjectEditor::Create_Object(const wstring& type)
         pObj = CLamp::Create(m_pGraphicDev);
     else if (type == L"Crystal")
         pObj = CCrystal::Create(m_pGraphicDev);
+    else if (type == L"EnderEye")
+        pObj = CEnderEye::Create(m_pGraphicDev);
 
     if (!pObj) return;
 
@@ -454,6 +466,8 @@ void CObjectEditor::Start_CreateMode(const wstring& type)
         m_pPreviewObject = CLamp::Create(m_pGraphicDev);
     else if (type == L"Crystal")
         m_pPreviewObject = CCrystal::Create(m_pGraphicDev);
+    else if (type == L"EnderEye")
+        m_pPreviewObject = CEnderEye::Create(m_pGraphicDev);
 }
 
 HRESULT CObjectEditor::Ready_Environment_Layer(const _tchar* pLayerTag)
@@ -514,6 +528,11 @@ HRESULT CObjectEditor::Ready_Prototype()
     // Crystal
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CrystalTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/T_RedstoneCrystal.png"))))
+        return E_FAIL;
+
+    // EnderEye
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_EnderEyeTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/A_teleport_ender_duringanim.png"))))
         return E_FAIL;
 
     //
