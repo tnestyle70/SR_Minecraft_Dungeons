@@ -1,12 +1,12 @@
 #pragma once
 #include "CGameObject.h"
-#include "CCrystalPart.h"
+#include "CProtoMgr.h"
 
-class CCrystal : public CGameObject
+class CEnderEye : public CGameObject
 {
 private:
-	explicit CCrystal(LPDIRECT3DDEVICE9 pGraphicDev);
-	virtual ~CCrystal();
+	explicit CEnderEye(LPDIRECT3DDEVICE9 pGraphicDev);
+	virtual ~CEnderEye();
 
 public:
 	virtual HRESULT Ready_GameObject();
@@ -17,20 +17,16 @@ public:
 private:
 	HRESULT Add_Component();
 
-	void Set_PartsOffset();
-	void Set_WorldScale();
-	void Set_PartsParent();
+public:
+	static CEnderEye* Create(LPDIRECT3DDEVICE9 pGraphicDev);
 
 private:
-	CCrystalPart* m_pParts[CRYSTAL_END];
-
-	CTexture* m_pTextureCom;
+	CRcTex* m_pBufferCom;
 	CTransform* m_pTransformCom;
+	CTexture* m_pTextureCom;
 	CCollider* m_pColliderCom;
-
-public:
-	static CCrystal* Create(LPDIRECT3DDEVICE9 pGraphicDev);
 
 private:
 	virtual void Free();
 };
+

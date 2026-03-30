@@ -176,6 +176,7 @@
     <ClInclude Include="..\Header\CEffect.h" />
     <ClInclude Include="..\Header\CEmerald.h" />
     <ClInclude Include="..\Header\CEnderDragon.h" />
+    <ClInclude Include="..\Header\CEnderEye.h" />
     <ClInclude Include="..\Header\CEnvironmentMgr.h" />
     <ClInclude Include="..\Header\CEquipSlot.h" />
     <ClInclude Include="..\Header\CExplosionLight.h" />
@@ -187,6 +188,8 @@
     <ClInclude Include="..\Header\CIronBar.h" />
     <ClInclude Include="..\Header\CIronBarMgr.h" />
     <ClInclude Include="..\Header\CItemPanel.h" />
+    <ClInclude Include="..\Header\CJSChunk.h" />
+    <ClInclude Include="..\Header\CJSChunkMgr.h" />
     <ClInclude Include="..\Header\CJSStage.h" />
     <ClInclude Include="..\Header\CJumpingTrap.h" />
     <ClInclude Include="..\Header\CJumpingTrapMgr.h" />
@@ -228,6 +231,7 @@
     <ClInclude Include="..\Header\CStage.h" />
     <ClInclude Include="..\Header\CTabButton.h" />
     <ClInclude Include="..\Header\CTerrain.h" />
+    <ClInclude Include="..\Header\CTGSkyBox.h" />
     <ClInclude Include="..\Header\CTGStage.h" />
     <ClInclude Include="..\Header\CTNT.h" />
     <ClInclude Include="..\Header\CTriggerBox.h" />
@@ -277,6 +281,7 @@
     <ClCompile Include="..\Code\CEffect.cpp" />
     <ClCompile Include="..\Code\CEmerald.cpp" />
     <ClCompile Include="..\Code\CEnderDragon.cpp" />
+    <ClCompile Include="..\Code\CEnderEye.cpp" />
     <ClCompile Include="..\Code\CEnvironmentMgr.cpp" />
     <ClCompile Include="..\Code\CEquipSlot.cpp" />
     <ClCompile Include="..\Code\CExplosionLight.cpp" />
@@ -288,6 +293,8 @@
     <ClCompile Include="..\Code\CIronBar.cpp" />
     <ClCompile Include="..\Code\CIronBarMgr.cpp" />
     <ClCompile Include="..\Code\CItemPanel.cpp" />
+    <ClCompile Include="..\Code\CJSChunk.cpp" />
+    <ClCompile Include="..\Code\CJSChunkMgr.cpp" />
     <ClCompile Include="..\Code\CJSStage.cpp" />
     <ClCompile Include="..\Code\CJumpingTrap.cpp" />
     <ClCompile Include="..\Code\CJumpingTrapMgr.cpp" />
@@ -325,6 +332,7 @@
     <ClCompile Include="..\Code\CStage.cpp" />
     <ClCompile Include="..\Code\CTabButton.cpp" />
     <ClCompile Include="..\Code\CTerrain.cpp" />
+    <ClCompile Include="..\Code\CTGSkyBox.cpp" />
     <ClCompile Include="..\Code\CTGStage.cpp" />
     <ClCompile Include="..\Code\CTNT.cpp" />
     <ClCompile Include="..\Code\CTriggerBox.cpp" />

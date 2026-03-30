@@ -598,9 +598,9 @@ void CPlayer::Key_Input(const _float& fTimeDelta)
 	// 화살 / TNT 던지기
 	bool bRClick = (GetAsyncKeyState(VK_RBUTTON) & 0x8000);
 
-	if (GetAsyncKeyState('7') & 0x8000)
+	if (GetAsyncKeyState('T') & 0x8000)
 	{
-		LaunchByTrap(30.f);
+		Use_Posion();
 	}
 	
 	if (m_pHeldTNT)
@@ -1209,6 +1209,12 @@ void CPlayer::Calc_AttackMotion(float& fAtkX, float& fAtkY, float& fTorsoY)
 	}
 }
 
+void CPlayer::Use_Posion()
+{
+	m_fHp = m_fMaxHp;
+	
+}
+
 void CPlayer::Render_Sword(float fAtkX, float fAtkY, float fSwing)
 {
 	// 손끝 위치
@@ -1324,6 +1330,12 @@ void CPlayer::Attack_Collision()
 		vAtkPos.y += 0.9f;
 		m_pAtkColliderCom->Update_AABB(vAtkPos);
 	}
+	else
+	{
+		m_pAtkColliderCom->Update_AABB(_vec3(0.f, -9999.f, 0.f));
+		m_bAtkColliderActive = false;
+	}
+
 }
 
 void CPlayer::Equip(eEquipType eType)

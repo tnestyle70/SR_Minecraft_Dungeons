@@ -1,4 +1,4 @@
-//     __ _____ _____ _____
+﻿//     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
@@ -7860,7 +7860,14 @@ namespace detail
 					break;
 				}
 
-				// U+40000..U+FFFFF F1..F3 80..BF 80..BF 80..BF
+				// U+40000..U+FFFFF 
+				// 
+				// 
+				// 
+				// 
+				// 
+				// 
+				// ..F3 80..BF 80..BF 80..BF
 				case 0xF1:
 				case 0xF2:
 				case 0xF3:

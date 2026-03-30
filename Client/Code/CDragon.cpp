@@ -253,15 +253,15 @@ void CDragon::Handle_Input(const _float& fTimeDelta)
 	// ── RTY 상태 강제 전환 (기존 그대로) ─────────────────────────────
 	static bool bR_prev = false, bT_prev = false, bY_prev = false;
 	bool bR_cur = (GetAsyncKeyState('R') & 0x8000) != 0;
-	bool bT_cur = (GetAsyncKeyState('T') & 0x8000) != 0;
+	//bool bT_cur = (GetAsyncKeyState('T') & 0x8000) != 0;
 	bool bY_cur = (GetAsyncKeyState('Y') & 0x8000) != 0;
 
 	if (bR_cur && !bR_prev) Transition_State(eDragonState::IDLE);
-	if (bT_cur && !bT_prev) Transition_State(eDragonState::ATTACK);
+	//if (bT_cur && !bT_prev) Transition_State(eDragonState::ATTACK);
 	if (bY_cur && !bY_prev) Transition_State(eDragonState::TAIL_ATTACK);
 
 	bR_prev = bR_cur;
-	bT_prev = bT_cur;
+	//bT_prev = bT_cur;
 	bY_prev = bY_cur;
 }
 

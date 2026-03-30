@@ -279,6 +279,18 @@
     <ClCompile Include="..\Code\CJumpingTrap.cpp">
       <Filter>01. Scene\03. Editor\08. JumpingTrapMgr\00. JumpingTrap</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CTGSkyBox.cpp">
+      <Filter>02. GameObject\05. SkyBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CEnderEye.cpp">
+      <Filter>02. GameObject\11. Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSChunkMgr.cpp">
+      <Filter>03. Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSChunk.cpp">
+      <Filter>03. Manager</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -410,7 +422,6 @@
     <ClInclude Include="..\Header\CRedStone.h">
       <Filter>01. Scene\01. Stage\02. RedStone</Filter>
     </ClInclude>
-    <ClInclude Include="..\Header\CBlockRenderer.h" />
     <ClInclude Include="..\Header\CUI.h" />
     <ClInclude Include="..\Header\CHotbar.h" />
     <ClInclude Include="..\Header\CUI_Json.h" />
@@ -563,6 +574,19 @@
     </ClInclude>
     <ClInclude Include="..\Header\CJumpingTrap.h">
       <Filter>01. Scene\03. Editor\08. JumpingTrapMgr\00. JumpingTrap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CTGSkyBox.h">
+      <Filter>02. GameObject\05. SkyBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CBlockRenderer.h" />
+    <ClInclude Include="..\Header\CEnderEye.h">
+      <Filter>02. GameObject\11. Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSChunkMgr.h">
+      <Filter>03. Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSChunk.h">
+      <Filter>03. Manager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

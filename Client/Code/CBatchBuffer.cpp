@@ -50,7 +50,7 @@ TileUV CBatchBuffer::MakeTile(int col, int row)
 		(col + 1) * su - insetU,
 		(row + 1) * sv - insetV
 	};
-
+	
 	//const float s = 1.f / 4.f;          // 타일 1칸 = 0.25
 	//const float inset = 0.5f / 64.f;    // 반 픽셀 = 0.0078125
 
@@ -111,7 +111,7 @@ TileUV CBatchBuffer::GetTileUV(eBlockType eType, eFace eFace)
 	default:
 		return MakeTile(1, 0);
 	}
-
+	
 	return MakeTile(1, 0);
 }
 

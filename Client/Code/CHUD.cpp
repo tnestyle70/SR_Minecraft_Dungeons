@@ -28,6 +28,10 @@ HRESULT CHUD::Ready_GameObject()
 	//하트 위치 사이즈 지정
 	m_fX = 595.f; m_fY = 622.f;
 	m_fW = 90.f; m_fH = 80.f;
+
+	//포션 쿨타임 위치 사이즈 지정
+	m_fPosionX = 690.f; m_fPosionY = 694.f;
+	m_fPosionW = 53.f; m_fPosionH = 65.f;
 	
 	return S_OK;
 }
@@ -35,6 +39,8 @@ HRESULT CHUD::Ready_GameObject()
 _int CHUD::Update_GameObject(const _float& fTimeDelta)
 {
 	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
+
+	Use_Posion(fTimeDelta);
 
 	CRenderer::GetInstance()->Add_RenderGroup(RENDER_UI, this);
 
@@ -65,7 +71,6 @@ void CHUD::Render_GameObject()
 	{
 		return;
 	}
-
 	
 	//체력 비율에 따른 데미지 비율, 즉 Empty Heart 렌더 비율 설정
 	float fRatio = (m_iMaxHP > 0) ? (float)m_iHP / (float)m_iMaxHP : 0.f;
@@ -76,6 +81,8 @@ void CHUD::Render_GameObject()
 	//기본 HUD Render
 	m_pTextureCom->Set_Texture(0);
 	m_pBufferCom->Render_Buffer();
+
+	Render_PosionCoolTime();
 
 	//Empty Heart 비율에 따른 렌더
 	if (fDamageRatio > 0.f)
@@ -148,6 +155,61 @@ void CHUD::Render_EndUI()
 	m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 }
 
+void CHUD::Render_PosionCoolTime()
+{
+	//시간에 따른 포션 쿨타임 렌더링 정도 설정
+	float fRatio = m_fPosionCooltime / m_fPosionDuration;
+	//float fCooltimeRatio = 1.f - fRatio;
+
+	//포션 쿨타임 렌더링
+	if (m_bIsPosionCoolTime)
+	{
+		//쿼드의 높이는 fEmptyH로 줄이되, UV도 fDamageRatio만큼만 줄이기
+		float fCoolTimeH = 1.f - m_fPosionH * fRatio;
+		//상단을 고정하기 위해서 Y를 fEmptyH * 0.5를 기준으로 잡는다?
+		float fNDCX = (m_fPosionX + m_fPosionW * 0.5f) / (WINCX * 0.5f) - 1.f;
+		float fNDCY = 1.f - (m_fPosionY + fCoolTimeH * 0.5f) / (WINCY * 0.5f);
+
+		_matrix matWorld;
+		D3DXMatrixTransformation2D(&matWorld,
+			nullptr, 0.f,
+			&_vec2(m_fPosionW / WINCX, fCoolTimeH / WINCY), //높이 비율 조정
+			nullptr, 0.f,
+			&_vec2(fNDCX, fNDCY));
+		m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+		//UV도 DamageRatio만큼만 샘플링
+		_matrix matTexture;
+		D3DXMatrixScaling(&matTexture, 1.f, fCoolTimeH, 1.f);
+		m_pGraphicDev->SetTransform(D3DTS_TEXTURE0, &matTexture);
+		m_pGraphicDev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+		//텍스쳐만 교체하고, Buffer는 그대로 써도 무관
+		m_pPosionCoolTime->Set_Texture(0);
+		m_pBufferCom->Render_Buffer();
+	}
+	else
+		return;
+}
+
+void CHUD::Use_Posion(const _float fTimeDelta)
+{
+	//포션 사용시 쿨타임 돌리기
+	if (GetAsyncKeyState('T') & 0x8000)
+	{
+		m_bIsPosionCoolTime = true;
+		m_fPosionCooltime = m_fPosionDuration;
+	}
+	//포션 쿨타임 돌리기
+	if (m_bIsPosionCoolTime)
+	{
+		m_fPosionCooltime -= fTimeDelta;
+		if (m_fPosionCooltime <= 0.f)
+		{
+			m_fPosionCooltime = 0.f;
+			m_bIsPosionCoolTime = false;
+		}
+	}
+}
+
 HRESULT CHUD::Add_Component()
 {
 	Engine::CComponent* pComponent = nullptr;
@@ -168,7 +230,7 @@ HRESULT CHUD::Add_Component()
 	if (nullptr == pComponent)
 		return E_FAIL;
 
-	m_mapComponent[ID_STATIC].insert({ L"Com_Texture", pComponent });
+	m_mapComponent[ID_STATIC].insert({ L"Com_HUDTexture", pComponent });
 
 	//Filled Heart Texture
 	pComponent = m_pFilledHeart = dynamic_cast<CTexture*>
@@ -177,7 +239,7 @@ HRESULT CHUD::Add_Component()
 	if (nullptr == pComponent)
 		return E_FAIL;
 
-	m_mapComponent[ID_STATIC].insert({ L"Com_Texture", pComponent });
+	m_mapComponent[ID_STATIC].insert({ L"Com_FillHeartTexture", pComponent });
 
 	//Empty Heart Texture
 	pComponent = m_pEmptyHeart = dynamic_cast<CTexture*>
@@ -186,7 +248,16 @@ HRESULT CHUD::Add_Component()
 	if (nullptr == pComponent)
 		return E_FAIL;
 
-	m_mapComponent[ID_STATIC].insert({ L"Com_Texture", pComponent });
+	m_mapComponent[ID_STATIC].insert({ L"Com_EmptyHeartTexture", pComponent });
+
+	//Posion CoolTime
+	pComponent = m_pPosionCoolTime = dynamic_cast<CTexture*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_PosionCoolDown"));
+
+	if (nullptr == pComponent)
+		return E_FAIL;
+
+	m_mapComponent[ID_STATIC].insert({ L"Com_PosionCoolTimeTexture", pComponent });
 
 	return S_OK;
 }

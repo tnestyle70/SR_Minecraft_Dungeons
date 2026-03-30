@@ -45,7 +45,7 @@ _int CDynamicCamera::Update_GameObject(const _float& fTimeDelta)
 {
     _int iExit = CCamera::Update_GameObject(fTimeDelta);
 
-    // F1 토글
+    // F2 토글
     if (GetAsyncKeyState(VK_F2) & 0x8000)
     {
         if (!m_bF2Check)
