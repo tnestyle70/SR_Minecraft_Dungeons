@@ -36,6 +36,7 @@
 #include "CCrystal.h"
 #include "CNPC.h"
 #include "CDialogueBox.h"
+#include "CEnderEye.h"
 
 CSquidCoast::CSquidCoast(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -130,6 +131,25 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 			return -1;
 		}
 		
+		return iExit;
+	}
+
+	if (GetAsyncKeyState('T') & 0x8000)
+	{
+		CRenderer::GetInstance()->Clear_RenderGroup();
+		CTriggerBoxMgr::GetInstance()->Clear();
+		CIronBarMgr::GetInstance()->Clear();
+		CMonsterMgr::GetInstance()->Clear();
+		CParticleMgr::GetInstance()->Clear_Emitters();
+		CInventoryMgr::GetInstance()->Clear_Player();
+		CDamageMgr::GetInstance()->Clear_Boss();
+		CEnvironmentMgr::GetInstance()->Clear_Boxes();
+		CBlockMgr::GetInstance()->ClearBlocks();
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_TG)))
+		{
+			MSG_BOX("TG Stage Create Failed");
+			return -1;
+		}
 		return iExit;
 	}
 
@@ -334,6 +354,16 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		//	return E_FAIL;
 
 		//m_mapLayer.insert({ pLayerTag, pLayer });
+
+	//pGameObject = CEnderEye::Create(m_pGraphicDev);
+
+	//if (!pGameObject)
+	//	return E_FAIL;
+
+	//if (FAILED(pLayer->Add_GameObject(L"EnderEye", pGameObject)))
+	//	return E_FAIL;
+
+	//m_mapLayer.insert({ pLayerTag, pLayer });
 		
 	//Boss
 	pGameObject = CRedStoneGolem::Create(m_pGraphicDev);
@@ -511,6 +541,9 @@ HRESULT CSquidCoast::Ready_ObjectData(const char* pFileName)
 			break;
 		case OBJECT_CRYSTAL:
 			pObj = CCrystal::Create(m_pGraphicDev);
+			break;
+		case OBJECT_ENDEREYE:
+			pObj = CEnderEye::Create(m_pGraphicDev);
 			break;
 		default:
 			continue;

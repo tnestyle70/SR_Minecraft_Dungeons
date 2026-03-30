@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "CTGStage.h"
 #include "CMonster.h"
 #include "CPlayer.h"
@@ -17,6 +17,7 @@
 #include "CAncientGuardian.h"
 #include "CHUD.h"
 #include "CInventoryMgr.h"
+#include "CTGSkyBox.h"
 
 CTGStage::CTGStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -39,7 +40,8 @@ HRESULT CTGStage::Ready_Scene()
 	if (FAILED(Ready_UI_Layer(L"UI_Layer")))
 		return E_FAIL;
 
-	Ready_StageData(L"../Bin/Data/Stage6.dat");
+	if (FAILED(Ready_StageData(L"../Bin/Data/Stage6.dat")))
+		MSG_BOX("StageData Load Failed");
 
 	return S_OK;
 }
@@ -133,6 +135,7 @@ HRESULT CTGStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 
 	CGameObject* pGameObject = nullptr;
 
+
 	//dynamic camera
 	_vec3 vEye{ 0.f, 10.f, -10.f };
 	_vec3 vAt{ 0.f, 0.f, 1.f };
@@ -153,7 +156,11 @@ HRESULT CTGStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 	if (FAILED(pLayer->Add_GameObject(L"DynamicCamera", pGameObject)))
 		return E_FAIL;
 
-	//SkyBox 추가
+	pGameObject = CTGSkyBox::Create(m_pGraphicDev);
+	if (nullptr == pGameObject)
+		return E_FAIL;
+	if (FAILED(pLayer->Add_GameObject(L"SkyBox", pGameObject)))
+		return E_FAIL;
 
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
@@ -226,22 +233,10 @@ HRESULT CTGStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 HRESULT CTGStage::Ready_UI_Layer(const _tchar* pLayerTag)
 {
 	CLayer* pLayer = CLayer::Create();
-
 	if (!pLayer)
 		return E_FAIL;
 
-	CGameObject* pGameObject = nullptr;
-	//HUD
-	pGameObject = CHUD::Create(m_pGraphicDev);
-
-	if (nullptr == pGameObject)
-		return E_FAIL;
-
-	if (FAILED(pLayer->Add_GameObject(L"HUD", pGameObject)))
-		return E_FAIL;
-
 	m_mapLayer.insert({ pLayerTag, pLayer });
-
 	return S_OK;
 }
 
@@ -260,11 +255,7 @@ HRESULT CTGStage::Ready_StageData(const _tchar* szPath)
 	// 1. 블럭 (LoadBlocks 내부에서 RebuildBatchMesh까지)
 
 	//BlockMgr
-	if (FAILED(CBlockMgr::GetInstance()->Ready_BlockMgr(m_pGraphicDev)))
-	{
-		MSG_BOX("block mgr create failed");
-		return E_FAIL;
-	}
+
 
 	CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_BATCH); // 먼저 모드 설정
 

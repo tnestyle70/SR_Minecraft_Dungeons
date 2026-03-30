@@ -58,6 +58,12 @@ _uint CLoading::Loading_SquidCoast()
             return E_FAIL;
     }
 
+    if (nullptr == CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_JSCubeTex"))
+    {
+        if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSCubeTex", Engine::CJSCubeTex::Create(m_pGraphicDev))))
+            return E_FAIL;
+    }
+
     //UI - Inventory
     //Slot Frame
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_FrameTexture",
@@ -183,6 +189,11 @@ _uint CLoading::Loading_SquidCoast()
     // Crystal
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CrystalTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/T_RedstoneCrystal.png"))))
+        return E_FAIL;
+
+    // EnderEye
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_EnderEyeTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/A_teleport_ender_duringanim.png"))))
         return E_FAIL;
 
     //오징어 해안 로딩 텍스쳐`
@@ -579,6 +590,11 @@ _uint CLoading::Loading_SquidCoast()
 
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_HeartMain",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI/Materials/Hotbar2/Heart/heart_main.png"))) )
+        return E_FAIL;
+
+    // 콜로세움 스카이박스
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ColosseumSkyBoxTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/SkyBox/Colosseum.dds"))))
         return E_FAIL;
 
 

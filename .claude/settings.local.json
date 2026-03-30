@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /c/Users/USER/source/SR/SR_Minecraft_Dungeons/Client/Header/*.h /c/Users/USER/source/SR/SR_Minecraft_Dungeons/Engine/Header/*.h)"
+    ]
+  }
+}

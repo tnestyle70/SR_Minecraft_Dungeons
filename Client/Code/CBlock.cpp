@@ -176,7 +176,9 @@ const _tchar* CBlock::GetTextureName()
 	case BLOCK_OAKWOOD:
 		return L"Proto_OakWoodTexture";
 	case BLOCK_REDSTONE:
-		return L"Proto_RedStoneTexture";
+		return L"Proto_RedStoneTexture"; 
+	case BLOCK_StoneGradient:
+		return L"Proto_StoneGradientTexture";
 	default:
 		break;
 	}

@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "CSceneChanger.h"
 #include "CManagement.h"
 #include "CLoadingScene.h"
@@ -106,7 +106,7 @@ HRESULT CSceneChanger::ChangeScene(LPDIRECT3DDEVICE9 pGraphicDev, eSceneType eTy
 		pScene = CNetworkStage::Create(pGraphicDev);
 		break;
 
-		// ÁÖ½Â ¿ÀºêÁ§Æ® ¿¡µğÅÍ ¾À
+		// ì£¼ìŠ¹ ì˜¤ë¸Œì íŠ¸ ì—ë””í„° ì”¬
 	case SCENE_OBJECT_EDITOR:
 		pScene = CObjectEditor::Create(pGraphicDev);
 		break;
