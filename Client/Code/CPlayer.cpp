@@ -1324,6 +1324,12 @@ void CPlayer::Attack_Collision()
 		vAtkPos.y += 0.9f;
 		m_pAtkColliderCom->Update_AABB(vAtkPos);
 	}
+	else
+	{
+		m_pAtkColliderCom->Update_AABB(_vec3(0.f, -9999.f, 0.f));
+		m_bAtkColliderActive = false;
+	}
+
 }
 
 void CPlayer::Equip(eEquipType eType)

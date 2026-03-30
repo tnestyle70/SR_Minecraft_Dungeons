@@ -228,6 +228,7 @@
     <ClInclude Include="..\Header\CStage.h" />
     <ClInclude Include="..\Header\CTabButton.h" />
     <ClInclude Include="..\Header\CTerrain.h" />
+    <ClInclude Include="..\Header\CTGSkyBox.h" />
     <ClInclude Include="..\Header\CTGStage.h" />
     <ClInclude Include="..\Header\CTNT.h" />
     <ClInclude Include="..\Header\CTriggerBox.h" />
@@ -325,6 +326,7 @@
     <ClCompile Include="..\Code\CStage.cpp" />
     <ClCompile Include="..\Code\CTabButton.cpp" />
     <ClCompile Include="..\Code\CTerrain.cpp" />
+    <ClCompile Include="..\Code\CTGSkyBox.cpp" />
     <ClCompile Include="..\Code\CTGStage.cpp" />
     <ClCompile Include="..\Code\CTNT.cpp" />
     <ClCompile Include="..\Code\CTriggerBox.cpp" />

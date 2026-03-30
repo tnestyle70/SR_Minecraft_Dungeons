@@ -1,4 +1,4 @@
-#include "pch.h"
+Ôªø#include "pch.h"
 #include "CSceneChanger.h"
 #include "CManagement.h"
 #include "CLoadingScene.h"
@@ -62,11 +62,7 @@ HRESULT CSceneChanger::ChangeScene(LPDIRECT3DDEVICE9 pGraphicDev, eSceneType eTy
 			L"Proto_CampLoadingTexture");
 		break;
 	case SCENE_TG:
-		pScene = CLoadingScene::Create(
-			pGraphicDev,
-			CLoading::LOADING_OBSIDIAN,
-			SCENE_TG_PLAY,
-			L"Proto_CampLoadingTexture");
+		pScene = CTGStage::Create(pGraphicDev);
 		break;
 	case SCENE_CY:
 		pScene = CLoadingScene::Create(
@@ -107,7 +103,7 @@ HRESULT CSceneChanger::ChangeScene(LPDIRECT3DDEVICE9 pGraphicDev, eSceneType eTy
 		pScene = CNetworkStage::Create(pGraphicDev);
 		break;
 
-		// ¡÷Ω¬ ø¿∫Í¡ß∆Æ ø°µ≈Õ æ¿
+		// Ï£ºÏäπ Ïò§Î∏åÏ†ùÌä∏ ÏóêÎîîÌÑ∞ Ïî¨
 	case SCENE_OBJECT_EDITOR:
 		pScene = CObjectEditor::Create(pGraphicDev);
 		break;

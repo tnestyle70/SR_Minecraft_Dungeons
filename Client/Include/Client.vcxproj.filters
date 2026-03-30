@@ -279,6 +279,9 @@
     <ClCompile Include="..\Code\CJumpingTrap.cpp">
       <Filter>01. Scene\03. Editor\08. JumpingTrapMgr\00. JumpingTrap</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CTGSkyBox.cpp">
+      <Filter>02. GameObject\05. SkyBox</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -563,6 +566,9 @@
     </ClInclude>
     <ClInclude Include="..\Header\CJumpingTrap.h">
       <Filter>01. Scene\03. Editor\08. JumpingTrapMgr\00. JumpingTrap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CTGSkyBox.h">
+      <Filter>02. GameObject\05. SkyBox</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
