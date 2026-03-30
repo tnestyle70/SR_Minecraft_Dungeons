@@ -59,7 +59,7 @@ void CBlockMgr::Render()
 {
 	switch (m_eRenderMode)
 	{
-	case RENDER_EDITOR:   Render_Stage();    break;
+	case RENDER_EDITOR:   Render_QuadTree();    break;
 	case RENDER_BATCH:    Render_Stage();     break;
 	case RENDER_QUADTREE: Render_QuadTree(); break;
 	default: break;

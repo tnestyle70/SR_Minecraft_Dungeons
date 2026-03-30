@@ -43,6 +43,8 @@ public:
 		m_vInfo[INFO_POS] = { fX, fY, fZ };
 	}
 
+	_vec3 Get_Scale() { return m_vScale; }
+
 	void Set_Scale(_float fScale)
 	{
 		m_vScale *= fScale;

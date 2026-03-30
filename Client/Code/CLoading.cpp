@@ -182,6 +182,16 @@ _uint CLoading::Loading_SquidCoast()
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/chest_emerald_pop.png"))))
         return E_FAIL;
 
+    // Crystal
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CrystalTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/T_RedstoneCrystal.png"))))
+        return E_FAIL;
+
+    // EnderEye
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_EnderEyeTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/A_teleport_ender_duringanim.png"))))
+        return E_FAIL;
+
     //오징어 해안 로딩 텍스쳐`
     //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SquidCoastLoadingTexture",
     //    Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Logo/Loading_Screen_Squid_Coast.png"))))
@@ -257,6 +267,10 @@ _uint CLoading::Loading_SquidCoast()
     //Gray Heart
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_EmptyHeart",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/gray_heart.png"))))
+        return E_FAIL;
+    //Posion CoolDown
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_PosionCoolDown",
+        Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Posion_CoolDown.png"))))
         return E_FAIL;
     //Inventory sword tab on
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SwordTabOff",

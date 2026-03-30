@@ -282,6 +282,9 @@
     <ClCompile Include="..\Code\CTGSkyBox.cpp">
       <Filter>02. GameObject\05. SkyBox</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CEnderEye.cpp">
+      <Filter>02. GameObject\11. Environment</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -413,7 +416,6 @@
     <ClInclude Include="..\Header\CRedStone.h">
       <Filter>01. Scene\01. Stage\02. RedStone</Filter>
     </ClInclude>
-    <ClInclude Include="..\Header\CBlockRenderer.h" />
     <ClInclude Include="..\Header\CUI.h" />
     <ClInclude Include="..\Header\CHotbar.h" />
     <ClInclude Include="..\Header\CUI_Json.h" />
@@ -569,6 +571,10 @@
     </ClInclude>
     <ClInclude Include="..\Header\CTGSkyBox.h">
       <Filter>02. GameObject\05. SkyBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CBlockRenderer.h" />
+    <ClInclude Include="..\Header\CEnderEye.h">
+      <Filter>02. GameObject\11. Environment</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
