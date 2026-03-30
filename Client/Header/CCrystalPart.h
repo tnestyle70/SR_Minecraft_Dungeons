@@ -47,7 +47,7 @@ private:
 private:
 	CRYSTAL_PART m_ePart;
 
-	CVIBuffer* m_pBufferCom;
+	CCubeBodyTex* m_pBufferCom;
 	CTransform* m_pTransformCom;
 
 	_vec3 m_vLocalOffset;

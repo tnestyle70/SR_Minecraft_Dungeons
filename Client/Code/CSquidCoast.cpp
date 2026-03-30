@@ -33,6 +33,7 @@
 #include "CSkyBox.h"
 #include "CObjectEditor.h"
 #include "CSoundMgr.h"
+#include "CCrystal.h"
 #include "CNPC.h"
 #include "CDialogueBox.h"
 
@@ -324,15 +325,15 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		//if (FAILED(pLayer->Add_GameObject(L"Box", pGameObject)))
 		//	return E_FAIL;
 
-		//pGameObject = CLamp::Create(m_pGraphicDev);
+		//pGameObject = CCrystal::Create(m_pGraphicDev);
 
 		//if (!pGameObject)
 		//	return E_FAIL;
 
-		//if (FAILED(pLayer->Add_GameObject(L"Lamp", pGameObject)))
+		//if (FAILED(pLayer->Add_GameObject(L"Crystal", pGameObject)))
 		//	return E_FAIL;
 
-		m_mapLayer.insert({ pLayerTag, pLayer });
+		//m_mapLayer.insert({ pLayerTag, pLayer });
 		
 	//Boss
 	pGameObject = CRedStoneGolem::Create(m_pGraphicDev);
@@ -507,6 +508,9 @@ HRESULT CSquidCoast::Ready_ObjectData(const char* pFileName)
 			break;
 		case OBJECT_LAMP:
 			pObj = CLamp::Create(m_pGraphicDev);
+			break;
+		case OBJECT_CRYSTAL:
+			pObj = CCrystal::Create(m_pGraphicDev);
 			break;
 		default:
 			continue;

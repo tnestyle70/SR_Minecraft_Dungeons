@@ -2,6 +2,7 @@
 #include "CObjectEditor.h"
 #include "CBox.h"
 #include "CLamp.h"
+#include "CCrystal.h"
 #include "CDynamicCamera.h"
 #include "CBlockMgr.h"
 #include "CMonsterUV.h"
@@ -135,7 +136,6 @@ void CObjectEditor::Render_Scene()
 
     m_pGraphicDev->DrawPrimitiveUP(D3DPT_LINELIST, 12, lines, sizeof(D3DXVECTOR3));
 
-    // ¿ø·¡ »óÅÂ º¹±¸
     m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, dwLighting);
     m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
     m_pGraphicDev->SetFVF(dwFVF);
@@ -197,6 +197,7 @@ HRESULT CObjectEditor::SaveObjectData(const char* pFileName)
         // Ÿ�� ����
         if (dynamic_cast<CBox*>(pObj)) data.eType = OBJECT_BOX;
         else if (dynamic_cast<CLamp*>(pObj)) data.eType = OBJECT_LAMP;
+        else if (dynamic_cast<CCrystal*>(pObj)) data.eType = OBJECT_CRYSTAL;
         else data.eType = OBJECT_END;
 
         data.vPos[0] = vPos.x;
@@ -242,6 +243,9 @@ HRESULT CObjectEditor::LoadObjectData(const char* pFileName)
             break;
         case OBJECT_LAMP:
             pObj = CLamp::Create(m_pGraphicDev);
+            break;
+        case OBJECT_CRYSTAL:
+            pObj = CCrystal::Create(m_pGraphicDev);
             break;
         default:
             continue;
@@ -309,6 +313,11 @@ void CObjectEditor::Render_CreateUI()
     if (ImGui::Button("Lamp"))
     {
         Start_CreateMode(L"Lamp");
+    }
+
+    if (ImGui::Button("Crystal"))
+    {
+        Start_CreateMode(L"Crystal");
     }
 
     ImGui::End();
@@ -405,6 +414,8 @@ void CObjectEditor::Create_Object(const wstring& type)
         pObj = CBox::Create(m_pGraphicDev);
     else if (type == L"Lamp")
         pObj = CLamp::Create(m_pGraphicDev);
+    else if (type == L"Crystal")
+        pObj = CCrystal::Create(m_pGraphicDev);
 
     if (!pObj) return;
 
@@ -441,6 +452,8 @@ void CObjectEditor::Start_CreateMode(const wstring& type)
         m_pPreviewObject = CBox::Create(m_pGraphicDev);
     else if (type == L"Lamp")
         m_pPreviewObject = CLamp::Create(m_pGraphicDev);
+    else if (type == L"Crystal")
+        m_pPreviewObject = CCrystal::Create(m_pGraphicDev);
 }
 
 HRESULT CObjectEditor::Ready_Environment_Layer(const _tchar* pLayerTag)
@@ -473,8 +486,8 @@ HRESULT CObjectEditor::Ready_Environment_Layer(const _tchar* pLayerTag)
 HRESULT CObjectEditor::Ready_Prototype()
 {
     // Transform
-    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Transform", Engine::CTransform::Create(m_pGraphicDev))))
-        return E_FAIL;
+    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Transform", Engine::CTransform::Create(m_pGraphicDev))))
+    //    return E_FAIL;
 
     // Box
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_BoxBottomTex", Engine::CBoxBottomTex::Create(m_pGraphicDev))))
@@ -498,6 +511,11 @@ HRESULT CObjectEditor::Ready_Prototype()
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/T_Lamp.png"))))
         return E_FAIL;
 
+    // Crystal
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CrystalTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/T_RedstoneCrystal.png"))))
+        return E_FAIL;
+
     //
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TriCol", Engine::CTriCol::Create(m_pGraphicDev))))
         return E_FAIL;
@@ -506,21 +524,21 @@ HRESULT CObjectEditor::Ready_Prototype()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TerrainTex", Engine::CTerrainTex::Create(m_pGraphicDev))))
         return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CubeTex", Engine::CCubeTex::Create(m_pGraphicDev))))
-    //    return E_FAIL;
-    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemBodyTex", Engine::CRedStoneGolemBodyTex::Create(m_pGraphicDev))))
-    //    return E_FAIL;
-    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemHeadTex", Engine::CRedStoneGolemHeadTex::Create(m_pGraphicDev))))
-    //    return E_FAIL;
-    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemShoulderTex", Engine::CRedStoneGolemShoulderTex::Create(m_pGraphicDev))))
-    //    return E_FAIL;
-    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemHipTex", Engine::CRedStoneGolemHipTex::Create(m_pGraphicDev))))
-    //    return E_FAIL;
-    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemCoreTex", Engine::CRedStoneGolemCoreTex::Create(m_pGraphicDev))))
-    //    return E_FAIL;
-    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemArmTex", Engine::CRedStoneGolemArmTex::Create(m_pGraphicDev))))
-    //    return E_FAIL;
-    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemLegTex", Engine::CRedStoneGolemLegTex::Create(m_pGraphicDev))))
-    //    return E_FAIL;
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemBodyTex", Engine::CRedStoneGolemBodyTex::Create(m_pGraphicDev))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemHeadTex", Engine::CRedStoneGolemHeadTex::Create(m_pGraphicDev))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemShoulderTex", Engine::CRedStoneGolemShoulderTex::Create(m_pGraphicDev))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemHipTex", Engine::CRedStoneGolemHipTex::Create(m_pGraphicDev))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemCoreTex", Engine::CRedStoneGolemCoreTex::Create(m_pGraphicDev))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemArmTex", Engine::CRedStoneGolemArmTex::Create(m_pGraphicDev))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemLegTex", Engine::CRedStoneGolemLegTex::Create(m_pGraphicDev))))
+        return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TerrainTexture",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Terrain/Grass_%d.tga", 2))))
         return E_FAIL;
@@ -529,10 +547,10 @@ HRESULT CObjectEditor::Ready_Prototype()
         return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_EffectTexture",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Explosion/Explosion%d.png", 90))))
-    //    return E_FAIL;
-    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemTexture",
-    //    CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Boss/T_RedStone_Golem.png"))))
-    //    return E_FAIL;
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Boss/T_RedStone_Golem.png"))))
+        return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CampLoadingTexture",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Logo/Loading_Screen_Lobby.png"))))
         return E_FAIL;
@@ -580,6 +598,12 @@ HRESULT CObjectEditor::Ready_Prototype()
         return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_OakLeavesTexture",
         CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/OakLeaves.dds"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/RedStone_Block.dds"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_OakWoodTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/Oak_Wood.dds"))))
         return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CherryLeavesTexture",
         CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/CherryLeaves.dds"))))
@@ -680,11 +704,23 @@ HRESULT CObjectEditor::Ready_Prototype()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Spider_LBLeg",
         Engine::CCubeBodyTex::Create(m_pGraphicDev, SpiderUV::LEG))))
         return E_FAIL;
-    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Transform",
-    //    Engine::CTransform::Create(m_pGraphicDev))))
-    //    return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Transform",
+        Engine::CTransform::Create(m_pGraphicDev))))
+        return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Calculator",
         Engine::CCalculator::Create(m_pGraphicDev))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_LavaTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE,
+            L"../Bin/Resource/Texture/blocks/lava.dds"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_PlankAcaciaTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE,
+            L"../Bin/Resource/Texture/blocks/planks_acacia.dds"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_PlankSpruceTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE,
+            L"../Bin/Resource/Texture/blocks/planks_spruce.dds"))))
         return E_FAIL;
 
     return S_OK;
