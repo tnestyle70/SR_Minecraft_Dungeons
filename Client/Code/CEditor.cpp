@@ -5,7 +5,10 @@
 #include "CMonsterUV.h"
 #include "CSceneChanger.h"
 #include "CTriggerBox.h"
-#include "CBlockPreset.h"
+#include "CBlockPreset.h" 
+#include "CNormalCubeTex.h" 
+#include "CBlockPlacer.h"
+#include "CRenderer.h"
 
 CEditor::CEditor(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev), m_bEditorMode(false)
@@ -70,7 +73,15 @@ _int CEditor::Update_Scene(const _float& fTimeDelta)
 	if (!m_bEditorMode)
 		return 0;
 
+	
 	_int iExit = CScene::Update_Scene(fTimeDelta);
+
+	//if (GetAsyncKeyState(VK_F5) & 0x8000)  // 찬영이 씬전환 키 
+	//{
+	//	CRenderer::GetInstance()->Clear_RenderGroup();
+	//	CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CY);
+	//	return 0;
+	//}
 
 	CBlockMgr::GetInstance()->Update(fTimeDelta);
 
@@ -410,7 +421,8 @@ void CEditor::Render_BlockPalette()
         {"PlankAcacia##block",  "PlankAcacia",  BLOCK_PLANKS_ACACIA},
         {"PlankSpruce##block",  "PlankSpruce",  BLOCK_PLANKS_SPRUCE},
 		{"OakWood##block",  "OakWood",  BLOCK_OAKWOOD},
-		{"Redstone##block",  "Redstone",  BLOCK_REDSTONE}
+		{"Redstone##block",  "Redstone",  BLOCK_REDSTONE},
+		{"StoneGradient##block", "StoneGradient", BLOCK_StoneGradient},
 	};
 	constexpr int iCount = (int)(sizeof(palette) / sizeof(palette[0]));
 
@@ -1706,7 +1718,10 @@ HRESULT CEditor::Ready_ProtoType()
 		return E_FAIL;
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TerrainTex", Engine::CTerrainTex::Create(m_pGraphicDev))))
 		return E_FAIL;
-	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CubeTex", Engine::CCubeTex::Create(m_pGraphicDev))))
+	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CubeTex", Engine::CCubeTex::Create(m_pGraphicDev))))  
+		return E_FAIL;
+	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_NormalCubeTex",
+		Engine::CNormalCubeTex::Create(m_pGraphicDev, 1.f, 1.f, 1.f))))
 		return E_FAIL;
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemBodyTex", Engine::CRedStoneGolemBodyTex::Create(m_pGraphicDev))))
 		return E_FAIL;
@@ -1904,6 +1919,9 @@ HRESULT CEditor::Ready_ProtoType()
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_PlankSpruceTexture",
 		CTexture::Create(m_pGraphicDev, TEX_CUBE,
 			L"../Bin/Resource/Texture/blocks/planks_spruce.dds"))))
+		return E_FAIL;
+	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StoneGradientTexture",
+		CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/stone_gradient_12.dds"))))
 		return E_FAIL;
 
 
