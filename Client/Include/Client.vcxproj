@@ -188,6 +188,8 @@
     <ClInclude Include="..\Header\CIronBar.h" />
     <ClInclude Include="..\Header\CIronBarMgr.h" />
     <ClInclude Include="..\Header\CItemPanel.h" />
+    <ClInclude Include="..\Header\CJSChunk.h" />
+    <ClInclude Include="..\Header\CJSChunkMgr.h" />
     <ClInclude Include="..\Header\CJSStage.h" />
     <ClInclude Include="..\Header\CJumpingTrap.h" />
     <ClInclude Include="..\Header\CJumpingTrapMgr.h" />
@@ -291,6 +293,8 @@
     <ClCompile Include="..\Code\CIronBar.cpp" />
     <ClCompile Include="..\Code\CIronBarMgr.cpp" />
     <ClCompile Include="..\Code\CItemPanel.cpp" />
+    <ClCompile Include="..\Code\CJSChunk.cpp" />
+    <ClCompile Include="..\Code\CJSChunkMgr.cpp" />
     <ClCompile Include="..\Code\CJSStage.cpp" />
     <ClCompile Include="..\Code\CJumpingTrap.cpp" />
     <ClCompile Include="..\Code\CJumpingTrapMgr.cpp" />

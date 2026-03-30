@@ -64,6 +64,12 @@ _uint CLoading::Loading_SquidCoast()
             return E_FAIL;
     }
 
+    if (nullptr == CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_JSCubeTex"))
+    {
+        if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSCubeTex", Engine::CJSCubeTex::Create(m_pGraphicDev))))
+            return E_FAIL;
+    }
+
     //UI - Inventory
     //Slot Frame
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_FrameTexture",

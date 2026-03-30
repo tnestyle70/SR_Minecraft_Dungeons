@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "CJSStage.h"
-#include "CDynamicCamera.h"
 #include "CSceneChanger.h"
 #include "CRenderer.h"
+#include "CDynamicCamera.h"
 
 CJSStage::CJSStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -60,10 +60,13 @@ HRESULT CJSStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 	_vec3 vAt{ 0.f, 0.f, 1.f };
 	_vec3 vUp{ 0.f, 1.f, 0.f };
 
-	if (FAILED(pLayer->Add_GameObject(L"DynamicCamera", pGameObject)))
+	pGameObject = CDynamicCamera::Create(m_pGraphicDev, &vEye, &vAt, &vUp);
+
+	if (!pGameObject)
 		return E_FAIL;
 
-	//SkyBox 추가
+	if (FAILED(pLayer->Add_GameObject(L"DynamicCamera", pGameObject)))
+		return E_FAIL;
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
 

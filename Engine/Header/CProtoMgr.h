@@ -7,6 +7,7 @@
 #include "CTerrainTex.h"
 #include "CCubeTex.h"
 #include "CCubeBodyTex.h"
+#include "CJSCubeTex.h"
 
 // RedStoneGolem
 #include "CRedStoneGolemBodyTex.h"
