@@ -38,6 +38,11 @@ _int CCrystal::Update_GameObject(const _float& fTimeDelta)
 		m_pParts[i]->Update_GameObject(fTimeDelta);
 	}
 
+	_vec3 vPos;
+	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+
+	m_pColliderCom->Update_AABB(vPos);
+
 	CRenderer::GetInstance()->Add_RenderGroup(RENDER_NONALPHA, this);
 
 	return iExit;
@@ -86,10 +91,10 @@ HRESULT CCrystal::Add_Component()
 
 	m_mapComponent[ID_STATIC].insert({ { L"Com_Texture", pComponent } });
 
-	//// Collider
-	//m_pColliderCom = CCollider::Create(m_pGraphicDev, _vec3(3.5f, 2.5f, 2.5f), _vec3(0.f, 1.85f, 0.f));
+	// Collider
+	m_pColliderCom = CCollider::Create(m_pGraphicDev, _vec3(1.f, 1.f, 1.f), _vec3(0.f, 0.f, 0.f));
 
-	//m_mapComponent[ID_STATIC].insert({ L"Com_Collider", m_pColliderCom });
+	m_mapComponent[ID_STATIC].insert({ L"Com_Collider", m_pColliderCom });
 
 	// Create Child
 	for (int i = 0; i < CRYSTAL_END; i++)
@@ -102,27 +107,34 @@ HRESULT CCrystal::Add_Component()
 
 void CCrystal::Set_PartsOffset()
 {
+	_vec3 vRootPos;
 
+	m_pTransformCom->Get_Info(INFO_POS, &vRootPos);
+
+	m_pParts[CRYSTAL_8x20]->Get_Transform()->Set_Pos(vRootPos.x, vRootPos.y, vRootPos.z);
+	m_pParts[CRYSTAL_5x14]->Get_Transform()->Set_Pos(vRootPos.x + 0.325f, vRootPos.y - 0.185f, vRootPos.z);
+	m_pParts[CRYSTAL_4x11]->Get_Transform()->Set_Pos(vRootPos.x - 0.3f, vRootPos.y - 0.2f, vRootPos.z);
+	m_pParts[CRYSTAL_3x15]->Get_Transform()->Set_Pos(vRootPos.x, vRootPos.y - 0.16f, vRootPos.z + 0.28f);
+	m_pParts[CRYSTAL_2x13]->Get_Transform()->Set_Pos(vRootPos.x, vRootPos.y - 0.2f, vRootPos.z - 0.2f);
+	m_pParts[CRYSTAL_3x5]->Get_Transform()->Set_Pos(vRootPos.x - 0.2f, vRootPos.y - 0.3f, vRootPos.z - 0.28f);
 }
 
 void CCrystal::Set_WorldScale()
 {
-	//m_pParts[CRYSTAL_8x20]->Get_Transform()->Set_Scale(20.f / 20.f);
-	//m_pParts[CRYSTAL_5x14]->Get_Transform()->Set_Scale(14.f / 20.f);
-	//m_pParts[CRYSTAL_4x11]->Get_Transform()->Set_Scale(11.f / 20.f);
-	//m_pParts[CRYSTAL_3x15]->Get_Transform()->Set_Scale(15.f / 20.f);
-	//m_pParts[CRYSTAL_2x13]->Get_Transform()->Set_Scale(13.f / 20.f);
-	//m_pParts[CRYSTAL_3x5]->Get_Transform()->Set_Scale(5.f / 20.f);
+	m_pParts[CRYSTAL_8x20]->Get_Transform()->Set_Scale(20.f / 20.f);
+	m_pParts[CRYSTAL_5x14]->Get_Transform()->Set_Scale(14.f / 20.f);
+	m_pParts[CRYSTAL_4x11]->Get_Transform()->Set_Scale(11.f / 20.f);
+	m_pParts[CRYSTAL_3x15]->Get_Transform()->Set_Scale(15.f / 20.f);
+	m_pParts[CRYSTAL_2x13]->Get_Transform()->Set_Scale(13.f / 20.f);
+	m_pParts[CRYSTAL_3x5]->Get_Transform()->Set_Scale(5.f / 20.f);
 }
 
 void CCrystal::Set_PartsParent()
 {
-	m_pParts[CRYSTAL_8x20]->Get_Transform()->Set_Parent(m_pTransformCom);
-	m_pParts[CRYSTAL_5x14]->Get_Transform()->Set_Parent(m_pTransformCom);
-	m_pParts[CRYSTAL_4x11]->Get_Transform()->Set_Parent(m_pTransformCom);
-	m_pParts[CRYSTAL_3x15]->Get_Transform()->Set_Parent(m_pTransformCom);
-	m_pParts[CRYSTAL_2x13]->Get_Transform()->Set_Parent(m_pTransformCom);
-	m_pParts[CRYSTAL_3x5]->Get_Transform()->Set_Parent(m_pTransformCom);
+	for (_int i = 0; i < CRYSTAL_END; ++i)
+	{
+		m_pParts[i]->Get_Transform()->Set_Parent(m_pTransformCom);
+	}
 }
 
 CCrystal* CCrystal::Create(LPDIRECT3DDEVICE9 pGraphicDev)
