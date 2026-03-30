@@ -145,7 +145,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		CDamageMgr::GetInstance()->Clear_Boss();
 		CEnvironmentMgr::GetInstance()->Clear_Boxes();
 		CBlockMgr::GetInstance()->ClearBlocks();
-		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_TG)))
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_TJ)))
 		{
 			MSG_BOX("TG Stage Create Failed");
 			return -1;
