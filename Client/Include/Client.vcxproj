@@ -166,6 +166,7 @@
     <ClInclude Include="..\Header\CCrystal.h" />
     <ClInclude Include="..\Header\CCrystalPart.h" />
     <ClInclude Include="..\Header\CCursorMgr.h" />
+    <ClInclude Include="..\Header\CCYStage.h" />
     <ClInclude Include="..\Header\CDamageMgr.h" />
     <ClInclude Include="..\Header\CDialogueBox.h" />
     <ClInclude Include="..\Header\CDLCBoss.h" />
@@ -180,11 +181,15 @@
     <ClInclude Include="..\Header\CExplosionLight.h" />
     <ClInclude Include="..\Header\CGolemStates.h" />
     <ClInclude Include="..\Header\CHUD.h" />
+    <ClInclude Include="..\Header\CInventoryBackground.h" />
     <ClInclude Include="..\Header\CInventoryMgr.h" />
     <ClInclude Include="..\Header\CInventorySlot.h" />
     <ClInclude Include="..\Header\CIronBar.h" />
     <ClInclude Include="..\Header\CIronBarMgr.h" />
     <ClInclude Include="..\Header\CItemPanel.h" />
+    <ClInclude Include="..\Header\CJSStage.h" />
+    <ClInclude Include="..\Header\CJumpingTrap.h" />
+    <ClInclude Include="..\Header\CJumpingTrapMgr.h" />
     <ClInclude Include="..\Header\CLamp.h" />
     <ClInclude Include="..\Header\CLampPart.h" />
     <ClInclude Include="..\Header\CLoading.h" />
@@ -223,6 +228,7 @@
     <ClInclude Include="..\Header\CStage.h" />
     <ClInclude Include="..\Header\CTabButton.h" />
     <ClInclude Include="..\Header\CTerrain.h" />
+    <ClInclude Include="..\Header\CTGStage.h" />
     <ClInclude Include="..\Header\CTNT.h" />
     <ClInclude Include="..\Header\CTriggerBox.h" />
     <ClInclude Include="..\Header\CTriggerBoxMgr.h" />
@@ -262,6 +268,7 @@
     <ClCompile Include="..\Code\CCrystal.cpp" />
     <ClCompile Include="..\Code\CCrystalPart.cpp" />
     <ClCompile Include="..\Code\CCursorMgr.cpp" />
+    <ClCompile Include="..\Code\CCYStage.cpp" />
     <ClCompile Include="..\Code\CDamageMgr.cpp" />
     <ClCompile Include="..\Code\CDialogueBox.cpp" />
     <ClCompile Include="..\Code\CDragon.cpp" />
@@ -275,11 +282,15 @@
     <ClCompile Include="..\Code\CExplosionLight.cpp" />
     <ClCompile Include="..\Code\CGolemStates.cpp" />
     <ClCompile Include="..\Code\CHUD.cpp" />
+    <ClCompile Include="..\Code\CInventoryBackground.cpp" />
     <ClCompile Include="..\Code\CInventoryMgr.cpp" />
     <ClCompile Include="..\Code\CInventorySlot.cpp" />
     <ClCompile Include="..\Code\CIronBar.cpp" />
     <ClCompile Include="..\Code\CIronBarMgr.cpp" />
     <ClCompile Include="..\Code\CItemPanel.cpp" />
+    <ClCompile Include="..\Code\CJSStage.cpp" />
+    <ClCompile Include="..\Code\CJumpingTrap.cpp" />
+    <ClCompile Include="..\Code\CJumpingTrapMgr.cpp" />
     <ClCompile Include="..\Code\CLamp.cpp" />
     <ClCompile Include="..\Code\CLampPart.cpp" />
     <ClCompile Include="..\Code\CLoading.cpp" />
@@ -314,6 +325,7 @@
     <ClCompile Include="..\Code\CStage.cpp" />
     <ClCompile Include="..\Code\CTabButton.cpp" />
     <ClCompile Include="..\Code\CTerrain.cpp" />
+    <ClCompile Include="..\Code\CTGStage.cpp" />
     <ClCompile Include="..\Code\CTNT.cpp" />
     <ClCompile Include="..\Code\CTriggerBox.cpp" />
     <ClCompile Include="..\Code\CTriggerBoxMgr.cpp" />
