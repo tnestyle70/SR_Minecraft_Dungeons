@@ -258,6 +258,10 @@ _uint CLoading::Loading_SquidCoast()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_EmptyHeart",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/gray_heart.png"))))
         return E_FAIL;
+    //Posion CoolDown
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_PosionCoolDown",
+        Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Posion_CoolDown.png"))))
+        return E_FAIL;
     //Inventory sword tab on
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SwordTabOff",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/gear_icon.png"))))

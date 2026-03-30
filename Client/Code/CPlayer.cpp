@@ -598,9 +598,9 @@ void CPlayer::Key_Input(const _float& fTimeDelta)
 	// 화살 / TNT 던지기
 	bool bRClick = (GetAsyncKeyState(VK_RBUTTON) & 0x8000);
 
-	if (GetAsyncKeyState('7') & 0x8000)
+	if (GetAsyncKeyState('T') & 0x8000)
 	{
-		LaunchByTrap(30.f);
+		Use_Posion();
 	}
 	
 	if (m_pHeldTNT)
@@ -1207,6 +1207,12 @@ void CPlayer::Calc_AttackMotion(float& fAtkX, float& fAtkY, float& fTorsoY)
 		fAtkY = 0.f;
 		fTorsoY = 0.f;
 	}
+}
+
+void CPlayer::Use_Posion()
+{
+	m_fHp = m_fMaxHp;
+	
 }
 
 void CPlayer::Render_Sword(float fAtkX, float fAtkY, float fSwing)
