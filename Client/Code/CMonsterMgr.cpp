@@ -4,6 +4,8 @@
 #include "CRedStoneGolem.h"
 #include "CAncientGuardian.h"
 #include "CEventBus.h"
+#include "CSpawnEffect.h"
+#include "CSoundMgr.h"
 
 IMPLEMENT_SINGLETON(CMonsterMgr)
 
@@ -16,9 +18,12 @@ CMonsterMgr::~CMonsterMgr()
 	Free();
 }
 
-HRESULT CMonsterMgr::Ready_MonsterMgr()
+HRESULT CMonsterMgr::Ready_MonsterMgr(LPDIRECT3DDEVICE9 pGraphicDev)
 {
-	return E_NOTIMPL;
+	m_pGraphicDev = pGraphicDev;
+	m_pGraphicDev->AddRef();
+	
+	return S_OK;
 }
 
 _int CMonsterMgr::Update(const _float& fTimeDelta)
@@ -50,7 +55,7 @@ _int CMonsterMgr::Update(const _float& fTimeDelta)
 				pMonster->SetActive(false);
 			}
 		}
-
+		
 		//트리거 안 되었거나, 모두 스폰된 그룹은 continue
 		if (!group.bTriggered || group.bAllSpawned)
 			continue;
@@ -61,12 +66,30 @@ _int CMonsterMgr::Update(const _float& fTimeDelta)
 		group.fSpawnTimer = 0.f;
 		//다음 몬스터 스폰
 		group.vecMonsters[group.iNextSpawnIndex]->SetActive(true);
+		//몬스터 스폰 이펙트 생성
+		m_vecSpawnEffects.push_back(
+			new CSpawnEffect(m_pGraphicDev, m_mapMonsterPos[pair.first][group.iNextSpawnIndex]));
+
+		CSoundMgr::GetInstance()->PlayEffect(L"Effect/Effect_Spawn.wav", 2.f);
+
 		group.iNextSpawnIndex++;
 		//그룹 내 몬스터 전부 스폰 완료되었을 경우 allSpawned = true
 		if (group.iNextSpawnIndex >= group.vecMonsters.size())
 		{
 			group.bAllSpawned = true;
 		}
+	}
+	//이펙트 업데이트 -> for iter로 돌면서 delete로 지우기
+	for (auto iter = m_vecSpawnEffects.begin(); iter != m_vecSpawnEffects.end();)
+	{
+		(*iter)->Update(fTimeDelta);
+		if ((*iter)->Is_Done())
+		{
+			delete (*iter);
+			iter = m_vecSpawnEffects.erase(iter);
+		}
+		else
+			iter++;
 	}
 
 	//커서 업데이트
@@ -100,6 +123,11 @@ void CMonsterMgr::Render()
 				pMonster->Render_GameObject();
 			}
 		}
+	}
+	//스폰 이펙트
+	for (auto& pEffect : m_vecSpawnEffects)
+	{
+		pEffect->Render();
 	}
 }
 
@@ -206,7 +234,8 @@ void CMonsterMgr::SetActiveMonsterGroup(int iTriggerID)
 	group.fSpawnTimer = group.fSpawnDelay;
 }
 
-void CMonsterMgr::AddMonster(CGameObject* pGameObject, int iTriggerID)
+void CMonsterMgr::AddMonster(CGameObject* pGameObject, int iTriggerID,
+	_vec3 vPos)
 {
 	CMonster* pMonster = dynamic_cast<CMonster*>(pGameObject);
 	if (!pMonster)
@@ -215,12 +244,18 @@ void CMonsterMgr::AddMonster(CGameObject* pGameObject, int iTriggerID)
 	if (iTriggerID == 0)
 		pMonster->SetActive(true);
 	m_mapMonsterGroups[iTriggerID].vecMonsters.push_back(pMonster);
+	m_mapMonsterPos[iTriggerID].push_back(vPos);
 
 	return;
 }
 
 void CMonsterMgr::Clear()
 {
+	//이펙트
+	for (auto& pEffect : m_vecSpawnEffects)
+		delete pEffect;
+	m_vecSpawnEffects.clear();
+	//몬스터 그룹
 	for (auto& pair : m_mapMonsterGroups)
 	{
 		for (auto& pMonster : pair.second.vecMonsters)
@@ -235,5 +270,6 @@ void CMonsterMgr::Free()
 {
 	m_pGuardian = nullptr;
 	m_pGolem = nullptr;
+	Safe_Release(m_pGraphicDev);
 	Clear();
 }

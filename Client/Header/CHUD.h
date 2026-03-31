@@ -4,8 +4,8 @@
 
 enum class eMissionType
 {
-	MISSION_MONSTER,
-	MISSION_SKELETON,
+	MISSION_NPC1,
+	MISSION_NPC2,
 	MISSION_END
 };
 
@@ -54,10 +54,18 @@ private:
 private:
 	Engine::CRcTex* m_pBufferCom = nullptr;
 	Engine::CTexture* m_pTextureCom = nullptr;
+	//하트, 쿨타임, 미션 완료
 	CTexture* m_pFilledHeart = nullptr;
 	CTexture* m_pEmptyHeart = nullptr;
 	CTexture* m_pPosionCoolTime = nullptr;
 	CTexture* m_pMissionComplete = nullptr;
+	//미션 텍스트
+	CTexture* m_pZombieMission = nullptr;
+	CTexture* m_pCripperMission = nullptr;
+	CTexture* m_pSpiderMission = nullptr;
+	CTexture* m_pSkeletonMission = nullptr;
+	//아티펙트
+	CTexture* m_pArtifact = nullptr;
 
 	CPlayer* m_pPlayer = nullptr;
 	CNetworkPlayer* m_pNetworkPlayer = nullptr;
@@ -71,8 +79,16 @@ private:
 	float m_fPosionW, m_fPosionH = 0.f;
 
 	//MissionComplete 위치, 사이즈
-	float m_fMissionX, m_fMissionY = 0.f;
-	float m_fMissionW, m_fMissionH = 0.f;
+	float m_fMissionComX, m_fMissionComY = 0.f;
+	float m_fMissionComW, m_fMissionComH = 0.f;
+
+	//MissionComplete Artifact 위치, 사이즈
+	float m_fArtifactX, m_fArtifactY = 0.f;
+	float m_fArtifactW, m_fArtifactH = 0.f;
+
+	//Mission Text 위치, 사이즈
+	float m_fMissionTextX, m_fMissionTextY = 0.f;
+	float m_fMissionTextW, m_fMissionTextH = 0.f;
 
 	//플레이어 체력
 	int m_iHP = 0;
@@ -93,6 +109,9 @@ private:
 	int m_iSkeletonCount = 0;
 	int m_iSpiderCount = 0;
 	eMissionType m_eMissionType = eMissionType::MISSION_END;
+	//미션 - 몬스터, 스켈레톤
+	bool m_bMissionNPC1 = false;
+	bool m_bMissionNPC2 = false;
 
 	bool m_bMissionComplete = false;
 	bool m_bFirstMissionComplete = true;

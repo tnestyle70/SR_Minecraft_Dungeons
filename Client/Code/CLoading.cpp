@@ -266,6 +266,22 @@ _uint CLoading::Loading_SquidCoast()
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Boss_HealthBar_Empty.png"))))
         return E_FAIL;
 
+    //Mission Text
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SpiderText",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_Spider.png"))))
+        return E_FAIL;
+    //Mission Text
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ZombieText",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_Zombie.png"))))
+        return E_FAIL;
+    //Mission Text
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SkeletonText",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_Skeleton.png"))))
+        return E_FAIL;
+    //Mission Text
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CripperText",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_Cripper.png"))))
+        return E_FAIL;
     //Scene Text
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CampText",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_Camp.png"))))

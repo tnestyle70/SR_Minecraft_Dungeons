@@ -43,8 +43,8 @@ private:
 
 	eJumpingTrapState m_eState = TRAP_IDLE;
 	//높이, 속도 설정
-	_float m_fMaxHeight = 3.f;
-	_float m_fActiveSpeed = 20.f;
+	_float m_fMaxHeight = 2.5f;
+	_float m_fActiveSpeed = 10.f;
 	_float m_fDeactiveSpeed = 10.f;
 
 	_vec3 m_vOriginPos = { 0.f, 0.f, 0.f };

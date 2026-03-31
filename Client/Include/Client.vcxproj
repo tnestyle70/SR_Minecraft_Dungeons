@@ -234,6 +234,7 @@
     <ClInclude Include="..\Header\CSceneChanger.h" />
     <ClInclude Include="..\Header\CScreenFX.h" />
     <ClInclude Include="..\Header\CSkyBox.h" />
+    <ClInclude Include="..\Header\CSpawnEffect.h" />
     <ClInclude Include="..\Header\CSquidCoast.h" />
     <ClInclude Include="..\Header\CStage.h" />
     <ClInclude Include="..\Header\CTabButton.h" />
@@ -346,6 +347,7 @@
     <ClCompile Include="..\Code\CSceneChanger.cpp" />
     <ClCompile Include="..\Code\CScreenFX.cpp" />
     <ClCompile Include="..\Code\CSkyBox.cpp" />
+    <ClCompile Include="..\Code\CSpawnEffect.cpp" />
     <ClCompile Include="..\Code\CSquidCoast.cpp" />
     <ClCompile Include="..\Code\CStage.cpp" />
     <ClCompile Include="..\Code\CTabButton.cpp" />

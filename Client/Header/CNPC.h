@@ -5,6 +5,13 @@
 #include "CCollider.h"
 #include "CDialogueBox.h"
 
+enum class eNPCType
+{
+    NPC_MONSTER,
+    NPC_SKELETON,
+    NPC_END
+};
+
 enum NPC_PART
 {
     NPC_HEAD,
@@ -41,9 +48,13 @@ public:
 public:
     static CNPC* Create(LPDIRECT3DDEVICE9 pGraphicDev, _vec3 vPos);
     Engine::CTransform* Get_Transform() { return m_pTransformCom; }
+
+    void Set_NPCType(eNPCType eType) { m_eType = eType; }
+    eNPCType Get_NPCType() { return m_eType; }
+
 private:
     virtual void Free();
-
+    
 private:
     CPlayerBody* m_pBufferCom[NPC_PART_END] = {};
     Engine::CTransform* m_pTransformCom = nullptr;
@@ -54,6 +65,10 @@ private:
     _vec3   m_vPartOffset[NPC_PART_END];
     _vec3   m_vPartScale[NPC_PART_END];
 
+    eNPCType m_eType = eNPCType::NPC_END;
+    
     bool    m_bTalking = false;
     CDialogueBox* m_pDialogueBox = nullptr;
+
+    bool m_bSoundPlay = false;
 };

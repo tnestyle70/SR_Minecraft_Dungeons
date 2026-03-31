@@ -38,11 +38,21 @@ HRESULT CHUD::Ready_GameObject()
 	m_fPosionW = 53.f; m_fPosionH = 65.f;
 
 	//미션 완료 텍스트
-	m_fMissionX = 500.f; m_fMissionY = 100.f;
-	m_fMissionW = 300.f; m_fMissionH = 250.f;
+	m_fMissionComX = 470.f; m_fMissionComY = 80.f;
+	m_fMissionComW = 340.f; m_fMissionComH = 150.f;
 	
 	m_fMissionCoolTime = m_fMissionDuration;
-	m_eMissionType = eMissionType::MISSION_MONSTER;
+	m_eMissionType = eMissionType::MISSION_NPC1;
+
+	//아티펙트
+	m_fArtifactX = 560.f; m_fArtifactY = 160.f;
+	m_fArtifactW = 150.f; m_fArtifactH = 150.f;
+	
+
+
+	//미션 텍스트
+	m_fMissionTextX = 835.f; m_fMissionTextY = 15.f;
+	m_fMissionTextW = 300.f; m_fMissionTextH = 40.f;
 	
 	//이벤트 버스 연결, 처치된 몬스터 수 받기
 	CEventBus::GetInstance()->Subscribe(eEventType::MONSTER_DEAD, this,
@@ -61,9 +71,25 @@ HRESULT CHUD::Ready_GameObject()
 	CEventBus::GetInstance()->Subscribe(eEventType::MISSION_COMPLETE, this,
 		[this](const FGameEvent& event)
 		{
+			switch (static_cast<eMissionType>(event.iSubType))
+			{
+			case eMissionType::MISSION_NPC1:    m_bMissionNPC1 = false; break;
+			case eMissionType::MISSION_NPC2:   m_bMissionNPC2 = false; break;
+			}
 			m_bMissionComplete = static_cast<bool>(event.iValue);
 		});
 
+	//이벤트 미션 수락
+	CEventBus::GetInstance()->Subscribe(eEventType::MISSION_ACCEPT, this,
+		[this](const FGameEvent& event)
+		{
+			switch (static_cast<eMissionType>(event.iValue))
+			{
+			case eMissionType::MISSION_NPC1:    m_bMissionNPC1 = true; break;
+			case eMissionType::MISSION_NPC2:   m_bMissionNPC2 = true; break;
+			}
+		});
+	
 	return S_OK;
 }
 
@@ -104,9 +130,9 @@ void CHUD::Update_Missison(const _float fTimeDelta)
 	///미션 성공 Event Bus 
 	switch (m_eMissionType)
 	{
-	case eMissionType::MISSION_MONSTER:
-		if (m_iZombieCount >= 1 && m_iCreeperCount >= 2 && m_iSpiderCount >= 2)
-			 //&& m_bFirstMissionComplete)
+	case eMissionType::MISSION_NPC1:
+		if (m_iZombieCount >= 1 && m_iCreeperCount >= 2 && m_iSpiderCount >= 2
+			 && m_bFirstMissionComplete)
 		{
 			FGameEvent event;
 			event.eType = eEventType::MISSION_COMPLETE;
@@ -117,8 +143,8 @@ void CHUD::Update_Missison(const _float fTimeDelta)
 			m_bFirstMissionComplete = false;
 		}
 		break;
-	case eMissionType::MISSION_SKELETON:
-		if (m_iSkeletonCount >= 2) //&& m_bFirstMissionComplete)
+	case eMissionType::MISSION_NPC2:
+		if (m_iSkeletonCount >= 2 && m_bFirstMissionComplete)
 		{
 			FGameEvent event;
 			event.eType = eEventType::MISSION_COMPLETE;
@@ -309,7 +335,7 @@ void CHUD::Render_CurrencyCount()
 		L"Font_Minecraft", buf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 
 	//유물
-	_vec2 vArtifact{ 400.f, 680.f };
+	_vec2 vArtifact{ 314.f, 670.f };
 
 	m_iArtifact = CInventoryMgr::GetInstance()->Get_ArtifactCount();
 	swprintf_s(buf, L"%d", m_iArtifact);
@@ -322,10 +348,10 @@ void CHUD::Render_Mission()
 {
 	switch (m_eMissionType)
 	{
-	case eMissionType::MISSION_MONSTER:
+	case eMissionType::MISSION_NPC1:
 		Render_Mission1();
 		break;
-	case eMissionType::MISSION_SKELETON:
+	case eMissionType::MISSION_NPC2:
 		Render_Mission2();
 		break;
 	default:
@@ -335,26 +361,80 @@ void CHUD::Render_Mission()
 
 void CHUD::Render_Mission1()
 {
-	_vec2 vPos{ 800.f, 50.f };
-	//좀비 
+	//NPC1에게 미션을 받았을 경우 렌더링
+	if (!m_bMissionNPC1)
+		return;
+
+	//좀비 미션
+	float fNDCX = (m_fMissionTextX + m_fMissionTextW * 0.5f) / (WINCX * 0.5f) - 1.f;
+	float fNDCY = 1.f - (m_fMissionTextY + m_fMissionTextH * 0.5f) / (WINCY * 0.5f);
+	
+	_matrix matWorld;
+	D3DXMatrixTransformation2D(&matWorld,
+		nullptr, 0.f,
+		&_vec2(m_fMissionTextW / WINCX, m_fMissionTextH / WINCY), //높이 비율 조정
+		nullptr, 0.f,
+		&_vec2(fNDCX, fNDCY));
+	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+
+	_matrix matTexture;
+	D3DXMatrixScaling(&matTexture, 1.f, 1.f, 1.f);
+	m_pGraphicDev->SetTransform(D3DTS_TEXTURE0, &matTexture);
+	m_pGraphicDev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+	//텍스쳐만 교체하고, Buffer는 그대로 써도 무관
+	m_pZombieMission->Set_Texture(0);
+	m_pBufferCom->Render_Buffer();
+
+	//크리퍼 미션
+	fNDCX = (m_fMissionTextX + m_fMissionTextW * 0.5f) / (WINCX * 0.5f) - 1.f;
+	fNDCY = 1.f - (m_fMissionTextY + 40.f +m_fMissionTextH * 0.5f) / (WINCY * 0.5f);
+
+	D3DXMatrixTransformation2D(&matWorld,
+		nullptr, 0.f,
+		&_vec2(m_fMissionTextW / WINCX, m_fMissionTextH / WINCY), //높이 비율 조정
+		nullptr, 0.f,
+		&_vec2(fNDCX, fNDCY));
+	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+	//텍스쳐 렌더링
+	m_pCripperMission->Set_Texture(0);
+	m_pBufferCom->Render_Buffer();
+
+	//거미 미션
+	fNDCX = (m_fMissionTextX + m_fMissionTextW * 0.5f) / (WINCX * 0.5f) - 1.f;
+	fNDCY = 1.f - (m_fMissionTextY + 80.f + m_fMissionTextH * 0.5f) / (WINCY * 0.5f);
+
+	D3DXMatrixTransformation2D(&matWorld,
+		nullptr, 0.f,
+		&_vec2(m_fMissionTextW / WINCX, m_fMissionTextH / WINCY), //높이 비율 조정
+		nullptr, 0.f,
+		&_vec2(fNDCX, fNDCY));
+	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+
+	//텍스쳐 렌더링
+	m_pSpiderMission->Set_Texture(0);
+	m_pBufferCom->Render_Buffer();
+
+	//숫자 렌더링
+	_vec2 vPos{ 1150.f, 20.f };
+	//좀비
 	_tchar missionBuf[32];
-	swprintf_s(missionBuf, L"좀비를 처치하세요 %d / 10", m_iZombieCount);
+	swprintf_s(missionBuf, L"%d / 10", m_iZombieCount);
 
 	CFontMgr::GetInstance()->Render_Font(
 		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 
 	//크리퍼
-	vPos.y += 20.f;
+	vPos.y += 40.f;
 
-	swprintf_s(missionBuf, L"크리퍼를 처치하세요 %d / 10", m_iCreeperCount);
+	swprintf_s(missionBuf, L"%d / 10", m_iCreeperCount);
 
 	CFontMgr::GetInstance()->Render_Font(
 		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 
 	//거미
-	vPos.y += 20.f;
+	vPos.y += 40.f;
 
-	swprintf_s(missionBuf, L"거미를 처치하세요 %d / 10", m_iSpiderCount);
+	swprintf_s(missionBuf, L"%d / 10", m_iSpiderCount);
 
 	CFontMgr::GetInstance()->Render_Font(
 		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
@@ -362,10 +442,34 @@ void CHUD::Render_Mission1()
 
 void CHUD::Render_Mission2()
 {
-	_vec2 vPos{ 800.f, 50.f };
+	//NPC2에게 미션을 받았을 경우 렌더링
+	if (!m_bMissionNPC2)
+		return;
+	
+	//상단을 고정하기 위해서 Y를 fEmptyH * 0.5를 기준으로 잡는다?
+	float fNDCX = (m_fMissionTextX + m_fMissionTextW * 0.5f) / (WINCX * 0.5f) - 1.f;
+	float fNDCY = 1.f - (m_fMissionTextY + m_fMissionTextH * 0.5f) / (WINCY * 0.5f);
+
+	_matrix matWorld;
+	D3DXMatrixTransformation2D(&matWorld,
+		nullptr, 0.f,
+		&_vec2(m_fMissionTextW / WINCX, m_fMissionTextH / WINCY), //높이 비율 조정
+		nullptr, 0.f,
+		&_vec2(fNDCX, fNDCY));
+	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+
+	_matrix matTexture;
+	D3DXMatrixScaling(&matTexture, 1.f, 1.f, 1.f);
+	m_pGraphicDev->SetTransform(D3DTS_TEXTURE0, &matTexture);
+	m_pGraphicDev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+	//텍스쳐만 교체하고, Buffer는 그대로 써도 무관
+	m_pSkeletonMission->Set_Texture(0);
+	m_pBufferCom->Render_Buffer();
+
+	_vec2 vPos{ 1150.f, 20.f };
 	//스켈레톤
 	_tchar missionBuf[32];
-	swprintf_s(missionBuf, L"스켈레톤을 처치하세요 %d / 10", m_iSkeletonCount);
+	swprintf_s(missionBuf, L"%d / 10", m_iSkeletonCount);
 
 	CFontMgr::GetInstance()->Render_Font(
 		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
@@ -376,13 +480,13 @@ void CHUD::Render_MissionComplete()
 	if (!m_bMissionComplete)
 		return;
 	//상단을 고정하기 위해서 Y를 fEmptyH * 0.5를 기준으로 잡는다?
-	float fNDCX = (m_fMissionX + m_fMissionW * 0.5f) / (WINCX * 0.5f) - 1.f;
-	float fNDCY = 1.f - (m_fMissionY + m_fMissionH * 0.5f) / (WINCY * 0.5f);
+	float fNDCX = (m_fMissionComX + m_fMissionComW * 0.5f) / (WINCX * 0.5f) - 1.f;
+	float fNDCY = 1.f - (m_fMissionComY + m_fMissionComH * 0.5f) / (WINCY * 0.5f);
 
 	_matrix matWorld;
 	D3DXMatrixTransformation2D(&matWorld,
 		nullptr, 0.f,
-		&_vec2(m_fMissionW / WINCX, m_fMissionH / WINCY), //높이 비율 조정
+		&_vec2(m_fMissionComW / WINCX, m_fMissionComH / WINCY), //높이 비율 조정
 		nullptr, 0.f,
 		&_vec2(fNDCX, fNDCY));
 	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
@@ -393,6 +497,20 @@ void CHUD::Render_MissionComplete()
 	m_pGraphicDev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
 	//텍스쳐만 교체하고, Buffer는 그대로 써도 무관
 	m_pMissionComplete->Set_Texture(0);
+	m_pBufferCom->Render_Buffer();
+
+	//아티펙트 렌더링
+	fNDCX = (m_fArtifactX + m_fArtifactW * 0.5f) / (WINCX * 0.5f) - 1.f;
+	fNDCY = 1.f - (m_fArtifactY + m_fArtifactH * 0.5f) / (WINCY * 0.5f);
+
+	D3DXMatrixTransformation2D(&matWorld,
+		nullptr, 0.f,
+		&_vec2(m_fArtifactW / WINCX, m_fArtifactH / WINCY), //높이 비율 조정
+		nullptr, 0.f,
+		&_vec2(fNDCX, fNDCY));
+	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+	
+	m_pArtifact->Set_Texture(0);
 	m_pBufferCom->Render_Buffer();
 }
 
@@ -454,6 +572,51 @@ HRESULT CHUD::Add_Component()
 
 	m_mapComponent[ID_STATIC].insert({ L"Com_MissionCompleteTexture", pComponent });
 
+	//Zombie Mission
+	pComponent = m_pZombieMission = dynamic_cast<CTexture*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_ZombieText"));
+
+	if (nullptr == pComponent)
+		return E_FAIL;
+
+	m_mapComponent[ID_STATIC].insert({ L"Com_ZombieTextTexture", pComponent });
+
+	//Cripper Mission
+	pComponent = m_pCripperMission = dynamic_cast<CTexture*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_CripperText"));
+
+	if (nullptr == pComponent)
+		return E_FAIL;
+
+	m_mapComponent[ID_STATIC].insert({ L"Com_CripperTextTexture", pComponent });
+
+	//Spider Mission
+	pComponent = m_pSpiderMission = dynamic_cast<CTexture*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_SpiderText"));
+
+	if (nullptr == pComponent)
+		return E_FAIL;
+
+	m_mapComponent[ID_STATIC].insert({ L"Com_SpiderTextTexture", pComponent });
+
+	//Skeleton Mission
+	pComponent = m_pSkeletonMission = dynamic_cast<CTexture*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_SkeletonText"));
+
+	if (nullptr == pComponent)
+		return E_FAIL;
+
+	m_mapComponent[ID_STATIC].insert({ L"Com_SkeletonTextTexture", pComponent });
+
+	//Artifact
+	pComponent = m_pArtifact = dynamic_cast<CTexture*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_ArtifactTexture"));
+
+	if (nullptr == pComponent)
+		return E_FAIL;
+
+	m_mapComponent[ID_STATIC].insert({ L"Com_ArtifactTexture", pComponent });
+
 	return S_OK;
 }
 
@@ -476,6 +639,7 @@ void CHUD::Free()
 	//이벤트 버스 소멸전 반드시 해제!
 	CEventBus::GetInstance()->Unsubscribe(eEventType::MONSTER_DEAD, this);
 	CEventBus::GetInstance()->Unsubscribe(eEventType::MISSION_COMPLETE, this);
+	CEventBus::GetInstance()->Unsubscribe(eEventType::MISSION_ACCEPT, this);
 	
 	CGameObject::Free();
 }

@@ -221,7 +221,8 @@ _vec3 CBlock::GetColliderSize(eBlockType eType)
 		vSize = { 0.15f, 5.f, 0.15f };
 		break;
 	case BLOCK_JUMPINGTRAP:
-		vSize = { 5.f, 0.15f, 5.f };
+		//vSize = { 5.f, 0.15f, 5.f };
+		vSize = { 0.f, 0.f, 0.f };
 		break;
 	default:
 		vSize = { 1.f, 1.f, 1.f };
@@ -241,7 +242,7 @@ _vec3 CBlock::GetColliderOffset(eBlockType eType)
 		vOffset = { 0.f, 2.f, 0.f };
 		break;
 	case BLOCK_JUMPINGTRAP:
-		vOffset = { 0.f, 2.f, 0.f };
+		vOffset = { 0.f, 0.f, 0.f };
 		break;
 	default:
 		vOffset = { 0.f, 0.f, 0.f };

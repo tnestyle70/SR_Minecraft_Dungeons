@@ -8,10 +8,11 @@
 class CMonster;
 class CRedStoneGolem;
 class CAncientGuradian;
+class CSpawnEffect;
 
 struct SpawnGroup
 {
-	vector<CMonster*> vecMonsters;
+	vector<CMonster*> vecMonsters = {};
 	float fSpawnTimer = 0.f;
 	float fSpawnDelay = 1.f;
 	int iNextSpawnIndex = 0;
@@ -26,7 +27,7 @@ private:
 	explicit CMonsterMgr();
 	virtual ~CMonsterMgr();
 public:
-	HRESULT Ready_MonsterMgr();
+	HRESULT Ready_MonsterMgr(LPDIRECT3DDEVICE9 pGraphicDev);
 	_int Update(const _float& fTimeDelta);
 	void LateUpdate(const _float& fTimeDelta);
 	void Render();
@@ -46,15 +47,22 @@ private:
 	CPlayer* m_pPlayer = nullptr;
 
 public:
-	void AddMonster(CGameObject* pGameObject, int iTriggerID);
+	void AddMonster(CGameObject* pGameObject, int iTriggerID, _vec3 vPos);
 	void AddGuardian(CAncientGuardian* pBoss) { m_pGuardian = pBoss; }
 	void AddGolem(CRedStoneGolem* pBoss) { m_pGolem = pBoss; }
 	void Clear();
-; private: //트리거 박스 밟았을 경우 생성할 ID별 몬스터 목록
+; private: 
+	//트리거 박스 밟았을 경우 생성할 ID별 몬스터 목록
 	CAncientGuardian* m_pGuardian = nullptr;
 	CRedStoneGolem* m_pGolem = nullptr;
-	map<int, SpawnGroup> m_mapMonsterGroups;
+	map<int, SpawnGroup> m_mapMonsterGroups = {};
+	map<int, vector<_vec3>> m_mapMonsterPos = {};
 	int m_iTriggerID = -1;
+
+	//스폰 이펙트
+	vector<CSpawnEffect*> m_vecSpawnEffects = {};
+
+	LPDIRECT3DDEVICE9 m_pGraphicDev = nullptr;
 
 private:
 	virtual void Free();

@@ -149,10 +149,10 @@ public:
 
 	//NPC 추가함수
 	void Add_NPC(CNPC* pNPC) { m_vecNPCs.push_back(pNPC); }
-
+	
 	//점핑 트랩
 	void LaunchByTrap(_float fForce, eJumpingTrapDir eDir);
-
+	
 private:
 	CPlayerBody* m_pBufferCom[PART_END];
 	CPlayerBody* m_pArmorBufferCom[PART_END] = {};
