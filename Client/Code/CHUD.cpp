@@ -37,6 +37,13 @@ HRESULT CHUD::Ready_GameObject()
 	m_fPosionX = 690.f; m_fPosionY = 694.f;
 	m_fPosionW = 53.f; m_fPosionH = 65.f;
 
+	//미션 완료 텍스트
+	m_fMissionX = 500.f; m_fMissionY = 100.f;
+	m_fMissionW = 300.f; m_fMissionH = 250.f;
+	
+	m_fMissionCoolTime = m_fMissionDuration;
+	m_eMissionType = eMissionType::MISSION_MONSTER;
+	
 	//이벤트 버스 연결, 처치된 몬스터 수 받기
 	CEventBus::GetInstance()->Subscribe(eEventType::MONSTER_DEAD, this,
 		[this](const FGameEvent& event)
@@ -48,7 +55,13 @@ HRESULT CHUD::Ready_GameObject()
 			case EMonsterType::SKELETON:  m_iSkeletonCount += event.iValue; break;
 			case EMonsterType::SPIDER:    m_iSpiderCount += event.iValue; break;
 			}
+		});
 
+	//이벤트 버스 연결, 미션 성공
+	CEventBus::GetInstance()->Subscribe(eEventType::MISSION_COMPLETE, this,
+		[this](const FGameEvent& event)
+		{
+			m_bMissionComplete = static_cast<bool>(event.iValue);
 		});
 
 	return S_OK;
@@ -60,6 +73,8 @@ _int CHUD::Update_GameObject(const _float& fTimeDelta)
 
 	Use_Posion(fTimeDelta);
 
+	Update_Missison(fTimeDelta);
+
 	CRenderer::GetInstance()->Add_RenderGroup(RENDER_UI, this);
 
 	return iExit;
@@ -68,6 +83,77 @@ _int CHUD::Update_GameObject(const _float& fTimeDelta)
 void CHUD::LateUpdate_GameObject(const _float& fTimeDelta)
 {
 	CGameObject::LateUpdate_GameObject(fTimeDelta);
+}
+
+void CHUD::Update_Missison(const _float fTimeDelta)
+{
+	//미션 성공 체크
+	if (m_bMissionComplete)
+	{
+		m_fMissionCoolTime -= fTimeDelta;
+		if (m_fMissionCoolTime <= 0.f)
+		{
+			m_fMissionCoolTime = m_fMissionDuration;
+			m_bMissionComplete = false;
+			m_bFirstMissionComplete = true;
+			//미션 enum 증가
+			m_eMissionType = eMissionType((int)m_eMissionType + 1);
+		}
+	}
+	
+	///미션 성공 Event Bus 
+	switch (m_eMissionType)
+	{
+	case eMissionType::MISSION_MONSTER:
+		if (m_iZombieCount >= 1 && m_iCreeperCount >= 2 && m_iSpiderCount >= 2)
+			 //&& m_bFirstMissionComplete)
+		{
+			FGameEvent event;
+			event.eType = eEventType::MISSION_COMPLETE;
+			event.iValue = 1; //Gain Artifact
+			event.iSubType = 0;
+			CEventBus::GetInstance()->Publish(event);
+
+			m_bFirstMissionComplete = false;
+		}
+		break;
+	case eMissionType::MISSION_SKELETON:
+		if (m_iSkeletonCount >= 2) //&& m_bFirstMissionComplete)
+		{
+			FGameEvent event;
+			event.eType = eEventType::MISSION_COMPLETE;
+			event.iValue = 1; //Gain Artifact
+			event.iSubType = 1;
+			CEventBus::GetInstance()->Publish(event);
+
+			m_bFirstMissionComplete = false;
+		}
+		break;
+	case eMissionType::MISSION_END:
+		break;
+	default:
+		break;
+	}
+}
+
+void CHUD::Use_Posion(const _float fTimeDelta)
+{
+	//포션 사용시 쿨타임 돌리기
+	if (GetAsyncKeyState('T') & 0x8000)
+	{
+		m_bIsPosionCoolTime = true;
+		m_fPosionCooltime = m_fPosionDuration;
+	}
+	//포션 쿨타임 돌리기
+	if (m_bIsPosionCoolTime)
+	{
+		m_fPosionCooltime -= fTimeDelta;
+		if (m_fPosionCooltime <= 0.f)
+		{
+			m_fPosionCooltime = 0.f;
+			m_bIsPosionCoolTime = false;
+		}
+	}
 }
 
 void CHUD::Render_GameObject()
@@ -101,8 +187,9 @@ void CHUD::Render_GameObject()
 	m_pBufferCom->Render_Buffer();
 
 	Render_PosionCoolTime();
-	Render_EmeraldCount(); 
+	Render_CurrencyCount(); 
 	Render_Mission();
+	Render_MissionComplete();
 
 	//Empty Heart 비율에 따른 렌더
 	if (fDamageRatio > 0.f)
@@ -210,39 +297,56 @@ void CHUD::Render_PosionCoolTime()
 		return;
 }
 
-void CHUD::Render_EmeraldCount()
+void CHUD::Render_CurrencyCount()
 {
-	_vec2 vPos{ 1000.f, 680.f };
+	//에메랄드
+	_vec2 vPos{ 1000.f, 670.f };
 	m_iEmerald = CInventoryMgr::GetInstance()->Get_EmeraldCount();
 	_tchar buf[32];
 	swprintf_s(buf, L"%d", m_iEmerald);
 
 	CFontMgr::GetInstance()->Render_Font(
 		L"Font_Minecraft", buf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+
+	//유물
+	_vec2 vArtifact{ 400.f, 680.f };
+
+	m_iArtifact = CInventoryMgr::GetInstance()->Get_ArtifactCount();
+	swprintf_s(buf, L"%d", m_iArtifact);
+	
+	CFontMgr::GetInstance()->Render_Font(
+		L"Font_Minecraft", buf, &vArtifact, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 }
 
 void CHUD::Render_Mission()
+{
+	switch (m_eMissionType)
+	{
+	case eMissionType::MISSION_MONSTER:
+		Render_Mission1();
+		break;
+	case eMissionType::MISSION_SKELETON:
+		Render_Mission2();
+		break;
+	default:
+		break;
+	}
+}
+
+void CHUD::Render_Mission1()
 {
 	_vec2 vPos{ 800.f, 50.f };
 	//좀비 
 	_tchar missionBuf[32];
 	swprintf_s(missionBuf, L"좀비를 처치하세요 %d / 10", m_iZombieCount);
-	
+
 	CFontMgr::GetInstance()->Render_Font(
 		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
-	
+
 	//크리퍼
 	vPos.y += 20.f;
 
 	swprintf_s(missionBuf, L"크리퍼를 처치하세요 %d / 10", m_iCreeperCount);
-
-	CFontMgr::GetInstance()->Render_Font(
-		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
-	
-	//스켈레톤
-	vPos.y += 20.f;
-
-	swprintf_s(missionBuf, L"스켈레톤을 처치하세요 %d / 10", m_iSkeletonCount);
 
 	CFontMgr::GetInstance()->Render_Font(
 		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
@@ -256,24 +360,40 @@ void CHUD::Render_Mission()
 		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 }
 
-void CHUD::Use_Posion(const _float fTimeDelta)
+void CHUD::Render_Mission2()
 {
-	//포션 사용시 쿨타임 돌리기
-	if (GetAsyncKeyState('T') & 0x8000)
-	{
-		m_bIsPosionCoolTime = true;
-		m_fPosionCooltime = m_fPosionDuration;
-	}
-	//포션 쿨타임 돌리기
-	if (m_bIsPosionCoolTime)
-	{
-		m_fPosionCooltime -= fTimeDelta;
-		if (m_fPosionCooltime <= 0.f)
-		{
-			m_fPosionCooltime = 0.f;
-			m_bIsPosionCoolTime = false;
-		}
-	}
+	_vec2 vPos{ 800.f, 50.f };
+	//스켈레톤
+	_tchar missionBuf[32];
+	swprintf_s(missionBuf, L"스켈레톤을 처치하세요 %d / 10", m_iSkeletonCount);
+
+	CFontMgr::GetInstance()->Render_Font(
+		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+}
+
+void CHUD::Render_MissionComplete()
+{
+	if (!m_bMissionComplete)
+		return;
+	//상단을 고정하기 위해서 Y를 fEmptyH * 0.5를 기준으로 잡는다?
+	float fNDCX = (m_fMissionX + m_fMissionW * 0.5f) / (WINCX * 0.5f) - 1.f;
+	float fNDCY = 1.f - (m_fMissionY + m_fMissionH * 0.5f) / (WINCY * 0.5f);
+
+	_matrix matWorld;
+	D3DXMatrixTransformation2D(&matWorld,
+		nullptr, 0.f,
+		&_vec2(m_fMissionW / WINCX, m_fMissionH / WINCY), //높이 비율 조정
+		nullptr, 0.f,
+		&_vec2(fNDCX, fNDCY));
+	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+
+	_matrix matTexture;
+	D3DXMatrixScaling(&matTexture, 1.f, 1.f, 1.f);
+	m_pGraphicDev->SetTransform(D3DTS_TEXTURE0, &matTexture);
+	m_pGraphicDev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+	//텍스쳐만 교체하고, Buffer는 그대로 써도 무관
+	m_pMissionComplete->Set_Texture(0);
+	m_pBufferCom->Render_Buffer();
 }
 
 HRESULT CHUD::Add_Component()
@@ -322,8 +442,17 @@ HRESULT CHUD::Add_Component()
 
 	if (nullptr == pComponent)
 		return E_FAIL;
-
+	
 	m_mapComponent[ID_STATIC].insert({ L"Com_PosionCoolTimeTexture", pComponent });
+
+	//Mission Complete
+	pComponent = m_pMissionComplete = dynamic_cast<CTexture*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_MissionCompleteText"));
+
+	if (nullptr == pComponent)
+		return E_FAIL;
+
+	m_mapComponent[ID_STATIC].insert({ L"Com_MissionCompleteTexture", pComponent });
 
 	return S_OK;
 }
@@ -346,5 +475,7 @@ void CHUD::Free()
 {
 	//이벤트 버스 소멸전 반드시 해제!
 	CEventBus::GetInstance()->Unsubscribe(eEventType::MONSTER_DEAD, this);
+	CEventBus::GetInstance()->Unsubscribe(eEventType::MISSION_COMPLETE, this);
+	
 	CGameObject::Free();
 }

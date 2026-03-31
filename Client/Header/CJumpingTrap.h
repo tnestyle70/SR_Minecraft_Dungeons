@@ -9,6 +9,11 @@ enum eJumpingTrapState
 	TRA_ACTIVE
 };
 
+enum class eJumpingTrapDir
+{
+	LEFT, RIGHT, FORWARD, BACKWARD, DIR_END
+};
+
 class CJumpingTrap : public CGameObject
 {
 private:
