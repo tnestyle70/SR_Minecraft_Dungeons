@@ -62,7 +62,7 @@ void CBlockMgr::Render()
 {
 	switch (m_eRenderMode)
 	{
-	case RENDER_EDITOR:   Render_Stage();    break;
+	case RENDER_EDITOR:   Render_Editor();    break;
 	case RENDER_BATCH:    Render_Stage();     break;
 	case RENDER_QUADTREE: Render_QuadTree(); break;
 	default: break;
@@ -292,7 +292,7 @@ void CBlockMgr::SetRenderMode(eRenderMode eMode)
 {
 	m_eRenderMode = eMode;
 
-	if (eMode == RENDER_BATCH)
+	if (eMode == RENDER_BATCH || eMode == RENDER_EDITOR)
 		RebuildBatchMesh();
 	else if (eMode == RENDER_QUADTREE)
 		BuildQuadTree();

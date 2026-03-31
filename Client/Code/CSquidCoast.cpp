@@ -63,9 +63,8 @@ HRESULT CSquidCoast::Ready_Scene()
 		return E_FAIL;
 	 
 	CCMiniMap::GetInstance()->Ready_MiniMap(m_pGraphicDev);
-	Ready_StageData(L"../Bin/Data/Stage7.dat");
+	Ready_StageData(L"../Bin/Data/Stage1.dat");
 
-	
 	Ready_ObjectData("../Bin/Data/Stage1Object.dat");
 
 	return S_OK;
@@ -153,6 +152,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		}
 		return iExit;
 	} 
+
 	if (GetAsyncKeyState(VK_F5) & 0x8000)
 	{
 		CRenderer::GetInstance()->Clear_RenderGroup();
@@ -164,8 +164,12 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		CDamageMgr::GetInstance()->Clear_Boss();
 		CEnvironmentMgr::GetInstance()->Clear_Boxes();
 		CBlockMgr::GetInstance()->ClearBlocks();
-		CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CY);
-		return 0;
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CY)))
+		{
+			MSG_BOX("TG Stage Create Failed");
+			return -1;
+		}
+		return iExit;
 	}
 
 	auto iter = m_mapLayer.find(L"GameLogic_Layer");
