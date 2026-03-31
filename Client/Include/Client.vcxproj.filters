@@ -303,6 +303,15 @@
     <ClCompile Include="..\Code\CJSChunk.cpp">
       <Filter>03. Manager</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CTJSpawnMgr.cpp">
+      <Filter>03. Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CTJExpOrb.cpp">
+      <Filter>02. GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CTJPlayer.cpp">
+      <Filter>02. GameObject\02. Player</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -611,6 +620,15 @@
     </ClInclude>
     <ClInclude Include="..\Header\CJSChunk.h">
       <Filter>03. Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CTJSpawnMgr.h">
+      <Filter>03. Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CTJExpOrb.h">
+      <Filter>02. GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CTJPlayer.h">
+      <Filter>02. GameObject\02. Player</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

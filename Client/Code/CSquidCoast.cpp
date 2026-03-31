@@ -134,7 +134,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		return iExit;
 	}
 
-	if (GetAsyncKeyState('T') & 0x8000)
+	if (GetAsyncKeyState('L') & 0x8000)
 	{
 		CRenderer::GetInstance()->Clear_RenderGroup();
 		CTriggerBoxMgr::GetInstance()->Clear();

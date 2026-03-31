@@ -18,6 +18,8 @@
 #include "CHUD.h"
 #include "CInventoryMgr.h"
 #include "CTGSkyBox.h"
+#include "CTJSpawnMgr.h"
+#include "CTJPlayer.h"
 
 CTGStage::CTGStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -65,6 +67,8 @@ _int CTGStage::Update_Scene(const _float& fTimeDelta)
 
 	CMonsterMgr::GetInstance()->Update(fTimeDelta);
 
+	CTJSpawnMgr::GetInstance()->Update(fTimeDelta);
+
 	if (GetAsyncKeyState(VK_RETURN) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
 	{
 		//Render Group Clear Before Change Scene!!!!
@@ -75,6 +79,7 @@ _int CTGStage::Update_Scene(const _float& fTimeDelta)
 		CMonsterMgr::GetInstance()->Clear();
 		CParticleMgr::GetInstance()->Clear_Emitters();
 		CInventoryMgr::GetInstance()->Clear_Player();
+		CTJSpawnMgr::GetInstance()->Clear();
 		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CY)))
 		{
 			MSG_BOX("RedStone Create Failed");
@@ -178,7 +183,7 @@ HRESULT CTGStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	CGameObject* pGameObject = nullptr;
 
 	//Player
-	pGameObject = CPlayer::Create(m_pGraphicDev);
+	pGameObject = CTJPlayer::Create(m_pGraphicDev);
 
 	if (!pGameObject)
 		return E_FAIL;
@@ -186,7 +191,7 @@ HRESULT CTGStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	if (FAILED(pLayer->Add_GameObject(L"Player", pGameObject)))
 		return E_FAIL;
 
-	CPlayer* pPlayer = dynamic_cast<CPlayer*>(pGameObject);
+	CTJPlayer* pPlayer = dynamic_cast<CTJPlayer*>(pGameObject);
 
 	//HUD
 	pGameObject = CHUD::Create(m_pGraphicDev);
@@ -217,6 +222,10 @@ HRESULT CTGStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	}
 	CTriggerBoxMgr::GetInstance()->SetPlayerCollider(pCollider);
 	CMonsterMgr::GetInstance()->SetPlayer(pPlayer);
+
+	CTJSpawnMgr::GetInstance()->Set_GraphicDev(m_pGraphicDev);
+	CTJSpawnMgr::GetInstance()->Set_Player(pPlayer);
+	CTJSpawnMgr::GetInstance()->Set_TJPlayer(pPlayer);
 
 	//고정카메라 추가
 	if (m_pDynamicCamera)
@@ -324,5 +333,6 @@ CTGStage* CTGStage::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 
 void CTGStage::Free()
 {
+	CTJSpawnMgr::DestroyInstance();
 	CScene::Free();
 }
