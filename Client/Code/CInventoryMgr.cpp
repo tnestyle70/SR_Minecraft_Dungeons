@@ -100,8 +100,17 @@ HRESULT CInventoryMgr::Ready_InventoryMgr(LPDIRECT3DDEVICE9 pGraphicDev)
 		{
 			switch (static_cast<eCurrencyType>(event.iSubType))
 			{
-			case eCurrencyType::EMERALD:    m_iEmeraldCount += event.iValue; break;
-			case eCurrencyType::ARTIFACT:   m_iArtifactCount += event.iValue; break;
+			case eCurrencyType::EMERALD:    m_iEmeraldCount += 10; break;
+			case eCurrencyType::ARTIFACT:   m_iArtifactCount += 10; break;
+			}
+		});
+	//미션 성공시 유물 개수 증가 시키기
+	CEventBus::GetInstance()->Subscribe(eEventType::MISSION_COMPLETE, this,
+		[this](const FGameEvent& event)
+		{
+			if(event.iValue)
+			{
+				m_iArtifactCount += 1;
 			}
 		});
 	

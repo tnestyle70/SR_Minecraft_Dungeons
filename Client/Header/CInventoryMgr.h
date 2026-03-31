@@ -43,6 +43,7 @@ public:
 	void Clear_Player() { m_pPlayer = nullptr; }
 
 	int Get_EmeraldCount() { return m_iEmeraldCount; }
+	int Get_ArtifactCount() { return m_iArtifactCount; }
 
 private:
 	void Init_Items();

@@ -17,12 +17,10 @@
 
 CLogo::CLogo(LPDIRECT3DDEVICE9 pGraphicDev)
     : Engine::CScene(pGraphicDev), m_pEditor(nullptr), m_pObjectEditor(nullptr)
-{
-}
+{}
 
 CLogo::~CLogo()
-{
-}
+{}
 
 HRESULT CLogo::Ready_Scene()
 {

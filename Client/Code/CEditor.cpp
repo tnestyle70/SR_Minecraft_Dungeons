@@ -6,7 +6,7 @@
 #include "CSceneChanger.h"
 #include "CTriggerBox.h"
 #include "CBlockPreset.h" 
-#include "CNormalCubeTex.h" 
+#include "CNormalCubeTex.h"
 #include "CBlockPlacer.h"
 #include "CRenderer.h"
 
@@ -76,12 +76,7 @@ _int CEditor::Update_Scene(const _float& fTimeDelta)
 	
 	_int iExit = CScene::Update_Scene(fTimeDelta);
 
-	//if (GetAsyncKeyState(VK_F5) & 0x8000)  // 찬영이 씬전환 키 
-	//{
-	//	CRenderer::GetInstance()->Clear_RenderGroup();
-	//	CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CY);
-	//	return 0;
-	//}
+	
 
 	CBlockMgr::GetInstance()->Update(fTimeDelta);
 
@@ -279,7 +274,8 @@ void CEditor::Render_MenuBar()
 		}
 
 		static const char* s_aStageNames[STAGE_END] =
-		{ "Squid Coast", "Camp", "RedStone", "Obsidian" };
+		{ "Squid Coast", "Camp", "RedStone", "Obsidian",
+			"JS", "TG", "CY", "GB" };
 		ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 150.f);
 		ImGui::TextDisabled("Stage : %s", s_aStageNames[m_eCurrentStage]);
 
