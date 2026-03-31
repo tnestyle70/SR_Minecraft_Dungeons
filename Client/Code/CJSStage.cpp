@@ -2,7 +2,10 @@
 #include "CJSStage.h"
 #include "CSceneChanger.h"
 #include "CRenderer.h"
-#include "CDynamicCamera.h"
+#include "CJSCamera.h"
+#include "CJSChunkMgr.h"
+#include "CJSPlayer.h"
+#include "CManagement.h"
 
 CJSStage::CJSStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -34,35 +37,12 @@ _int CJSStage::Update_Scene(const _float& fTimeDelta)
 {
 	_int iExit = CScene::Update_Scene(fTimeDelta);
 
+	_vec3 vPlayerPos;
 
-	//CBlockMgr::GetInstance()->Update(fTimeDelta);
+	CTransform* pPlayerTrans = dynamic_cast<CTransform*>(CManagement::GetInstance()->Get_Component(ID_DYNAMIC, L"GameLogic_Layer", L"JSPlayer", L"Com_Transform"));
+	pPlayerTrans->Get_Info(INFO_POS, &vPlayerPos);
 
-	//CTriggerBoxMgr::GetInstance()->Update(fTimeDelta);
-
-	//CIronBarMgr::GetInstance()->Update(fTimeDelta);
-
-	//CMonsterMgr::GetInstance()->Update(fTimeDelta);
-
-	//if (GetAsyncKeyState(VK_RETURN) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
-	//{
-	//	//Render Group Clear Before Change Scene!!!!
-	//	CTriggerBoxMgr::GetInstance()->SetSceneChanged(false);
-	//	CRenderer::GetInstance()->Clear_RenderGroup();
-	//	CTriggerBoxMgr::GetInstance()->Clear();
-	//	CIronBarMgr::GetInstance()->Clear();
-	//	CMonsterMgr::GetInstance()->Clear();
-	//	CParticleMgr::GetInstance()->Clear_Emitters();
-	//	CInventoryMgr::GetInstance()->Clear_Player();
-	//	if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_TJ)))
-	//	{
-	//		MSG_BOX("RedStone Create Failed");
-	//		return -1;
-	//	}
-	//	return iExit;
-	//}
-	//auto iter = m_mapLayer.find(L"GameLogic_Layer");
-	//if (iter != m_mapLayer.end())
-	//	iter->second->Delete_GameObject(fTimeDelta);
+	CJSChunkMgr::GetInstance()->Update_Manager(fTimeDelta, vPlayerPos);
 
 	return iExit;
 }
@@ -85,17 +65,20 @@ HRESULT CJSStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 
 	CGameObject* pGameObject = nullptr;
 
-	//dynamic camera
+	//camera
 	_vec3 vEye{ 0.f, 10.f, -10.f };
 	_vec3 vAt{ 0.f, 0.f, 1.f };
 	_vec3 vUp{ 0.f, 1.f, 0.f };
 
-	pGameObject = CDynamicCamera::Create(m_pGraphicDev, &vEye, &vAt, &vUp);
+	pGameObject = CJSCamera::Create(m_pGraphicDev, &vEye, &vAt, &vUp);
 
 	if (!pGameObject)
 		return E_FAIL;
 
-	if (FAILED(pLayer->Add_GameObject(L"DynamicCamera", pGameObject)))
+	if (FAILED(pLayer->Add_GameObject(L"JSCamera", pGameObject)))
+		return E_FAIL;
+
+	if (FAILED(CJSChunkMgr::GetInstance()->Ready_Manager(m_pGraphicDev, pLayer)))
 		return E_FAIL;
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
@@ -111,6 +94,14 @@ HRESULT CJSStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	CGameObject* pGameObject = nullptr;
+
+	pGameObject = CJSPlayer::Create(m_pGraphicDev);
+
+	if (!pGameObject)
+		return E_FAIL;
+
+	if (FAILED(pLayer->Add_GameObject(L"JSPlayer", pGameObject)))
+		return E_FAIL;
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
 
@@ -152,5 +143,6 @@ CJSStage* CJSStage::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 
 void CJSStage::Free()
 {
+	CJSChunkMgr::DestroyInstance();
 	CScene::Free();
 }
