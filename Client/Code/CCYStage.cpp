@@ -45,7 +45,10 @@ HRESULT CCYStage::Ready_Scene()
 }
 
 _int CCYStage::Update_Scene(const _float& fTimeDelta)
-{
+{ 
+
+	
+	 
 	//인벤토리 먼저 업데이트
 	CInventoryMgr::GetInstance()->Update(fTimeDelta);
 
@@ -112,8 +115,14 @@ void CCYStage::Render_Scene()
 		return;
 	}
 
+	D3DMATERIAL9 mat;
+	ZeroMemory(&mat, sizeof(mat));
+	mat.Diffuse = { 1.f, 1.f, 1.f, 1.f };
+	mat.Ambient = { 1.f, 1.f, 1.f, 1.f };
+	m_pGraphicDev->SetMaterial(&mat);
+
 	CBlockMgr::GetInstance()->Render();
-}
+} 
 
 void CCYStage::Render_UI()
 {
@@ -247,6 +256,9 @@ HRESULT CCYStage::Ready_UI_Layer(const _tchar* pLayerTag)
 
 HRESULT CCYStage::Ready_Light()
 {
+	m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
+	m_pGraphicDev->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(10, 10, 10));
+
 	return S_OK;
 }
 
@@ -256,63 +268,53 @@ HRESULT CCYStage::Ready_StageData(const _tchar* szPath)
 	_wfopen_s(&pFile, szPath, L"rb");
 	if (!pFile)
 		return E_FAIL;
-
-	// 1. 블럭 (LoadBlocks 내부에서 RebuildBatchMesh까지)
-
-	//BlockMgr
-	if (FAILED(CBlockMgr::GetInstance()->Ready_BlockMgr(m_pGraphicDev)))
-	{
-		MSG_BOX("block mgr create failed");
-		return E_FAIL;
-	}
-
-	CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_BATCH); // 먼저 모드 설정
-
+	
+	 //CNormalCubeTex, StoneGradient 프로토타입 등록 (게임 플레이 시 에디터를 안 거치면 없을 수 있음)
+	CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_NormalCubeTex",
+		Engine::CNormalCubeTex::Create(m_pGraphicDev, 1.f, 1.f, 1.f));
+	
+	CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StoneGradientTexture",
+		Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL,
+			L"../Bin/Resource/Texture/blocks/stone_gradient_12.dds"));
+	
+	CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_EDITOR);
+	
 	CBlockMgr::GetInstance()->LoadBlocks(pFile);
-
-	// 2. 몬스터 - map에 안 담고 레이어에 바로 추가
-	int iCount = 0;
-	fread(&iCount, sizeof(int), 1, pFile);
-	for (int i = 0; i < iCount; ++i)
-	{
-		MonsterData tData;
-		fread(&tData, sizeof(MonsterData), 1, pFile);
-		_vec3 vPos = { (float)tData.x, (float)tData.y, (float)tData.z };
-
-		CGameObject* pMonster = CMonster::Create(
-			m_pGraphicDev, (EMonsterType)tData.iMonsterType, vPos);
-		//MonsterMgr 쪽에 추가
-		CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID);
-	}
-
-	// 3. 창살
-	fread(&iCount, sizeof(int), 1, pFile);
-	for (int i = 0; i < iCount; ++i)
-	{
-		IronBarData tData;
-		fread(&tData, sizeof(IronBarData), 1, pFile);
-		_vec3 vPos = { (float)tData.x, (float)tData.y, (float)tData.z };
-
-		CGameObject* pIronBar = CIronBar::Create(m_pGraphicDev, vPos);
-		if (pIronBar)
-			CIronBarMgr::GetInstance()->AddIronBar(pIronBar, tData.iTriggerID);
-		//m_mapLayer[L"GameLogic_Layer"]->Add_GameObject(L"IronBar", pIronBar);
-	}
-
-	// 4. 트리거박스
-	fread(&iCount, sizeof(int), 1, pFile);
-	for (int i = 0; i < iCount; ++i)
-	{
-		TriggerBoxData tData;
-		fread(&tData, sizeof(TriggerBoxData), 1, pFile);
-		_vec3 vPos = { (float)tData.x, (float)tData.y, (float)tData.z };
-
-		CGameObject* pTriggerBox = CTriggerBox::Create(m_pGraphicDev, vPos, tData.iTriggerID, (eTriggerBoxType)tData.iTriggerBoxType);
-		if (pTriggerBox)
-			CTriggerBoxMgr::GetInstance()->AddTriggerBox(pTriggerBox);
-		//m_mapLayer[L"GameLogic_Layer"]->Add_GameObject(L"TriggerBox", pTriggerBox);
-	}
-
+	//
+	//int iCount = 0;
+	//fread(&iCount, sizeof(int), 1, pFile);
+	//for (int i = 0; i < iCount; ++i)
+	//{
+	//	MonsterData tData;
+	//	fread(&tData, sizeof(MonsterData), 1, pFile);
+	//	_vec3 vPos = { (float)tData.x, (float)tData.y, (float)tData.z };
+	//	CGameObject* pMonster = CMonster::Create(
+	//		m_pGraphicDev, (EMonsterType)tData.iMonsterType, vPos);
+	//	CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID);
+	//}
+	//
+	//fread(&iCount, sizeof(int), 1, pFile);
+	//for (int i = 0; i < iCount; ++i)
+	//{
+	//	IronBarData tData;
+	//	fread(&tData, sizeof(IronBarData), 1, pFile);
+	//	_vec3 vPos = { (float)tData.x, (float)tData.y, (float)tData.z };
+	//	CGameObject* pIronBar = CIronBar::Create(m_pGraphicDev, vPos);
+	//	if (pIronBar)
+	//		CIronBarMgr::GetInstance()->AddIronBar(pIronBar, tData.iTriggerID);
+	//}
+	//
+	//fread(&iCount, sizeof(int), 1, pFile);
+	//for (int i = 0; i < iCount; ++i)
+	//{
+	//	TriggerBoxData tData;
+	//	fread(&tData, sizeof(TriggerBoxData), 1, pFile);
+	//	_vec3 vPos = { (float)tData.x, (float)tData.y, (float)tData.z };
+	//	CGameObject* pTriggerBox = CTriggerBox::Create(m_pGraphicDev, vPos, tData.iTriggerID, (eTriggerBoxType)tData.iTriggerBoxType);
+	//	if (pTriggerBox)
+	//		CTriggerBoxMgr::GetInstance()->AddTriggerBox(pTriggerBox);
+	//}
+	//
 	fclose(pFile);
 	return S_OK;
 }
@@ -332,6 +334,7 @@ CCYStage* CCYStage::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 }
 
 void CCYStage::Free()
-{
+{ 
+	
 	CScene::Free();
 }
