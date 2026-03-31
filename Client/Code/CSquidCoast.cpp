@@ -36,7 +36,8 @@
 #include "CCrystal.h"
 #include "CNPC.h"
 #include "CDialogueBox.h"
-#include "CEnderEye.h"
+#include "CEnderEye.h" 
+
 
 CSquidCoast::CSquidCoast(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -62,7 +63,7 @@ HRESULT CSquidCoast::Ready_Scene()
 		return E_FAIL;
 	 
 	CCMiniMap::GetInstance()->Ready_MiniMap(m_pGraphicDev);
-	Ready_StageData(L"../Bin/Data/Stage1.dat");
+	Ready_StageData(L"../Bin/Data/Stage7.dat");
 
 	
 	Ready_ObjectData("../Bin/Data/Stage1Object.dat");
@@ -151,6 +152,20 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 			return -1;
 		}
 		return iExit;
+	} 
+	if (GetAsyncKeyState(VK_F5) & 0x8000)
+	{
+		CRenderer::GetInstance()->Clear_RenderGroup();
+		CTriggerBoxMgr::GetInstance()->Clear();
+		CIronBarMgr::GetInstance()->Clear();
+		CMonsterMgr::GetInstance()->Clear();
+		CParticleMgr::GetInstance()->Clear_Emitters();
+		CInventoryMgr::GetInstance()->Clear_Player();
+		CDamageMgr::GetInstance()->Clear_Boss();
+		CEnvironmentMgr::GetInstance()->Clear_Boxes();
+		CBlockMgr::GetInstance()->ClearBlocks();
+		CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CY);
+		return 0;
 	}
 
 	auto iter = m_mapLayer.find(L"GameLogic_Layer");
