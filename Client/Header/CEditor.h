@@ -118,6 +118,7 @@ public:
     HRESULT LoadStageData(const _tchar* szPath);
 private:
     eStageType m_eCurrentStage = STAGE_SQUIDCOAST;
+
     CDragon* m_pDragon = nullptr;
     CPlayer* m_pPlayer = nullptr;
     bool m_bPresetMode = false;
@@ -157,7 +158,7 @@ private:
 
     // 추가 - 클립보드
     vector<ClipboardBlock> m_vecClipboard;
-
+    
     // 추가 - Undo/Redo
     deque<EditorAction> m_undoStack;
     deque<EditorAction> m_redoStack;

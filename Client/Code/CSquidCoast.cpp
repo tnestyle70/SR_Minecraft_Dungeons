@@ -135,7 +135,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		return iExit;
 	}
 
-	if (GetAsyncKeyState('T') & 0x8000)
+	if (GetAsyncKeyState('Y') & 0x8000)
 	{
 		CRenderer::GetInstance()->Clear_RenderGroup();
 		CTriggerBoxMgr::GetInstance()->Clear();
@@ -315,6 +315,9 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 
 	CInventoryMgr::GetInstance()->Set_Player(pPlayer);
 
+	//IronBarMgr EventBus 연결
+	CIronBarMgr::GetInstance()->Ready_IronBarMgr();
+
 	//TNT
 	CTNT* pTNT = CTNT::Create(m_pGraphicDev, _vec3(5.f, 1.5f, 3.f));
 	if (pTNT)
@@ -326,49 +329,49 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	//HUD
 	pGameObject = CHUD::Create(m_pGraphicDev);
 
-		if (nullptr == pGameObject)
-			return E_FAIL;
+	if (nullptr == pGameObject)
+		return E_FAIL;
 
-		if (FAILED(pLayer->Add_GameObject(L"HUD", pGameObject)))
-			return E_FAIL;
+	if (FAILED(pLayer->Add_GameObject(L"HUD", pGameObject)))
+		return E_FAIL;
 
-		CHUD* pHUD = dynamic_cast<CHUD*>(pGameObject);
-		pHUD->Set_Player(pPlayer);
+	CHUD* pHUD = dynamic_cast<CHUD*>(pGameObject);
+	pHUD->Set_Player(pPlayer);
 
-		m_mapLayer.insert({ pLayerTag, pLayer });
+	m_mapLayer.insert({ pLayerTag, pLayer });
 
-		//TriggerBoxMgr
-		CCollider* pCollider = dynamic_cast<CCollider*>(pPlayer->Get_Component(ID_STATIC, L"Com_Collider"));
-		if (!pCollider)
-		{
-			MSG_BOX("Player Collider Set Failed");
-		}
-		CTriggerBoxMgr::GetInstance()->SetPlayerCollider(pCollider);
-		CMonsterMgr::GetInstance()->SetPlayer(pPlayer);
+	//TriggerBoxMgr
+	CCollider* pCollider = dynamic_cast<CCollider*>(pPlayer->Get_Component(ID_STATIC, L"Com_Collider"));
+	if (!pCollider)
+	{
+		MSG_BOX("Player Collider Set Failed");
+	}
+	CTriggerBoxMgr::GetInstance()->SetPlayerCollider(pCollider);
+	CMonsterMgr::GetInstance()->SetPlayer(pPlayer);
+	
+	//고정 카메라 추가
+	if (m_pDynamicCamera)
+		m_pDynamicCamera->SetFollowTarget(
+			dynamic_cast<Engine::CTransform*>(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform")));
 
-		//고정 카메라 추가
-		if (m_pDynamicCamera)
-			m_pDynamicCamera->SetFollowTarget(
-				dynamic_cast<Engine::CTransform*>(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform")));
+	//Object
+	//pGameObject = CBox::Create(m_pGraphicDev);
 
-		//Object
-		//pGameObject = CBox::Create(m_pGraphicDev);
+	//if (!pGameObject)
+	//	return E_FAIL;
 
-		//if (!pGameObject)
-		//	return E_FAIL;
+	//if (FAILED(pLayer->Add_GameObject(L"Box", pGameObject)))
+	//	return E_FAIL;
 
-		//if (FAILED(pLayer->Add_GameObject(L"Box", pGameObject)))
-		//	return E_FAIL;
+	//pGameObject = CCrystal::Create(m_pGraphicDev);
 
-		//pGameObject = CCrystal::Create(m_pGraphicDev);
+	//if (!pGameObject)
+	//	return E_FAIL;
 
-		//if (!pGameObject)
-		//	return E_FAIL;
+	//if (FAILED(pLayer->Add_GameObject(L"Crystal", pGameObject)))
+	//	return E_FAIL;
 
-		//if (FAILED(pLayer->Add_GameObject(L"Crystal", pGameObject)))
-		//	return E_FAIL;
-
-		//m_mapLayer.insert({ pLayerTag, pLayer });
+	//m_mapLayer.insert({ pLayerTag, pLayer });
 
 	//pGameObject = CEnderEye::Create(m_pGraphicDev);
 

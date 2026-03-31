@@ -73,7 +73,10 @@ public:
 
 private:
 	Engine::CTransform* m_pTargetTransform = nullptr;
-	_vec3 m_vFollowOffset = { -12.f, 15.f, -12.f };  // 등뒤 위치 오프셋
+
+	//_vec3 m_vFollowOffset = { -12.f, 15.f, -12.f };  // 등뒤 위치 오프셋
+
+	_vec3 m_vFollowOffset = { -12.f, 20.f, -12.f };
 
 	//자유카메라 <-> 고정카메라
 	bool m_bFollowMode = true;

@@ -265,7 +265,7 @@
       <Filter>01. Scene\01. Stage\04. JS</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\CTGStage.cpp">
-      <Filter>01. Scene\01. Stage\05. TG</Filter>
+      <Filter>01. Scene\01. Stage\05. TJ</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\CDialogueBox.cpp">
       <Filter>02. GameObject\12. UI</Filter>
@@ -573,7 +573,7 @@
       <Filter>01. Scene\01. Stage\04. JS</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CTGStage.h">
-      <Filter>01. Scene\01. Stage\05. TG</Filter>
+      <Filter>01. Scene\01. Stage\05. TJ</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CCYStage.h">
       <Filter>01. Scene\01. Stage\06. CY</Filter>
@@ -776,9 +776,6 @@
     <Filter Include="01. Scene\01. Stage\04. JS">
       <UniqueIdentifier>{329c2971-bac3-4122-9c4c-e37a53d13dea}</UniqueIdentifier>
     </Filter>
-    <Filter Include="01. Scene\01. Stage\05. TG">
-      <UniqueIdentifier>{53800c26-c572-43f7-a5ac-7453e2bce097}</UniqueIdentifier>
-    </Filter>
     <Filter Include="01. Scene\01. Stage\06. CY">
       <UniqueIdentifier>{1aebd20a-f04b-44a4-9e67-390946b61ffb}</UniqueIdentifier>
     </Filter>
@@ -814,6 +811,9 @@
     </Filter>
     <Filter Include="03. Manager\05. EventBus">
       <UniqueIdentifier>{7a43042b-503e-426b-a3b0-14cc490d62af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Scene\01. Stage\05. TJ">
+      <UniqueIdentifier>{53800c26-c572-43f7-a5ac-7453e2bce097}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

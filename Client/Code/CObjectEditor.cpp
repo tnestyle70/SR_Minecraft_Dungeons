@@ -7,8 +7,8 @@
 #include "CDynamicCamera.h"
 #include "CBlockMgr.h"
 #include "CMonsterUV.h"
+#include "CNormalCubeTex.h"
 #include "CTorch.h"
-
 
 CObjectEditor::CObjectEditor(LPDIRECT3DDEVICE9 pGraphicDev)
     : CScene(pGraphicDev)
@@ -56,7 +56,7 @@ _int CObjectEditor::Update_Scene(const _float& fTimeDelta)
         float fT = 0.f;
 
         _vec3 vRayPos, vRayDir;
-        // ±âÁ¸ Get_MouseWorldPos() ´ë½Å ºí·Ï Ãæµ¹ Ã¼Å©
+        // ê¸°ì¡´ Get_MouseWorldPos() ëŒ€ì‹  ë¸”ë¡ ì¶©ëŒ ì²´í¬
         Get_MouseRay(vRayPos, vRayDir);
 
         if (CBlockMgr::GetInstance()->RayAABBIntersectWithNormal(
@@ -216,7 +216,7 @@ HRESULT CObjectEditor::SaveObjectData(const char* pFileName)
         vRot = pTrans->Get_Rotation();
 
         OBJECT_DATA data;
-        // Å¸ÀÔ ÃßÃâ
+        // íƒ€ìž… ì¶”ì¶œ
         if (dynamic_cast<CBox*>(pObj)) data.eType = OBJECT_BOX;
         else if (dynamic_cast<CLamp*>(pObj)) data.eType = OBJECT_LAMP;
         else if (dynamic_cast<CCrystal*>(pObj)) data.eType = OBJECT_CRYSTAL;
@@ -246,7 +246,7 @@ HRESULT CObjectEditor::LoadObjectData(const char* pFileName)
     if (fopen_s(&pFile, pFileName, "rb") != 0)
         return E_FAIL;
 
-    // ±âÁ¸ ¿ÀºêÁ§Æ® Á¦°Å
+    // ê¸°ì¡´ ì˜¤ë¸Œì íŠ¸ ì œê±°
     for (auto& pair : m_mapEditObject)
         Safe_Release(pair.second);
     m_mapEditObject.clear();
@@ -295,7 +295,7 @@ HRESULT CObjectEditor::LoadObjectData(const char* pFileName)
             pTrans->Set_Rotation(ROT_Z, data.vRot[2]);
         }
 
-        // Å° »ý¼º
+        // í‚¤ ìƒì„±
         static int iID = 0;
         wstring key = L"Obj_" + to_wstring(iID++);
         m_mapEditObject.insert({ key, pObj });
@@ -408,12 +408,12 @@ void CObjectEditor::Render_SaveLoad()
 
     ImGui::Begin("Object Save / Load");
 
-    // ½ºÅ×ÀÌÁö ¼±ÅÃ¿ë Combo Box
+    // ìŠ¤í…Œì´ì§€ ì„ íƒìš© Combo Box
     static int stageIndex = 0;
     const char* stages[] = { "Stage1", "Stage2", "Stage3", "Stage4","Stage7"};
     ImGui::Combo("Stage", &stageIndex, stages, IM_ARRAYSIZE(stages));
 
-    // ¼±ÅÃµÈ ½ºÅ×ÀÌÁö¿¡ µû¶ó ÆÄÀÏ ÀÌ¸§ °áÁ¤
+    // ì„ íƒëœ ìŠ¤í…Œì´ì§€ì— ë”°ë¼ íŒŒì¼ ì´ë¦„ ê²°ì •
     std::string fileName = "../Bin/Data/";
     fileName += stages[stageIndex];
     fileName += "Object.dat";
@@ -785,7 +785,6 @@ HRESULT CObjectEditor::Ready_Prototype()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StoneGradientTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/stone_gradient_12.dds"))))
         return E_FAIL;
-
 
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TorchTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/redstone_torch_on.png"))))

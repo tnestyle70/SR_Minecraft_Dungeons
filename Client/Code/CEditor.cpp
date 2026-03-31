@@ -6,7 +6,7 @@
 #include "CSceneChanger.h"
 #include "CTriggerBox.h"
 #include "CBlockPreset.h" 
-#include "CNormalCubeTex.h" 
+#include "CNormalCubeTex.h"
 #include "CBlockPlacer.h"
 #include "CRenderer.h"
 

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "CIronBarMgr.h"
+#include "CEventBus.h"
 
 IMPLEMENT_SINGLETON(CIronBarMgr)
 
@@ -14,6 +15,15 @@ CIronBarMgr::~CIronBarMgr()
 
 HRESULT CIronBarMgr::Ready_IronBarMgr()
 {
+	CEventBus::GetInstance()->Subscribe(eEventType::MISSION_COMPLETE, this,
+		[this](const FGameEvent& event)
+		{
+			if (event.iSubType)
+			{
+				Close(0);
+			}
+		});
+
 	return S_OK;
 }
 
@@ -128,6 +138,8 @@ bool CIronBarMgr::IsClosed(int iTriggerID)
 
 void CIronBarMgr::Free()
 {
+	//EventBus 해제해주기
+
 	for (auto& pair : m_mapIronBarGroups)
 	{
 		for (auto& pIronBar : pair.second)
