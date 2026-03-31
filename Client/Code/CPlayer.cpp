@@ -51,12 +51,11 @@ HRESULT CPlayer::Ready_GameObject()
 {
 	if (FAILED(Add_Component()))
 		return E_FAIL;
-
+	
 	//m_pTransformCom->Set_Pos(0.f, 10.f, 0.f);
 	m_pTransformCom->Set_Pos(48.f, 9.f, 97.f);
-	
 	//m_pTransformCom->Set_Pos(-48.f, 1.f, -163.f);
-	
+
 	m_eArmorType = ARMOR_BARDSGARD;
 	
 #pragma region 파트별 크기, 오프셋
@@ -74,7 +73,6 @@ HRESULT CPlayer::Ready_GameObject()
 	m_vPartOffset[PART_LLEG] = { 0.26f, 0.45f, 0.00f };
 	m_vPartOffset[PART_RLEG] = { -0.26f, 0.45f, 0.00f };
 #pragma endregion
-
 
 	Safe_Release(m_pAttackEmitter);
 
@@ -1372,6 +1370,11 @@ void CPlayer::LaunchByTrap(_float fForce, eJumpingTrapDir eDir)
 	m_fVelocityY = fForce;
 	m_bOnGround = false;
 
+	_vec3 vPos;
+	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+	vPos.y += 1.f;
+	m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
+
 	//수평 속도
 	float fHorizontalForce = fForce * 0.5f;
 
@@ -1383,7 +1386,7 @@ void CPlayer::LaunchByTrap(_float fForce, eJumpingTrapDir eDir)
 	D3DXVec3Normalize(&vRight, &vRight);
 
 	//상수 벡터로 월드 축 보장
-
+	
 	switch (eDir)
 	{
 	case eJumpingTrapDir::LEFT:

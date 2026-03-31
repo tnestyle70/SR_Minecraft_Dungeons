@@ -55,7 +55,7 @@ HRESULT CSquidCoast::Ready_Scene()
 
 	if (FAILED(Ready_Environment_Layer(L"Environment_Layer")))
 		return E_FAIL;
-
+	
 	if (FAILED(Ready_GameLogic_Layer(L"GameLogic_Layer")))
 		return E_FAIL;
 
@@ -125,7 +125,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		CDamageMgr::GetInstance()->Clear_Boss();
 		CEnvironmentMgr::GetInstance()->Clear_Boxes();
 
-		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP)))
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_NETWORK)))
 		{
 			MSG_BOX("Camp Create Failed");
 			return -1;
@@ -151,9 +151,9 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 			return -1;
 		}
 		return iExit;
-	} 
+	}
 
-	if (GetAsyncKeyState(VK_F5) & 0x8000)
+	if (GetAsyncKeyState(VK_F6) & 0x8000)
 	{
 		CRenderer::GetInstance()->Clear_RenderGroup();
 		CTriggerBoxMgr::GetInstance()->Clear();
@@ -211,6 +211,8 @@ void CSquidCoast::Render_Scene()
 	CBlockMgr::GetInstance()->Render();
 
 	CParticleMgr::GetInstance()->Render();
+
+	CMonsterMgr::GetInstance()->Render();
 
 	//CCMiniMap::GetInstance()->Render();
 }
@@ -292,27 +294,37 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	//JumpingTrap
 	CJumpingTrapMgr::GetInstance()->Set_Player(pPlayer);
 
-	// NPC	
+	// NPC
 	// DialogueBox
 	CDialogueBox* pDialogueBox = CDialogueBox::Create(m_pGraphicDev);
 	if (!pDialogueBox) return E_FAIL;
 	if (FAILED(pLayer->Add_GameObject(L"DialogueBox", pDialogueBox)))
 		return E_FAIL;
-
-	pGameObject = CNPC::Create(m_pGraphicDev, _vec3(5.f, 2.f, 5.f));
+	pGameObject = CNPC::Create(m_pGraphicDev, _vec3(-19.f, 1.f, -126.f));
 	if (!pGameObject)
 		return E_FAIL;
-
-	if (FAILED(pLayer->Add_GameObject(L"NPC", pGameObject)))
+	if (FAILED(pLayer->Add_GameObject(L"NPC1", pGameObject)))
+		return E_FAIL;
+	CNPC* pNPC1 = dynamic_cast<CNPC*>(pGameObject);
+	if (pNPC1 && pPlayer)
+	{
+		pPlayer->Add_NPC(pNPC1);
+		pNPC1->Set_NPCType(eNPCType::NPC_MONSTER);
+		pNPC1->Set_DialogueBox(pDialogueBox);
+	}
+	pGameObject = CNPC::Create(m_pGraphicDev, _vec3(96.f, -20.f, 86.f));
+	if (!pGameObject)
+		return E_FAIL;
+	if (FAILED(pLayer->Add_GameObject(L"NPC2", pGameObject)))
 		return E_FAIL;
 
-	CNPC* pNPC = dynamic_cast<CNPC*>(pGameObject);
-	if (pNPC && pPlayer)
+	CNPC* pNPC2 = dynamic_cast<CNPC*>(pGameObject);
+	if (pNPC2 && pPlayer)
 	{
-		pPlayer->Add_NPC(pNPC);
-		pNPC->Set_DialogueBox(pDialogueBox);
+		pPlayer->Add_NPC(pNPC2);
+		pNPC2->Set_NPCType(eNPCType::NPC_SKELETON);
+		pNPC2->Set_DialogueBox(pDialogueBox);
 	}
-
 	//Inventory 세팅
 	if (CInventoryMgr::GetInstance()->Ready_InventoryMgr(m_pGraphicDev))
 		return E_FAIL;
@@ -467,7 +479,9 @@ HRESULT CSquidCoast::Ready_StageData(const _tchar* szPath)
 	CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_BATCH); // 먼저 모드 설정
 
 	CBlockMgr::GetInstance()->LoadBlocks(pFile);
-
+	
+	CMonsterMgr::GetInstance()->Ready_MonsterMgr(m_pGraphicDev);
+	
 	// 2. 몬스터 - map에 안 담고 레이어에 바로 추가
 	int iCount = 0;
 	fread(&iCount, sizeof(int), 1, pFile);
@@ -483,7 +497,7 @@ HRESULT CSquidCoast::Ready_StageData(const _tchar* szPath)
 
 		//MonsterMgr 쪽에 추가
 		if(pMonster)
-			CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID);
+			CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID, vPos);
 	}
 
 	// 3. 창살

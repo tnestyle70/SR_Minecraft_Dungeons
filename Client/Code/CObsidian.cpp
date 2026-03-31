@@ -258,7 +258,7 @@ HRESULT CObsidian::Ready_StageData(const _tchar* szPath)
 		CGameObject* pMonster = CMonster::Create(
 			m_pGraphicDev, (EMonsterType)tData.iMonsterType, vPos);
 		if (pMonster)
-			CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID);
+			CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID, vPos);
 		// 레이어가 소유권 가짐 → 씬 종료 시 자동 해제
 	}
 

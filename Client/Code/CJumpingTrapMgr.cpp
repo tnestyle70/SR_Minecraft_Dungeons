@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "CJumpingTrapMgr.h"
 #include "CPlayer.h"
-
+#include "CSoundMgr.h"
+	
 IMPLEMENT_SINGLETON(CJumpingTrapMgr)
 
 CJumpingTrapMgr::CJumpingTrapMgr()
@@ -55,27 +56,52 @@ void CJumpingTrapMgr::Render()
 void CJumpingTrapMgr::Activate(int iTriggerID)
 {
 	auto it = m_mapJumpingTrapGroups.find(iTriggerID);
+
 	if (it == m_mapJumpingTrapGroups.end())
 		return;
+
 	//애니메이션 재생
 	for (auto* pTrap : it->second)
 		pTrap->Set_Active(true);
+	//사운드 재생
+	CSoundMgr::GetInstance()->PlayEffect(L"Effect/Effect_Jump.wav", 1.f);
+	
 	//플레이어 점프
 	if (iTriggerID == 0)
 	{
-		m_pPlayer->LaunchByTrap(10.f, eJumpingTrapDir::RIGHT);
+		m_pPlayer->LaunchByTrap(30.f, eJumpingTrapDir::RIGHT);
 	}
 	if (iTriggerID == 1)
 	{
-		m_pPlayer->LaunchByTrap(50.f, eJumpingTrapDir::LEFT);
+		m_pPlayer->LaunchByTrap(46.f, eJumpingTrapDir::LEFT);
 	}
 	if (iTriggerID == 2)
 	{
-		m_pPlayer->LaunchByTrap(10.f, eJumpingTrapDir::LEFT);
+		m_pPlayer->LaunchByTrap(20.f, eJumpingTrapDir::LEFT);
 	}
 	if (iTriggerID == 3)
 	{
-		m_pPlayer->LaunchByTrap(50.f, eJumpingTrapDir::BACKWARD);
+		m_pPlayer->LaunchByTrap(20.f, eJumpingTrapDir::LEFT);
+	}
+	if (iTriggerID == 4)
+	{
+		m_pPlayer->LaunchByTrap(20.f, eJumpingTrapDir::LEFT);
+	}
+	if (iTriggerID == 5)
+	{
+		m_pPlayer->LaunchByTrap(20.f, eJumpingTrapDir::RIGHT);
+	}
+	if (iTriggerID == 6)
+	{
+		m_pPlayer->LaunchByTrap(20.f, eJumpingTrapDir::RIGHT);
+	}
+	if (iTriggerID == 7)
+	{
+		m_pPlayer->LaunchByTrap(20.f, eJumpingTrapDir::RIGHT);
+	}
+	if (iTriggerID == 8)
+	{
+		m_pPlayer->LaunchByTrap(48.f, eJumpingTrapDir::FORWARD);
 	}
 }
 

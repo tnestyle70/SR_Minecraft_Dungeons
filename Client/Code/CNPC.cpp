@@ -5,6 +5,8 @@
 #include "CBlockMgr.h"
 #include "CCollider.h"
 #include "CProtoMgr.h"
+#include "CEventBus.h"
+#include "CSoundMgr.h"
 
 CNPC::CNPC(LPDIRECT3DDEVICE9 pGraphicDev)
     : CGameObject(pGraphicDev)
@@ -48,10 +50,14 @@ _int CNPC::Update_GameObject(const _float& fTimeDelta)
 {
     _int iExit = CGameObject::Update_GameObject(fTimeDelta);
 
+    //B키로 닫기
+    if (GetAsyncKeyState('B') & 0x8000)
+        m_pDialogueBox->Hide();
+
     _vec3 vPos;
     m_pTransformCom->Get_Info(INFO_POS, &vPos);
     m_pColliderCom->Update_AABB(vPos);
-
+    
     CRenderer::GetInstance()->Add_RenderGroup(RENDER_NONALPHA, this);
 
     return iExit;
@@ -74,93 +80,6 @@ void CNPC::Render_GameObject()
         Render_Part((NPC_PART)i, 0.f, fYaw, 0.f, matRootWorld);
 
     m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
-}
-
-HRESULT CNPC::Add_Component()
-{
-        FACE_UV uvHead[6] = {
-            {0.125f, 0.125f, 0.25f,  0.25f },
-            {0.375f, 0.125f, 0.5f,   0.25f },
-            {0.125f, 0.0f,   0.25f,  0.125f},
-            {0.25f,  0.0f,   0.375f, 0.125f},
-            {0.0f,   0.125f, 0.125f, 0.25f },
-            {0.25f,  0.125f, 0.375f, 0.25f },
-        };
-        FACE_UV uvBody[6] = {
-            {0.3125f, 0.3125f, 0.4375f, 0.5f   },
-            {0.5f,    0.3125f, 0.625f,  0.5f   },
-            {0.3125f, 0.25f,   0.4375f, 0.3125f},
-            {0.4375f, 0.25f,   0.5625f, 0.3125f},
-            {0.25f,   0.3125f, 0.3125f, 0.5f   },
-            {0.4375f, 0.3125f, 0.5f,    0.5f   },
-        };
-        FACE_UV uvRArm[6] = {
-            {0.6875f, 0.3125f, 0.75f,   0.5f   },
-            {0.8125f, 0.3125f, 0.875f,  0.5f   },
-            {0.6875f, 0.25f,   0.75f,   0.3125f},
-            {0.75f,   0.25f,   0.8125f, 0.3125f},
-            {0.625f,  0.3125f, 0.6875f, 0.5f   },
-            {0.75f,   0.3125f, 0.8125f, 0.5f   },
-        };
-        FACE_UV uvLArm[6] = {
-            {0.5625f, 0.8125f, 0.625f,  1.0f   },
-            {0.6875f, 0.8125f, 0.75f,   1.0f   },
-            {0.5625f, 0.75f,   0.625f,  0.8125f},
-            {0.625f,  0.75f,   0.6875f, 0.8125f},
-            {0.5f,    0.8125f, 0.5625f, 1.0f   },
-            {0.625f,  0.8125f, 0.6875f, 1.0f   },
-        };
-        FACE_UV uvRLeg[6] = {
-            {0.0625f, 0.3125f, 0.125f,  0.5f   },
-            {0.1875f, 0.3125f, 0.25f,   0.5f   },
-            {0.0625f, 0.25f,   0.125f,  0.3125f},
-            {0.125f,  0.25f,   0.1875f, 0.3125f},
-            {0.0f,    0.3125f, 0.0625f, 0.5f   },
-            {0.125f,  0.3125f, 0.1875f, 0.5f   },
-        };
-        FACE_UV uvLLeg[6] = {
-            {0.3125f, 0.8125f, 0.375f,  1.0f   },
-            {0.4375f, 0.8125f, 0.5f,    1.0f   },
-            {0.3125f, 0.75f,   0.375f,  0.8125f},
-            {0.375f,  0.75f,   0.4375f, 0.8125f},
-            {0.25f,   0.8125f, 0.3125f, 1.0f   },
-            {0.375f,  0.8125f, 0.4375f, 1.0f   },
-        };
-
-        FACE_UV* uvTable[NPC_PART_END] = { uvHead, uvBody, uvLArm, uvRArm, uvRLeg, uvLLeg };
-        const wchar_t* tagTable[NPC_PART_END] = {
-            L"Com_HeadBuf", L"Com_BodyBuf",
-            L"Com_LArmBuf", L"Com_RArmBuf",
-            L"Com_LLegBuf", L"Com_RLegBuf"
-        };
-
-        for (int i = 0; i < NPC_PART_END; ++i)
-        {
-            m_pBufferCom[i] = CPlayerBody::Create(m_pGraphicDev, uvTable[i]);
-            if (!m_pBufferCom[i]) return E_FAIL;
-            m_mapComponent[ID_STATIC].insert({ tagTable[i], m_pBufferCom[i] });
-        }
-
-        // 텍스처
-        Engine::CComponent* pComponent = nullptr;
-        pComponent = m_pTextureCom = dynamic_cast<Engine::CTexture*>(
-            CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_NPCTexture"));
-        if (!pComponent) return E_FAIL;
-        m_mapComponent[ID_STATIC].insert({ L"Com_Texture", pComponent });
-
-        // 트랜스폼
-        pComponent = m_pTransformCom = dynamic_cast<Engine::CTransform*>(
-            CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_Transform"));
-        if (!pComponent) return E_FAIL;
-        m_mapComponent[ID_DYNAMIC].insert({ L"Com_Transform", pComponent });
-
-        // 콜라이더
-        m_pColliderCom = CCollider::Create(m_pGraphicDev,
-            _vec3(1.2f, 3.2f, 1.2f), _vec3(0.f, 1.3f, 0.f));
-        if (!m_pColliderCom) return E_FAIL;
-        m_mapComponent[ID_STATIC].insert({ L"Com_Collider", m_pColliderCom });
-
-        return S_OK;
 }
 
 void CNPC::Render_Part(NPC_PART ePart, _float fAngleX, _float fAngleY, _float fAngleZ,
@@ -199,6 +118,25 @@ void CNPC::Interact()
 {
     if (!m_pDialogueBox)
         return;
+    FGameEvent event;
+    switch (m_eType)
+    {
+    case eNPCType::NPC_MONSTER:
+        event.eType = eEventType::MISSION_ACCEPT;
+        event.iValue = 0; 
+        CEventBus::GetInstance()->Publish(event);
+        break;
+    case eNPCType::NPC_SKELETON:
+        event.eType = eEventType::MISSION_ACCEPT;
+        event.iValue = 1; 
+        CEventBus::GetInstance()->Publish(event);
+        break;
+    }
+    if (!m_bSoundPlay)
+    {
+        CSoundMgr::GetInstance()->PlayEffect(L"Effect/Effect_NPC.wav", 1.f);
+        m_bSoundPlay = true;
+    }
 
     if (m_pDialogueBox->Is_Visible())
         m_pDialogueBox->Hide();
@@ -222,6 +160,93 @@ bool CNPC::Is_Interactable(const _vec3& vPlayerPos, const _vec3& vPickPos)
         return false;
 
     return true;
+}
+
+HRESULT CNPC::Add_Component()
+{
+    FACE_UV uvHead[6] = {
+        {0.125f, 0.125f, 0.25f,  0.25f },
+        {0.375f, 0.125f, 0.5f,   0.25f },
+        {0.125f, 0.0f,   0.25f,  0.125f},
+        {0.25f,  0.0f,   0.375f, 0.125f},
+        {0.0f,   0.125f, 0.125f, 0.25f },
+        {0.25f,  0.125f, 0.375f, 0.25f },
+    };
+    FACE_UV uvBody[6] = {
+        {0.3125f, 0.3125f, 0.4375f, 0.5f   },
+        {0.5f,    0.3125f, 0.625f,  0.5f   },
+        {0.3125f, 0.25f,   0.4375f, 0.3125f},
+        {0.4375f, 0.25f,   0.5625f, 0.3125f},
+        {0.25f,   0.3125f, 0.3125f, 0.5f   },
+        {0.4375f, 0.3125f, 0.5f,    0.5f   },
+    };
+    FACE_UV uvRArm[6] = {
+        {0.6875f, 0.3125f, 0.75f,   0.5f   },
+        {0.8125f, 0.3125f, 0.875f,  0.5f   },
+        {0.6875f, 0.25f,   0.75f,   0.3125f},
+        {0.75f,   0.25f,   0.8125f, 0.3125f},
+        {0.625f,  0.3125f, 0.6875f, 0.5f   },
+        {0.75f,   0.3125f, 0.8125f, 0.5f   },
+    };
+    FACE_UV uvLArm[6] = {
+        {0.5625f, 0.8125f, 0.625f,  1.0f   },
+        {0.6875f, 0.8125f, 0.75f,   1.0f   },
+        {0.5625f, 0.75f,   0.625f,  0.8125f},
+        {0.625f,  0.75f,   0.6875f, 0.8125f},
+        {0.5f,    0.8125f, 0.5625f, 1.0f   },
+        {0.625f,  0.8125f, 0.6875f, 1.0f   },
+    };
+    FACE_UV uvRLeg[6] = {
+        {0.0625f, 0.3125f, 0.125f,  0.5f   },
+        {0.1875f, 0.3125f, 0.25f,   0.5f   },
+        {0.0625f, 0.25f,   0.125f,  0.3125f},
+        {0.125f,  0.25f,   0.1875f, 0.3125f},
+        {0.0f,    0.3125f, 0.0625f, 0.5f   },
+        {0.125f,  0.3125f, 0.1875f, 0.5f   },
+    };
+    FACE_UV uvLLeg[6] = {
+        {0.3125f, 0.8125f, 0.375f,  1.0f   },
+        {0.4375f, 0.8125f, 0.5f,    1.0f   },
+        {0.3125f, 0.75f,   0.375f,  0.8125f},
+        {0.375f,  0.75f,   0.4375f, 0.8125f},
+        {0.25f,   0.8125f, 0.3125f, 1.0f   },
+        {0.375f,  0.8125f, 0.4375f, 1.0f   },
+    };
+
+    FACE_UV* uvTable[NPC_PART_END] = { uvHead, uvBody, uvLArm, uvRArm, uvRLeg, uvLLeg };
+    const wchar_t* tagTable[NPC_PART_END] = {
+        L"Com_HeadBuf", L"Com_BodyBuf",
+        L"Com_LArmBuf", L"Com_RArmBuf",
+        L"Com_LLegBuf", L"Com_RLegBuf"
+    };
+
+    for (int i = 0; i < NPC_PART_END; ++i)
+    {
+        m_pBufferCom[i] = CPlayerBody::Create(m_pGraphicDev, uvTable[i]);
+        if (!m_pBufferCom[i]) return E_FAIL;
+        m_mapComponent[ID_STATIC].insert({ tagTable[i], m_pBufferCom[i] });
+    }
+
+    // 텍스처
+    Engine::CComponent* pComponent = nullptr;
+    pComponent = m_pTextureCom = dynamic_cast<Engine::CTexture*>(
+        CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_NPCTexture"));
+    if (!pComponent) return E_FAIL;
+    m_mapComponent[ID_STATIC].insert({ L"Com_Texture", pComponent });
+
+    // 트랜스폼
+    pComponent = m_pTransformCom = dynamic_cast<Engine::CTransform*>(
+        CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_Transform"));
+    if (!pComponent) return E_FAIL;
+    m_mapComponent[ID_DYNAMIC].insert({ L"Com_Transform", pComponent });
+
+    // 콜라이더
+    m_pColliderCom = CCollider::Create(m_pGraphicDev,
+        _vec3(1.2f, 3.2f, 1.2f), _vec3(0.f, 1.3f, 0.f));
+    if (!m_pColliderCom) return E_FAIL;
+    m_mapComponent[ID_STATIC].insert({ L"Com_Collider", m_pColliderCom });
+
+    return S_OK;
 }
 
 CNPC* CNPC::Create(LPDIRECT3DDEVICE9 pGraphicDev, _vec3 vPos)

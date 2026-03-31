@@ -84,6 +84,7 @@ _int CCYStage::Update_Scene(const _float& fTimeDelta)
 		}
 		return iExit;
 	}
+
 	auto iter = m_mapLayer.find(L"GameLogic_Layer");
 	if (iter != m_mapLayer.end())
 		iter->second->Delete_GameObject(fTimeDelta);
@@ -294,7 +295,7 @@ HRESULT CCYStage::Ready_StageData(const _tchar* szPath)
 	CBlockMgr::GetInstance()->ClearBlocks();
 
 	CBlockMgr::GetInstance()->LoadBlocks(pFile);
-
+	
 	// 2. 몬스터 - map에 안 담고 레이어에 바로 추가
 	int iCount = 0;
 	fread(&iCount, sizeof(int), 1, pFile);
@@ -310,7 +311,7 @@ HRESULT CCYStage::Ready_StageData(const _tchar* szPath)
 
 		//MonsterMgr 쪽에 추가
 		if (pMonster)
-			CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID);
+			CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID, vPos);
 	}
 
 	// 3. 창살

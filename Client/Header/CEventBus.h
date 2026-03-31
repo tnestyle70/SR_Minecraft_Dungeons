@@ -9,6 +9,7 @@ enum class eEventType
 {
 	CURRENCY_COLLECTED,  //재화 획득
 	MONSTER_DEAD, //몬스터 처치
+	MISSION_ACCEPT, //미션 수락
 	MISSION_COMPLETE, //미션 완료
 	GAME_EVENT_END
 };

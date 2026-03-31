@@ -273,7 +273,7 @@ HRESULT CTGStage::Ready_StageData(const _tchar* szPath)
 		CGameObject* pMonster = CMonster::Create(
 			m_pGraphicDev, (EMonsterType)tData.iMonsterType, vPos);
 		//MonsterMgr 쪽에 추가
-		CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID);
+		CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID, vPos);
 	}
 
 	// 3. 창살

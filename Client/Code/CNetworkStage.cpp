@@ -23,6 +23,7 @@
 #include "CHUD.h"
 #include "CDragon.h"
 #include "CLightMgr.h"
+#include "CSoundMgr.h"
 
 CNetworkStage::CNetworkStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -46,6 +47,10 @@ HRESULT CNetworkStage::Ready_Scene()
 		return E_FAIL;
 
 	Ready_StageData(L"../Bin/Data/Stage3.dat");
+
+	CSoundMgr::GetInstance()->StopAll();
+
+	CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_GBStage.wav", 1.f);
 
 	return S_OK;
 }
@@ -222,7 +227,7 @@ _int CNetworkStage::Update_Scene(const _float& fTimeDelta)
 
 	CIronBarMgr::GetInstance()->Update(fTimeDelta);
 
-	CMonsterMgr::GetInstance()->Update(fTimeDelta);
+	//CMonsterMgr::GetInstance()->Update(fTimeDelta);
 
 	//if (GetAsyncKeyState(VK_RETURN) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
 	//{
@@ -255,7 +260,7 @@ void CNetworkStage::LateUpdate_Scene(const _float& fTimeDelta)
 
 	CIronBarMgr::GetInstance()->LateUpdate(fTimeDelta);
 
-	CMonsterMgr::GetInstance()->LateUpdate(fTimeDelta);
+	//CMonsterMgr::GetInstance()->LateUpdate(fTimeDelta);
 
 	//파도 조작
 	if (m_pOcean)
@@ -515,7 +520,7 @@ HRESULT CNetworkStage::Ready_StageData(const _tchar* szPath)
 
 		//MonsterMgr 쪽에 추가
 		if (pMonster)
-			CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID);
+			CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID, vPos);
 	}
 
 	// 3. 창살

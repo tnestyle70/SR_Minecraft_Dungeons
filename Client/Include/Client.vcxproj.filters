@@ -306,6 +306,9 @@
     <ClCompile Include="..\Code\CTorch.cpp">
       <Filter>02. GameObject</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CSpawnEffect.cpp">
+      <Filter>01. Scene\03. Editor\07. MonsterMgr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -617,6 +620,9 @@
     </ClInclude>
     <ClInclude Include="..\Header\CTorch.h">
       <Filter>02. GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CSpawnEffect.h">
+      <Filter>01. Scene\03. Editor\07. MonsterMgr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

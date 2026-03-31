@@ -133,9 +133,9 @@ void CLoadingScene::Render_Scene()
 	m_pLoadingBlock->Render_GameObject();
 	
 	//로딩 진행 텍스트
-	_vec2 vPos{ 0.f, 0.f };
-	CFontMgr::GetInstance()->Render_Font(
-		L"Font_Minecraft", m_pLoading->Get_String(), &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+	//_vec2 vPos{ 0.f, 0.f };
+	//CFontMgr::GetInstance()->Render_Font(
+	//	L"Font_Minecraft", m_pLoading->Get_String(), &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 }
 
 void CLoadingScene::Render_UI()
@@ -146,31 +146,19 @@ void CLoadingScene::Render_UI()
 	{
 	case SCENE_SQUIDCOAST_PLAY:
 		vStagePos = { 0.f, 0.f };
-		CFontMgr::GetInstance()->Render_Font(
-			L"Font_Minecraft", L"Squid Coast", &vStagePos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 		break;
 	case SCENE_CAMP_PLAY:
 		vStagePos = { 0.f, 0.f };
-		CFontMgr::GetInstance()->Render_Font(
-			L"Font_Minecraft", L"Camp", &vStagePos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 		break;
 	case SCENE_REDSTONE_PLAY:
 		vStagePos = { 0.f, 0.f };
-		CFontMgr::GetInstance()->Render_Font(
-			L"Font_Minecraft", L"Redstone", &vStagePos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 		break;
 	case SCENE_OBSIDIAN_PLAY:
 		vStagePos = { 0.f, 0.f };
-		CFontMgr::GetInstance()->Render_Font(
-			L"Font_Minecraft", L"Obsidian", &vStagePos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 		break;
 	default:
 		break;
 	}
-
-	_vec2 vPos{ 460.f, 550.f };
-	CFontMgr::GetInstance()->Render_Font(
-		L"Font_Minecraft", L"Loading....", &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 }
 
 CLoadingScene* CLoadingScene::Create(LPDIRECT3DDEVICE9 pGraphicDev,

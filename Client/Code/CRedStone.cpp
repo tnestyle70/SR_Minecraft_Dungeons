@@ -241,7 +241,7 @@ HRESULT CRedStone::Ready_StageData(const _tchar* szPath)
 
 		//MonsterMgr 쪽에 추가
 		if(pMonster)
-			CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID);
+			CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID, vPos);
 	}
 
 	// 3. 창살

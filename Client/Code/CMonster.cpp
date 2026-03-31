@@ -679,7 +679,7 @@ void CMonster::Update_AI(const _float& fTimeDelta)
                 switch (m_eType)
                 {
                 case EMonsterType::ZOMBIE:
-                    CSoundMgr::GetInstance()->PlayEffect(L"Monster/zombieIdle.wav", 0.5f);
+                    //CSoundMgr::GetInstance()->PlayEffect(L"Monster/zombieIdle.wav", 0.5f);
                     break;
                 case EMonsterType::SPIDER:
                     CSoundMgr::GetInstance()->PlayEffect(L"Monster/spiderIdle.wav", 0.5f);
@@ -692,7 +692,7 @@ void CMonster::Update_AI(const _float& fTimeDelta)
             
         }
     }
-
+    
     _vec3 vLookDir = vPlayerPos - vMyPos;
     vLookDir.y = 0.f;
     D3DXVec3Normalize(&vLookDir, &vLookDir);
