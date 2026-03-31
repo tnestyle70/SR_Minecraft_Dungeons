@@ -55,6 +55,7 @@ public:
 	CRedStoneGolem* m_pGolem = nullptr;
 	map<int, SpawnGroup> m_mapMonsterGroups;
 	int m_iTriggerID = -1;
+
 private:
 	virtual void Free();
 };

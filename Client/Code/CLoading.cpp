@@ -604,6 +604,10 @@ _uint CLoading::Loading_SquidCoast()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ColosseumSkyBoxTexture",
         CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/SkyBox/Colosseum.dds"))))
         return E_FAIL;
+    //태준 경험치구슬
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ExpOrbTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/ExpOrb.png"))))
+        return E_FAIL;
 
 
     lstrcpy(m_szLoading, L"기타 등등 로딩");

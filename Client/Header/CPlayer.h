@@ -32,7 +32,7 @@ enum ARMOR_TYPE
 
 class CPlayer : public CGameObject
 {
-private:
+protected:
 	explicit CPlayer(LPDIRECT3DDEVICE9 pGraphicDev);
 	explicit CPlayer(const CGameObject& rhs);
 	virtual ~CPlayer();
