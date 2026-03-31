@@ -2,6 +2,7 @@
 #include "CGameObject.h"
 #include "CProtoMgr.h"
 #include "CBlockPlacer.h"
+#include "CNormalCubeTex.h"
 
 class CBlock : public CGameObject
 {
@@ -32,6 +33,7 @@ private:
 	Engine::CTransform* m_pTransformCom = nullptr;
 	Engine::CTexture* m_pTextureCom = nullptr;
 	Engine::CCollider* m_pColliderCom = nullptr;
+	Engine::CNormalCubeTex* m_pNormalBufferCom = nullptr;
 
 	_vec3 m_vPos = { 0.f, 0.f, 0.f };
 	eBlockType m_eType = eBlockType::BLOCK_END;

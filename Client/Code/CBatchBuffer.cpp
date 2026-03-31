@@ -107,7 +107,9 @@ TileUV CBatchBuffer::GetTileUV(eBlockType eType, eFace eFace)
 	case BLOCK_OAKWOOD:
 		return MakeTile(0, 4);
 	case BLOCK_REDSTONE:
-		return MakeTile(1, 4);
+		return MakeTile(1, 4); 
+	case BLOCK_StoneGradient:
+		return MakeTile(2, 0);
 	default:
 		return MakeTile(1, 0);
 	}
