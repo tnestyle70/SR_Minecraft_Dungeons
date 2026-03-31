@@ -18,6 +18,8 @@
 #include "CHUD.h"
 #include "CInventoryMgr.h"
 #include "CJumpingTrapMgr.h"
+#include "CTorch.h"
+#include "CObjectEditor.h"
 
 CCYStage::CCYStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -110,11 +112,7 @@ void CCYStage::LateUpdate_Scene(const _float& fTimeDelta)
 
 void CCYStage::Render_Scene()
 {
-	if (CInventoryMgr::GetInstance()->IsActive())
-	{
-		CInventoryMgr::GetInstance()->Render();
-		return;
-	}
+	m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
 
 	D3DMATERIAL9 mat;
 	ZeroMemory(&mat, sizeof(mat));
@@ -123,7 +121,9 @@ void CCYStage::Render_Scene()
 	m_pGraphicDev->SetMaterial(&mat);
 
 	CBlockMgr::GetInstance()->Render();
-} 
+
+	m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE);
+}
 
 void CCYStage::Render_UI()
 {
@@ -258,7 +258,7 @@ HRESULT CCYStage::Ready_UI_Layer(const _tchar* pLayerTag)
 HRESULT CCYStage::Ready_Light()
 {
 	m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
-	m_pGraphicDev->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(10, 10, 10));
+	m_pGraphicDev->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(20, 20, 20));
 
 	return S_OK;
 }
@@ -352,7 +352,37 @@ HRESULT CCYStage::Ready_StageData(const _tchar* szPath)
 			CJumpingTrapMgr::GetInstance()->Add_JumpingTrap(pJumpingTrap, tData.iTriggerID);
 	}
 
-	fclose(pFile);
+	fclose(pFile); 
+
+
+	// Stage7Object.dat 로드 (횃불 등)
+	FILE* pObjFile = nullptr;
+	fopen_s(&pObjFile, "../Bin/Data/Stage7Object.dat", "rb");
+	if (pObjFile)
+	{
+		int iObjCount = 0;
+		fread(&iObjCount, sizeof(int), 1, pObjFile);
+		for (int i = 0; i < iObjCount; ++i)
+		{
+			OBJECT_DATA data;
+			fread(&data, sizeof(OBJECT_DATA), 1, pObjFile);
+
+			if (data.eType == OBJECT_TORCH)
+			{
+				CTorch* pTorch = CTorch::Create(m_pGraphicDev);
+				if (pTorch)
+				{
+					CTransform* pTrans = dynamic_cast<CTransform*>
+						(pTorch->Get_Component(ID_DYNAMIC, L"Com_Transform"));
+					if (pTrans)
+						pTrans->Set_Pos(data.vPos[0], data.vPos[1], data.vPos[2]);
+
+					m_mapLayer[L"GameLogic_Layer"]->Add_GameObject(L"Torch", pTorch);
+				}
+			}
+		}
+		fclose(pObjFile);
+	}
 	return S_OK;
 
 	//

@@ -149,7 +149,7 @@ void CObjectEditor::Render_Scene()
     m_pGraphicDev->GetRenderState(D3DRS_LIGHTING, &dwLighting);
     m_pGraphicDev->GetFVF(&dwFVF);
 
-    m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE);
+    m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
     m_pGraphicDev->SetFVF(D3DFVF_XYZ);
 
     D3DXMATRIX matWorld;
