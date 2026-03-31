@@ -121,3 +121,113 @@ technique PostProcess
         CullMode        = NONE;
     }
 }
+
+// ──────────────────────────────────────────
+// VoidFlame — 빌보드 구체 셰이더
+// Fresnel + fBm 3옥타브 + Screen Space 굴절 + HDR (ps_3_0)
+// ──────────────────────────────────────────
+float4x4 matWVP;           // 빌보드 WorldViewProj
+float4x4 matWV;            // 빌보드 WorldView (eyeVec Fresnel용)
+float    fFlameAmt;        // 0~1 활성화 강도
+float    fRefractionIndex; // 배경 굴절 강도 (0.025 권장)
+float    iScreenW;         // 화면 너비 (픽셀)
+float    iScreenH;         // 화면 높이 (픽셀)
+
+struct VF_IN  { float4 pos : POSITION; float2 uv : TEXCOORD0; };
+struct VF_OUT
+{
+    float4 pos    : POSITION;
+    float2 uv     : TEXCOORD0;
+    float3 eyeVec : TEXCOORD1;   // 뷰 공간 픽셀 위치 (Fresnel용)
+};
+
+VF_OUT VS_Billboard(VF_IN i)
+{
+    VF_OUT o;
+    o.pos    = mul(i.pos, matWVP);
+    o.uv     = i.uv;
+    // 뷰 공간 위치 계산 (matWV = World * View, Proj 제외)
+    float4 viewPos = mul(i.pos, matWV);
+    o.eyeVec = normalize(viewPos.xyz);
+    return o;
+}
+
+// ── fBm 3 옥타브 ──────────────────────────
+float fBm3(float2 uv, float t)
+{
+    float n0 = tex2D(NoiseTex, uv * 1.0f + t * float2( 0.50f, -0.30f)).r;
+    float n1 = tex2D(NoiseTex, uv * 2.0f + t * float2(-0.80f,  0.50f)).r;
+    float n2 = tex2D(NoiseTex, uv * 4.0f + t * float2( 1.20f, -0.90f)).r;
+    return n0 * 0.500f + n1 * 0.250f + n2 * 0.125f;
+}
+
+// ── PS 입력 구조체 (VPOS 단독 선언 에러 방지) ──
+struct PS_IN
+{
+    float2 uv     : TEXCOORD0;
+    float3 eyeVec : TEXCOORD1;
+    float2 vpos   : VPOS;        // 화면 픽셀 좌표 (ps_3_0 전용)
+};
+
+float4 PS_VoidFlame(PS_IN i) : COLOR0
+{
+    // ── 1. 방사형 거리 + 구체 법선 ──────────────
+    float2 c    = i.uv * 2.0f - 1.0f;
+    float  dist = length(c);
+    clip(0.99f - dist);
+
+    float3 N = normalize(float3(c.x, -c.y, sqrt(max(0.001f, 1.0f - dot(c, c)))));
+    float3 V = normalize(i.eyeVec);
+
+    // ── 2. Fresnel (외곽→1, 중심→0) ─────────────
+    float fresnel = pow(1.0f - saturate(dot(N, V)), 4.5f);
+
+    // ── 3. fBm 3옥타브 이글거림 ─────────────────
+    float fbmVal = fBm3(i.uv, fTime);
+
+    // ── 4. Screen Space 굴절 ─────────────────────
+    float2 screenUV = i.vpos.xy / float2(iScreenW, iScreenH);
+    float2 deltaUV  = (fbmVal - 0.4375f) * fRefractionIndex * fresnel;
+    float4 bgColor  = tex2D(SceneTex, screenUV + deltaUV);
+
+    // ── 5. 색상 합성 ─────────────────────────────
+    float coreFade = saturate(dist / 0.5f);
+
+    // [A] 내부 채우기 — Fresnel 무관, 원 전체를 채우는 base fill
+    float outerMask = saturate(1.0f - (dist - 0.90f) / 0.09f); // 극외곽만 페이드
+    float baseFill  = coreFade * outerMask;                      // 원 전체 불투명도
+
+    // [B] 외곽 Fresnel 림 — HDR 보라 발광
+    float rimAlpha  = fresnel * coreFade
+                    * saturate(1.0f - (dist - 0.75f) / 0.24f);
+
+    // 색상: 내부=공허 블랙퍼플, 외곽=HDR 보라
+    float3 coreColor = float3(0.03f, 0.0f, 0.07f);
+    float3 rimColor  = float3(5.5f, 0.0f, 10.0f)
+                     * (1.0f + fbmVal * 1.5f)
+                     * fresnel;
+
+    // 내부→외곽으로 coreColor → rimColor 전환
+    float3 col = lerp(coreColor, rimColor, saturate(fresnel * 2.5f));
+    col = lerp(bgColor.rgb, col, baseFill);
+
+    // 알파: 내부 fill(0.85) + 외곽 림 합산
+    float alpha = saturate(baseFill * 0.85f + rimAlpha) * fFlameAmt;
+
+    return float4(col * alpha, alpha);
+}
+
+technique VoidFlame
+{
+    pass P0
+    {
+        VertexShader     = compile vs_3_0 VS_Billboard();
+        PixelShader      = compile ps_3_0 PS_VoidFlame();
+        ZEnable          = TRUE;
+        ZWriteEnable     = FALSE;
+        AlphaBlendEnable = TRUE;
+        SrcBlend         = ONE;
+        DestBlend        = ONE;
+        CullMode         = NONE;
+    }
+}

@@ -37,7 +37,8 @@
 #include "CNPC.h"
 #include "CDialogueBox.h"
 #include "CEnderEye.h" 
-
+#include "CTorch.h"
+#include "CLightMgr.h"
 
 CSquidCoast::CSquidCoast(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -229,6 +230,15 @@ void CSquidCoast::Render_Scene()
 		return;
 	}
 
+	// 조명 활성화
+	m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
+
+	D3DMATERIAL9 mat;
+	ZeroMemory(&mat, sizeof(mat));
+	mat.Diffuse = { 1.f, 1.f, 1.f, 1.f };
+	mat.Ambient = { 1.f, 1.f, 1.f, 1.f };
+	m_pGraphicDev->SetMaterial(&mat);
+
 	CBlockMgr::GetInstance()->Render();
 
 	CParticleMgr::GetInstance()->Render();
@@ -236,6 +246,9 @@ void CSquidCoast::Render_Scene()
 	CMonsterMgr::GetInstance()->Render();
 
 	//CCMiniMap::GetInstance()->Render();
+
+		// 조명 비활성화 (다른 렌더 그룹에 영향 차단)
+	m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE);
 }
 
 void CSquidCoast::Render_UI()
@@ -478,6 +491,19 @@ HRESULT CSquidCoast::Ready_UI_Layer(const _tchar* pLayerTag)
 
 HRESULT CSquidCoast::Ready_Light()
 {
+	D3DLIGHT9 tLightInfo;
+
+	ZeroMemory(&tLightInfo, sizeof(D3DLIGHT9));
+
+	tLightInfo.Type = D3DLIGHT_DIRECTIONAL;
+	tLightInfo.Diffuse = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
+	tLightInfo.Specular = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
+	tLightInfo.Ambient = D3DXCOLOR(0.4f, 0.4f, 0.4f, 1.f);
+	tLightInfo.Direction = { 1.f, -1.f, 1.f };
+
+	if (FAILED(CLightMgr::GetInstance()->Ready_Light(m_pGraphicDev, &tLightInfo, 0)))
+		return E_FAIL;
+
 	return S_OK;
 }
 
@@ -601,6 +627,9 @@ HRESULT CSquidCoast::Ready_ObjectData(const char* pFileName)
 			break;
 		case OBJECT_ENDEREYE:
 			pObj = CEnderEye::Create(m_pGraphicDev);
+			break;
+		case OBJECT_TORCH:
+			pObj = CTorch::Create(m_pGraphicDev);
 			break;
 		default:
 			continue;

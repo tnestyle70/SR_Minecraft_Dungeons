@@ -124,7 +124,7 @@ void CTJSpawnMgr::Spawn_Monster()
 
     CGameObject* pMonster = CMonster::Create(m_pGraphicDev, eType, vSpawnPos);
     if (pMonster)
-        CMonsterMgr::GetInstance()->AddMonster(pMonster, 0);
+        CMonsterMgr::GetInstance()->AddMonster(pMonster, 0, vSpawnPos);
 }
 
 void CTJSpawnMgr::Clear()

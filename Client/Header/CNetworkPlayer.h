@@ -7,6 +7,7 @@
 #include "CEquipSlot.h"
 #include "CPlayer.h"
 #include "CDragon.h"
+#include "CVoidFlame.h"
 
 class CMonster;
 class CRedStoneGolem;
@@ -79,6 +80,9 @@ private:
 	bool  m_bCharging = false;
 	_vec3 m_vBowDir = { 0.f, 0.f, 1.f };
 	vector<CPlayerArrow*> m_vecArrows;
+	//드래곤 브래스
+	vector<CVoidFlame*>   m_vecVoidFlames;
+	bool                  m_bTKeyPrev = false;
 	_matrix m_matLArmWorld;		//왼손위치
 	//폭죽화살 변수
 	bool m_bFireworkArrow = false;

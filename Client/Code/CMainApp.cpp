@@ -20,6 +20,7 @@
 #include "CEnvironmentMgr.h"
 #include "CNetworkMgr.h"
 #include "CCMiniMap.h"
+#include "CScreenFX.h"
 
 
 CMainApp::CMainApp()
@@ -53,6 +54,8 @@ HRESULT CMainApp::Ready_MainApp()
 int CMainApp::Update_MainApp(const float& fTimeDelta)
 {
     CDInputMgr::GetInstance()->Update_InputDev();
+
+    CScreenFX::GetInstance()->Update(fTimeDelta);
 
     CDamageMgr::GetInstance()->Update(fTimeDelta);
 
@@ -98,7 +101,12 @@ void CMainApp::Render_MainApp()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
+    CScreenFX::GetInstance()->Begin_Capture();
     m_pManagementClass->Render_Scene(m_pGraphicDev);
+    CScreenFX::GetInstance()->End_Capture();
+    CScreenFX::GetInstance()->Apply_Effect();
+
+    //m_pManagementClass->Render_Scene(m_pGraphicDev);
 
     ImGui::EndFrame();
     ImGui::Render();
@@ -186,6 +194,12 @@ HRESULT CMainApp::Ready_DefaultSetting(LPDIRECT3DDEVICE9* ppGraphicDev)
     (*ppGraphicDev)->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
     (*ppGraphicDev)->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 
+    if (FAILED(CScreenFX::GetInstance()->Ready(*ppGraphicDev, WINCX, WINCY)))
+    {
+        MSG_BOX("CScreenFX Ready Failed");
+        return E_FAIL;
+    }
+
     return S_OK;
 }
 
@@ -235,6 +249,7 @@ void CMainApp::Free()
     CRenderer::GetInstance()->DestroyInstance();
 
     // 4. 게임 오브젝트를 관리하는 매니저들
+    CScreenFX::GetInstance()->DestroyInstance();
     CMonsterMgr::GetInstance()->DestroyInstance();
     CIronBarMgr::GetInstance()->DestroyInstance();
     CTriggerBoxMgr::GetInstance()->DestroyInstance();

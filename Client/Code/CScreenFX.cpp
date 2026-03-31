@@ -34,6 +34,8 @@ HRESULT CScreenFX::Ready(LPDIRECT3DDEVICE9 pDev, _uint iWidth, _uint iHeight)
     m_pGraphicDev->AddRef();
     m_iWidth = iWidth;
     m_iHeight = iHeight;
+    m_fScreenW = static_cast<float>(iWidth);
+    m_fScreenH = static_cast<float>(iHeight);
 
     if (FAILED(Create_RenderTarget(iWidth, iHeight)))
         return E_FAIL;
@@ -281,6 +283,9 @@ void CScreenFX::Set_EffectParams()
     m_pEffect->SetFloat("fShakeX", m_fShakeX);
     m_pEffect->SetFloat("fShakeY", m_fShakeY);
     m_pEffect->SetVector("vVoidTint", &m_vVoidTint);
+    m_pEffect->SetFloat("fFlameAmt", m_fFlameAmt);
+    m_pEffect->SetFloat("iScreenW", m_fScreenW);
+    m_pEffect->SetFloat("iScreenH", m_fScreenH);
 }
 
 void CScreenFX::Trigger_Hit(float fIntensity)
@@ -326,6 +331,70 @@ void CScreenFX::Trigger_TailHit(float fIntensity)
         m_fShakeDuration = fShakeDur;
         m_fShakePeak = fIntensity * 1.2f;
     }
+}
+
+void CScreenFX::Trigger_VoidFlame(bool bActive)
+{
+    m_bFlameActive = bActive;
+}
+
+void CScreenFX::Apply_VoidFlame(const D3DXMATRIX& matWVP, const D3DXMATRIX& matWV)
+{
+    if (!m_bReady || !m_pEffect)
+        return;
+
+    // FVF / StreamSource 는 effect Begin/End 가 복원하지 않으므로 직접 저장
+    DWORD dwPrevFVF = 0;
+    IDirect3DVertexBuffer9* pPrevVB = nullptr;
+    UINT uPrevOffset = 0, uPrevStride = 0;
+    m_pGraphicDev->GetFVF(&dwPrevFVF);
+    m_pGraphicDev->GetStreamSource(0, &pPrevVB, &uPrevOffset, &uPrevStride);
+
+    DWORD prevAlphaTest = 0;
+    m_pGraphicDev->GetRenderState(D3DRS_ALPHATESTENABLE, &prevAlphaTest);
+    m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+
+    m_pEffect->SetTechnique("VoidFlame");
+
+    // 행렬
+    m_pEffect->SetMatrix("matWVP", &matWVP);
+    m_pEffect->SetMatrix("matWV", &matWV);   // eyeVec Fresnel용
+
+    // 스칼라
+    m_pEffect->SetFloat("fFlameAmt", 1.f);
+    m_pEffect->SetFloat("fTime", m_fTime);
+    m_pEffect->SetFloat("fRefractionIndex", 0.025f);
+    m_pEffect->SetFloat("iScreenW", m_fScreenW);
+    m_pEffect->SetFloat("iScreenH", m_fScreenH);
+
+    // 텍스처 (Begin 전 반드시 바인딩)
+    m_pEffect->SetTexture("NoiseMap", m_pNoiseTex);   // fBm 3옥타브
+    if (m_pRT)
+        m_pEffect->SetTexture("SceneMap", m_pRT);     // Screen 굴절 (캡처 활성 시)
+
+    m_pGraphicDev->SetFVF(QUAD_FVF);
+    m_pGraphicDev->SetStreamSource(0, m_pQuadVB, 0, sizeof(QUAD_VERTEX));
+
+    UINT passes = 0;
+    m_pEffect->Begin(&passes, 0);
+    for (UINT p = 0; p < passes; ++p)
+    {
+        m_pEffect->BeginPass(p);
+        m_pGraphicDev->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+        m_pEffect->EndPass();
+    }
+    m_pEffect->End();
+
+    // 복원
+    m_pGraphicDev->SetStreamSource(0, pPrevVB, uPrevOffset, uPrevStride);
+    m_pGraphicDev->SetFVF(dwPrevFVF);
+    if (pPrevVB) pPrevVB->Release();
+
+    m_pEffect->SetTechnique("PostProcess");
+    m_pGraphicDev->SetTexture(0, nullptr);
+    m_pGraphicDev->SetTexture(1, nullptr);
+
+    m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, prevAlphaTest);
 }
 
 void CScreenFX::SetBreathActive(bool bActive, float fIntensity)

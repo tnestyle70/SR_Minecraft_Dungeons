@@ -161,6 +161,18 @@ _int CNetworkPlayer::Update_GameObject(const _float& fTimeDelta)
 			}),
 		m_vecArrows.end());
 
+	// 화염포
+	for (auto& pFlame : m_vecVoidFlames)
+		pFlame->Update_GameObject(fTimeDelta);
+
+	m_vecVoidFlames.erase(
+		remove_if(m_vecVoidFlames.begin(), m_vecVoidFlames.end(),
+			[](CVoidFlame* p) {
+				if (p->Is_Dead()) { Safe_Release(p); return true; }
+				return false;
+			}),
+		m_vecVoidFlames.end());
+	//TNT
 	m_vecTNTs.erase(
 		remove_if(m_vecTNTs.begin(), m_vecTNTs.end(),
 			[](CTNT* p) { return p->Is_Dead(); }),
@@ -317,6 +329,10 @@ void CNetworkPlayer::Render_GameObject()
 	//화살 렌더링
 	for (auto& pArrow : m_vecArrows)
 		pArrow->Render_GameObject();
+
+	// 화염포 렌더링
+	for (auto& pFlame : m_vecVoidFlames)
+		pFlame->Render_GameObject();
 
 	m_pColliderCom->Render_Collider();
 }
@@ -728,6 +744,30 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 	else
 	{
 		m_bRKeyPrev = false;
+	}
+
+	// T 키: 화염포 발사 (마우스 방향, 화살 발사 로직과 동일)
+	{
+		bool bTCur = (GetAsyncKeyState('T') & 0x8000) != 0;
+		if (bTCur && !m_bTKeyPrev)
+		{
+			_vec3 vPos;
+			m_pTransformCom->Get_Info(INFO_POS, &vPos);
+			vPos.y += 1.0f;
+
+			_vec3 vTarget = Picking_OnBlock();
+			_vec3 vDir = vTarget - vPos;
+			vDir.y = 0.f;
+			if (D3DXVec3Length(&vDir) > 0.1f)
+				D3DXVec3Normalize(&vDir, &vDir);
+			else
+				m_pTransformCom->Get_Info(INFO_LOOK, &vDir);
+
+			CVoidFlame* pFlame = CVoidFlame::Create(m_pGraphicDev, vPos, vDir, 20.f);
+			if (pFlame)
+				m_vecVoidFlames.push_back(pFlame);
+		}
+		m_bTKeyPrev = bTCur;
 	}
 
 	// 마우스 클릭 이동 + 클라이언트 영역 안에 존재할 경우만
@@ -1467,9 +1507,14 @@ void CNetworkPlayer::Free()
 	//Effect Release
 	Safe_Release(m_pFootStepEmitter);
 	Safe_Release(m_pAttackEmitter);
-
+	//화살
 	for (auto& pArrow : m_vecArrows)
 		Safe_Release(pArrow);
 	m_vecArrows.clear();
+	//화염포
+	for (auto& pFlame : m_vecVoidFlames)
+		Safe_Release(pFlame);
+	m_vecVoidFlames.clear();
+
 	CGameObject::Free();
 }
