@@ -17,6 +17,7 @@
 #include "CAncientGuardian.h"
 #include "CHUD.h"
 #include "CInventoryMgr.h"
+#include "CJumpingTrapMgr.h"
 
 CCYStage::CCYStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -264,22 +265,96 @@ HRESULT CCYStage::Ready_Light()
 
 HRESULT CCYStage::Ready_StageData(const _tchar* szPath)
 {
+	 //CNormalCubeTex, StoneGradient 프로토타입 등록 (게임 플레이 시 에디터를 안 거치면 없을 수 있음)
+	if(FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_NormalCubeTex",
+		Engine::CNormalCubeTex::Create(m_pGraphicDev, 1.f, 1.f, 1.f))))
+		return E_FAIL;
+	
+	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StoneGradientTexture",
+		Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL,
+			L"../Bin/Resource/Texture/blocks/stone_gradient_12.dds"))))
+		return E_FAIL;
+
 	FILE* pFile = nullptr;
 	_wfopen_s(&pFile, szPath, L"rb");
 	if (!pFile)
 		return E_FAIL;
-	
-	 //CNormalCubeTex, StoneGradient 프로토타입 등록 (게임 플레이 시 에디터를 안 거치면 없을 수 있음)
-	CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_NormalCubeTex",
-		Engine::CNormalCubeTex::Create(m_pGraphicDev, 1.f, 1.f, 1.f));
-	
-	CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StoneGradientTexture",
-		Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL,
-			L"../Bin/Resource/Texture/blocks/stone_gradient_12.dds"));
-	
-	CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_EDITOR);
-	
+
+	// 1. 블럭 (LoadBlocks 내부에서 RebuildBatchMesh까지)
+
+	//BlockMgr
+	//if (FAILED(CBlockMgr::GetInstance()->Ready_BlockMgr(m_pGraphicDev)))
+	//{
+	//	MSG_BOX("block mgr create failed");
+	//	return E_FAIL;
+	//}
+
+	CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_EDITOR); // 먼저 모드 설정
+
+	CBlockMgr::GetInstance()->ClearBlocks();
+
 	CBlockMgr::GetInstance()->LoadBlocks(pFile);
+
+	// 2. 몬스터 - map에 안 담고 레이어에 바로 추가
+	int iCount = 0;
+	fread(&iCount, sizeof(int), 1, pFile);
+
+	for (int i = 0; i < iCount; ++i)
+	{
+		MonsterData tData;
+		fread(&tData, sizeof(MonsterData), 1, pFile);
+		_vec3 vPos = { (float)tData.x, (float)tData.y, (float)tData.z };
+
+		CGameObject* pMonster = CMonster::Create(
+			m_pGraphicDev, (EMonsterType)tData.iMonsterType, vPos);
+
+		//MonsterMgr 쪽에 추가
+		if (pMonster)
+			CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID);
+	}
+
+	// 3. 창살
+	fread(&iCount, sizeof(int), 1, pFile);
+	for (int i = 0; i < iCount; ++i)
+	{
+		IronBarData tData;
+		fread(&tData, sizeof(IronBarData), 1, pFile);
+		_vec3 vPos = { (float)tData.x, (float)tData.y, (float)tData.z };
+
+		CGameObject* pIronBar = CIronBar::Create(m_pGraphicDev, vPos);
+		if (pIronBar)
+			CIronBarMgr::GetInstance()->AddIronBar(pIronBar, tData.iTriggerID);
+	}
+
+	// 4. 트리거박스
+	fread(&iCount, sizeof(int), 1, pFile);
+	for (int i = 0; i < iCount; ++i)
+	{
+		TriggerBoxData tData;
+		fread(&tData, sizeof(TriggerBoxData), 1, pFile);
+		_vec3 vPos = { (float)tData.x, (float)tData.y, (float)tData.z };
+
+		CGameObject* pTriggerBox = CTriggerBox::Create(m_pGraphicDev, vPos, tData.iTriggerID, (eTriggerBoxType)tData.iTriggerBoxType);
+		if (pTriggerBox)
+			CTriggerBoxMgr::GetInstance()->AddTriggerBox(pTriggerBox);
+	}
+
+	//5. 점핑 트랩
+	fread(&iCount, sizeof(int), 1, pFile);
+	for (int i = 0; i < iCount; ++i)
+	{
+		JumpingTrapData tData;
+		fread(&tData, sizeof(JumpingTrapData), 1, pFile);
+		_vec3 vPos = { (float)tData.x, (float)tData.y, (float)tData.z };
+
+		CGameObject* pJumpingTrap = CJumpingTrap::Create(m_pGraphicDev, vPos);
+		if (pJumpingTrap)
+			CJumpingTrapMgr::GetInstance()->Add_JumpingTrap(pJumpingTrap, tData.iTriggerID);
+	}
+
+	fclose(pFile);
+	return S_OK;
+
 	//
 	//int iCount = 0;
 	//fread(&iCount, sizeof(int), 1, pFile);
@@ -315,9 +390,8 @@ HRESULT CCYStage::Ready_StageData(const _tchar* szPath)
 	//		CTriggerBoxMgr::GetInstance()->AddTriggerBox(pTriggerBox);
 	//}
 	//
-	fclose(pFile);
-	return S_OK;
 }
+
 
 CCYStage* CCYStage::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 {

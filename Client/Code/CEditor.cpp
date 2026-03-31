@@ -274,7 +274,8 @@ void CEditor::Render_MenuBar()
 		}
 
 		static const char* s_aStageNames[STAGE_END] =
-		{ "Squid Coast", "Camp", "RedStone", "Obsidian" };
+		{ "Squid Coast", "Camp", "RedStone", "Obsidian",
+			"JS", "TG", "CY", "GB" };
 		ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 150.f);
 		ImGui::TextDisabled("Stage : %s", s_aStageNames[m_eCurrentStage]);
 

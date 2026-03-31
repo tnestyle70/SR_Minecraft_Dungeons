@@ -40,9 +40,9 @@ CBatchBuffer::~CBatchBuffer()
 TileUV CBatchBuffer::MakeTile(int col, int row)
 {
 	const float su = 1.f / 4.f;          // 가로 4칸
-	const float sv = 1.f / 5.f;          // 세로 5칸 (64x80 아틀라스)
+	const float sv = 1.f / 6.f;          // 세로 5칸 (64x80 아틀라스)
 	const float insetU = 1.5f / 64.f;    // 반 픽셀 (가로)
-	const float insetV = 1.5f / 80.f;    // 반 픽셀 (세로)
+	const float insetV = 1.5f / 96.f;    // 반 픽셀 (세로)
 	
 	return {
 		col * su + insetU,
@@ -103,7 +103,7 @@ TileUV CBatchBuffer::GetTileUV(eBlockType eType, eFace eFace)
 	case BLOCK_PLANKS_ACACIA:
 		return MakeTile(3, 4);  
 	case BLOCK_PLANKS_SPRUCE:
-		return MakeTile(3, 3);  
+		return MakeTile(3, 3);
 	case BLOCK_OAKWOOD:
 		return MakeTile(0, 4);
 	case BLOCK_REDSTONE:

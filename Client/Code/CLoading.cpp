@@ -3,6 +3,7 @@
 #include "CProtoMgr.h"
 #include "CMonsterUV.h"
 #include "CAncientGuardianUV.h"
+#include "CNormalCubeTex.h"
 
 CLoading::CLoading(LPDIRECT3DDEVICE9 pGraphicDev)
     : m_pGraphicDev(pGraphicDev), m_bFinish(false), m_eLoadingID(LOADING_END)
