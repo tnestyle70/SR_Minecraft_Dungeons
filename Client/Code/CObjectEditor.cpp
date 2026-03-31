@@ -149,7 +149,7 @@ void CObjectEditor::Render_Scene()
     m_pGraphicDev->GetRenderState(D3DRS_LIGHTING, &dwLighting);
     m_pGraphicDev->GetFVF(&dwFVF);
 
-    m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE);
+    m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
     m_pGraphicDev->SetFVF(D3DFVF_XYZ);
 
     D3DXMATRIX matWorld;
@@ -551,7 +551,7 @@ HRESULT CObjectEditor::Ready_Prototype()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_BoxTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/T_LargeBoxChest.png"))))
         return E_FAIL;
-
+    
     // Lamp
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_LampBodyTex", Engine::CLampBodyTex::Create(m_pGraphicDev))))
         return E_FAIL;

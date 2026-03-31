@@ -511,7 +511,7 @@ HRESULT CBlockMgr::LoadBlocks(FILE* pFile)
 		}
 	}
 
-	if (m_eRenderMode == RENDER_BATCH)
+	if (m_eRenderMode == RENDER_BATCH || m_eRenderMode == RENDER_EDITOR)
 		RebuildBatchMesh();
 	else if (m_eRenderMode == RENDER_QUADTREE)
 		BuildQuadTree();

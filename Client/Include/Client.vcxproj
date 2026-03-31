@@ -190,9 +190,12 @@
     <ClInclude Include="..\Header\CIronBar.h" />
     <ClInclude Include="..\Header\CIronBarMgr.h" />
     <ClInclude Include="..\Header\CItemPanel.h" />
+    <ClInclude Include="..\Header\CJSCamera.h" />
     <ClInclude Include="..\Header\CJSChunk.h" />
     <ClInclude Include="..\Header\CJSChunkMgr.h" />
+    <ClInclude Include="..\Header\CJSPlayer.h" />
     <ClInclude Include="..\Header\CJSStage.h" />
+    <ClInclude Include="..\Header\CJSTile.h" />
     <ClInclude Include="..\Header\CJumpingTrap.h" />
     <ClInclude Include="..\Header\CJumpingTrapMgr.h" />
     <ClInclude Include="..\Header\CLamp.h" />
@@ -238,6 +241,9 @@
     <ClInclude Include="..\Header\CTerrain.h" />
     <ClInclude Include="..\Header\CTGSkyBox.h" />
     <ClInclude Include="..\Header\CTGStage.h" />
+    <ClInclude Include="..\Header\CTJExpOrb.h" />
+    <ClInclude Include="..\Header\CTJPlayer.h" />
+    <ClInclude Include="..\Header\CTJSpawnMgr.h" />
     <ClInclude Include="..\Header\CTNT.h" />
     <ClInclude Include="..\Header\CTorch.h" />
     <ClInclude Include="..\Header\CTriggerBox.h" />
@@ -301,9 +307,12 @@
     <ClCompile Include="..\Code\CIronBar.cpp" />
     <ClCompile Include="..\Code\CIronBarMgr.cpp" />
     <ClCompile Include="..\Code\CItemPanel.cpp" />
+    <ClCompile Include="..\Code\CJSCamera.cpp" />
     <ClCompile Include="..\Code\CJSChunk.cpp" />
     <ClCompile Include="..\Code\CJSChunkMgr.cpp" />
+    <ClCompile Include="..\Code\CJSPlayer.cpp" />
     <ClCompile Include="..\Code\CJSStage.cpp" />
+    <ClCompile Include="..\Code\CJSTile.cpp" />
     <ClCompile Include="..\Code\CJumpingTrap.cpp" />
     <ClCompile Include="..\Code\CJumpingTrapMgr.cpp" />
     <ClCompile Include="..\Code\CLamp.cpp" />
@@ -345,6 +354,9 @@
     <ClCompile Include="..\Code\CTerrain.cpp" />
     <ClCompile Include="..\Code\CTGSkyBox.cpp" />
     <ClCompile Include="..\Code\CTGStage.cpp" />
+    <ClCompile Include="..\Code\CTJExpOrb.cpp" />
+    <ClCompile Include="..\Code\CTJPlayer.cpp" />
+    <ClCompile Include="..\Code\CTJSpawnMgr.cpp" />
     <ClCompile Include="..\Code\CTNT.cpp" />
     <ClCompile Include="..\Code\CTorch.cpp" />
     <ClCompile Include="..\Code\CTriggerBox.cpp" />

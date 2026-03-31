@@ -134,7 +134,9 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		return iExit;
 	}
 
-	if (GetAsyncKeyState('Y') & 0x8000)
+
+	if (GetAsyncKeyState('L') & 0x8000)
+
 	{
 		CRenderer::GetInstance()->Clear_RenderGroup();
 		CTriggerBoxMgr::GetInstance()->Clear();
@@ -167,6 +169,25 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CY)))
 		{
 			MSG_BOX("TG Stage Create Failed");
+			return -1;
+		}
+		return iExit;
+	}
+
+	if (GetAsyncKeyState('J') & 0x8000)
+	{
+		CRenderer::GetInstance()->Clear_RenderGroup();
+		CTriggerBoxMgr::GetInstance()->Clear();
+		CIronBarMgr::GetInstance()->Clear();
+		CMonsterMgr::GetInstance()->Clear();
+		CParticleMgr::GetInstance()->Clear_Emitters();
+		CInventoryMgr::GetInstance()->Clear_Player();
+		CDamageMgr::GetInstance()->Clear_Boss();
+		CEnvironmentMgr::GetInstance()->Clear_Boxes();
+		CBlockMgr::GetInstance()->ClearBlocks();
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_JS)))
+		{
+			MSG_BOX("JS Stage Create Failed");
 			return -1;
 		}
 		return iExit;

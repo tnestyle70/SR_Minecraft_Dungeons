@@ -22,7 +22,9 @@ private:
     CTransform* m_pTransformCom = nullptr;
     CCollider* m_pColliderCom = nullptr;
     Engine::CRcTex* m_pBufferCom = nullptr;
-    _float          m_fFlicker = 0.f;
+    _float          m_fFlicker = 0.f; 
+    int m_iLightIdx = -1; 
+    static int s_iNextLightIdx;
 
 public:
     static CTorch* Create(LPDIRECT3DDEVICE9 pGraphicDev);
