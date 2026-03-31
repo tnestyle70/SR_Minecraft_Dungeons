@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "CBlock.h"
 #include "CRenderer.h"
-#include "CBlockMgr.h"
+#include "CBlockMgr.h" 
+#include "CNormalCubeTex.h"
 
 CBlock::CBlock(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -75,11 +76,25 @@ void CBlock::Render_GameObject()
 
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
 
-	m_pGraphicDev->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+	m_pGraphicDev->SetRenderState(D3DRS_ZWRITEENABLE, TRUE); 
 
-	m_pTextureCom->Set_Texture(0);
+	if (m_eType == BLOCK_StoneGradient)
+	{
+		D3DMATERIAL9 mat;
+		ZeroMemory(&mat, sizeof(mat));
+		mat.Diffuse = { 0.8f, 0.8f, 0.8f, 1.f };
+		mat.Ambient = { 0.3f, 0.3f, 0.3f, 1.f };
+		mat.Specular = { 0.5f, 0.5f, 0.5f, 1.f };
+		mat.Power = 20.f;
+		m_pGraphicDev->SetMaterial(&mat);
+	}
 
-	m_pBufferCom->Render_Buffer();
+	m_pTextureCom->Set_Texture(0); 
+
+	if (m_eType == BLOCK_StoneGradient && m_pNormalBufferCom)
+		m_pNormalBufferCom->Render_Buffer();
+	else
+		m_pBufferCom->Render_Buffer();
 
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 
@@ -98,7 +113,17 @@ HRESULT CBlock::Add_Component()
 	if (!pComponent)
 		return E_FAIL;
 
-	m_mapComponent[ID_STATIC].insert({ L"Com_Buffer", pComponent });
+	m_mapComponent[ID_STATIC].insert({ L"Com_Buffer", pComponent }); 
+
+	if (m_eType == BLOCK_StoneGradient)
+	{
+		
+		m_pNormalBufferCom = dynamic_cast<CNormalCubeTex*>
+			(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_NormalCubeTex"));
+		if (!m_pNormalBufferCom)
+			return E_FAIL;
+	}
+
 
 	// Transform
 	pComponent = m_pTransformCom = dynamic_cast<CTransform*>
@@ -243,4 +268,5 @@ CBlock* CBlock::Create(LPDIRECT3DDEVICE9 pGraphicDev,
 void CBlock::Free()
 {
 	CGameObject::Free();
+
 }

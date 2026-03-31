@@ -61,13 +61,21 @@ void CJumpingTrapMgr::Activate(int iTriggerID)
 	for (auto* pTrap : it->second)
 		pTrap->Set_Active(true);
 	//플레이어 점프
-	if (iTriggerID == 1)
-	{
-		m_pPlayer->LaunchByTrap(80.f);
-	}
 	if (iTriggerID == 0)
 	{
-		m_pPlayer->LaunchByTrap(30.f);
+		m_pPlayer->LaunchByTrap(10.f, eJumpingTrapDir::RIGHT);
+	}
+	if (iTriggerID == 1)
+	{
+		m_pPlayer->LaunchByTrap(50.f, eJumpingTrapDir::LEFT);
+	}
+	if (iTriggerID == 2)
+	{
+		m_pPlayer->LaunchByTrap(10.f, eJumpingTrapDir::LEFT);
+	}
+	if (iTriggerID == 3)
+	{
+		m_pPlayer->LaunchByTrap(50.f, eJumpingTrapDir::BACKWARD);
 	}
 }
 

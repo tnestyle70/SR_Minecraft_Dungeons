@@ -7,6 +7,8 @@
 #include "CDynamicCamera.h"
 #include "CBlockMgr.h"
 #include "CMonsterUV.h"
+#include "CNormalCubeTex.h"
+#include "CTorch.h"
 
 CObjectEditor::CObjectEditor(LPDIRECT3DDEVICE9 pGraphicDev)
     : CScene(pGraphicDev)
@@ -49,11 +51,30 @@ _int CObjectEditor::Update_Scene(const _float& fTimeDelta)
 
     if (m_pPreviewObject)
     {
-        _vec3 vPos = Get_MouseWorldPos();
+        _vec3 vPos;
+        BlockPos tHitPos, tNormal;
+        float fT = 0.f;
+
+        _vec3 vRayPos, vRayDir;
+        // ê¸°ì¡´ Get_MouseWorldPos() ëŒ€ì‹  ë¸”ë¡ ì¶©ëŒ ì²´í¬
+        Get_MouseRay(vRayPos, vRayDir);
+
+        if (CBlockMgr::GetInstance()->RayAABBIntersectWithNormal(
+            vRayPos, vRayDir, &tHitPos, &fT, &tNormal))
+        {
+            vPos = {
+                (float)(tHitPos.x + tNormal.x),
+                (float)(tHitPos.y + tNormal.y),
+                (float)(tHitPos.z + tNormal.z)
+            };
+        }
+        else
+        {
+            vPos = Get_MouseWorldPos();
+        }
 
         CTransform* pTrans = dynamic_cast<CTransform*>(
             m_pPreviewObject->Get_Component(ID_DYNAMIC, L"Com_Transform"));
-
         if (pTrans)
             pTrans->Set_Pos(vPos.x, vPos.y, vPos.z);
     }
@@ -144,7 +165,7 @@ void CObjectEditor::Render_Scene()
 
 void CObjectEditor::Render_UI()
 {
-    CBlockMgr::GetInstance()->Render_Stage();
+    CBlockMgr::GetInstance()->Render_Editor();
 
     // Object List
     ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Once);
@@ -195,11 +216,13 @@ HRESULT CObjectEditor::SaveObjectData(const char* pFileName)
         vRot = pTrans->Get_Rotation();
 
         OBJECT_DATA data;
-        // Å¸ÀÔ ÃßÃâ
+        // íƒ€ìž… ì¶”ì¶œ
         if (dynamic_cast<CBox*>(pObj)) data.eType = OBJECT_BOX;
         else if (dynamic_cast<CLamp*>(pObj)) data.eType = OBJECT_LAMP;
         else if (dynamic_cast<CCrystal*>(pObj)) data.eType = OBJECT_CRYSTAL;
         else if (dynamic_cast<CEnderEye*>(pObj)) data.eType = OBJECT_ENDEREYE;
+        else if (dynamic_cast<CTorch*>(pObj)) data.eType = OBJECT_TORCH;
+       
         else data.eType = OBJECT_END;
 
         data.vPos[0] = vPos.x;
@@ -223,7 +246,7 @@ HRESULT CObjectEditor::LoadObjectData(const char* pFileName)
     if (fopen_s(&pFile, pFileName, "rb") != 0)
         return E_FAIL;
 
-    // ±âÁ¸ ¿ÀºêÁ§Æ® Á¦°Å
+    // ê¸°ì¡´ ì˜¤ë¸Œì íŠ¸ ì œê±°
     for (auto& pair : m_mapEditObject)
         Safe_Release(pair.second);
     m_mapEditObject.clear();
@@ -251,7 +274,12 @@ HRESULT CObjectEditor::LoadObjectData(const char* pFileName)
             break;
         case OBJECT_ENDEREYE:
             pObj = CEnderEye::Create(m_pGraphicDev);
+            break;  
+        case OBJECT_TORCH:
+            pObj = CTorch::Create(m_pGraphicDev);
             break;
+
+
         default:
             continue;
         }
@@ -267,7 +295,7 @@ HRESULT CObjectEditor::LoadObjectData(const char* pFileName)
             pTrans->Set_Rotation(ROT_Z, data.vRot[2]);
         }
 
-        // Å° »ý¼º
+        // í‚¤ ìƒì„±
         static int iID = 0;
         wstring key = L"Obj_" + to_wstring(iID++);
         m_mapEditObject.insert({ key, pObj });
@@ -330,6 +358,10 @@ void CObjectEditor::Render_CreateUI()
         Start_CreateMode(L"EnderEye");
     }
 
+    if (ImGui::Button("Torch"))
+    {
+        Start_CreateMode(L"Torch");
+    }
     ImGui::End();
 }
 
@@ -376,12 +408,12 @@ void CObjectEditor::Render_SaveLoad()
 
     ImGui::Begin("Object Save / Load");
 
-    // ½ºÅ×ÀÌÁö ¼±ÅÃ¿ë Combo Box
+    // ìŠ¤í…Œì´ì§€ ì„ íƒìš© Combo Box
     static int stageIndex = 0;
-    const char* stages[] = { "Stage1", "Stage2", "Stage3", "Stage4"};
+    const char* stages[] = { "Stage1", "Stage2", "Stage3", "Stage4","Stage7"};
     ImGui::Combo("Stage", &stageIndex, stages, IM_ARRAYSIZE(stages));
 
-    // ¼±ÅÃµÈ ½ºÅ×ÀÌÁö¿¡ µû¶ó ÆÄÀÏ ÀÌ¸§ °áÁ¤
+    // ì„ íƒëœ ìŠ¤í…Œì´ì§€ì— ë”°ë¼ íŒŒì¼ ì´ë¦„ ê²°ì •
     std::string fileName = "../Bin/Data/";
     fileName += stages[stageIndex];
     fileName += "Object.dat";
@@ -427,7 +459,10 @@ void CObjectEditor::Create_Object(const wstring& type)
     else if (type == L"Crystal")
         pObj = CCrystal::Create(m_pGraphicDev);
     else if (type == L"EnderEye")
-        pObj = CEnderEye::Create(m_pGraphicDev);
+        pObj = CEnderEye::Create(m_pGraphicDev); 
+    else if (type == L"Torch")
+        pObj = CTorch::Create(m_pGraphicDev);
+   
 
     if (!pObj) return;
 
@@ -467,7 +502,10 @@ void CObjectEditor::Start_CreateMode(const wstring& type)
     else if (type == L"Crystal")
         m_pPreviewObject = CCrystal::Create(m_pGraphicDev);
     else if (type == L"EnderEye")
-        m_pPreviewObject = CEnderEye::Create(m_pGraphicDev);
+        m_pPreviewObject = CEnderEye::Create(m_pGraphicDev);  
+    else if (type == L"Torch")
+        m_pPreviewObject = CTorch::Create(m_pGraphicDev);
+  
 }
 
 HRESULT CObjectEditor::Ready_Environment_Layer(const _tchar* pLayerTag)
@@ -535,15 +573,18 @@ HRESULT CObjectEditor::Ready_Prototype()
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/A_teleport_ender_duringanim.png"))))
         return E_FAIL;
 
-    //
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TriCol", Engine::CTriCol::Create(m_pGraphicDev))))
         return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RcCol", Engine::CRcCol::Create(m_pGraphicDev))))
         return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TerrainTex", Engine::CTerrainTex::Create(m_pGraphicDev))))
         return E_FAIL;
-    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CubeTex", Engine::CCubeTex::Create(m_pGraphicDev))))
+    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CubeTex", Engine::CCubeTex::Create(m_pGraphicDev))))
+    //	return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_NormalCubeTex",
+        Engine::CNormalCubeTex::Create(m_pGraphicDev, 1.f, 1.f, 1.f))))
         return E_FAIL;
+
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemBodyTex", Engine::CRedStoneGolemBodyTex::Create(m_pGraphicDev))))
         return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemHeadTex", Engine::CRedStoneGolemHeadTex::Create(m_pGraphicDev))))
@@ -723,9 +764,9 @@ HRESULT CObjectEditor::Ready_Prototype()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Spider_LBLeg",
         Engine::CCubeBodyTex::Create(m_pGraphicDev, SpiderUV::LEG))))
         return E_FAIL;
-    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Transform",
-        Engine::CTransform::Create(m_pGraphicDev))))
-        return E_FAIL;
+    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Transform",
+    //	Engine::CTransform::Create(m_pGraphicDev))))
+    //	return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Calculator",
         Engine::CCalculator::Create(m_pGraphicDev))))
         return E_FAIL;
@@ -741,6 +782,16 @@ HRESULT CObjectEditor::Ready_Prototype()
         CTexture::Create(m_pGraphicDev, TEX_CUBE,
             L"../Bin/Resource/Texture/blocks/planks_spruce.dds"))))
         return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StoneGradientTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/stone_gradient_12.dds"))))
+        return E_FAIL;
+
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TorchTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/redstone_torch_on.png"))))
+        return E_FAIL;
+    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RcTex",
+    //    Engine::CRcTex::Create(m_pGraphicDev))))
+    //    return E_FAIL; 
 
     return S_OK;
 }

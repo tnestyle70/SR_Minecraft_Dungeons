@@ -6,6 +6,7 @@
 #include "CTNT.h"
 #include "CEquipSlot.h"
 #include "CNPC.h"
+#include "CJumpingTrap.h"
 
 class CMonster;
 class CRedStoneGolem;
@@ -64,7 +65,7 @@ private:
 	_float m_fMaxHp = 100.f;
 	_float m_fMeleeDmg = 10.f;
 	_float m_fBowDmg = 10.f;
-	_float m_fMoveSpeed = 10.f;
+	_float m_fMoveSpeed = 20.f;
 
 	_float m_fBowCooldown = 0.f;
 
@@ -150,7 +151,7 @@ public:
 	void Add_NPC(CNPC* pNPC) { m_vecNPCs.push_back(pNPC); }
 
 	//점핑 트랩
-	void LaunchByTrap(_float fForce);
+	void LaunchByTrap(_float fForce, eJumpingTrapDir eDir);
 
 private:
 	CPlayerBody* m_pBufferCom[PART_END];
@@ -178,11 +179,13 @@ private:
 	_vec3 m_vTargetPos;
 	_bool  m_bHasTarget = false;
 
-	_float m_fGravity = -25.f;
+	_float m_fGravity = -35.f;
 	_float m_fJumpPower = 8.f;
 	_float m_fMaxFall = -20.f;
 
 	_float m_fVelocityY = 0.f;
+	//점핑 트랩 발사 방향
+	_vec3 m_vLaunchVelocity = _vec3(0.f, 0.f, 0.f); 
 	_bool m_bOnGround = false;
 
 

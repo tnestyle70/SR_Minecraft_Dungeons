@@ -3,6 +3,7 @@
 #include "CProtoMgr.h"
 #include "CMonsterUV.h"
 #include "CAncientGuardianUV.h"
+#include "CNormalCubeTex.h"
 
 CLoading::CLoading(LPDIRECT3DDEVICE9 pGraphicDev)
     : m_pGraphicDev(pGraphicDev), m_bFinish(false), m_eLoadingID(LOADING_END)
@@ -284,7 +285,10 @@ _uint CLoading::Loading_SquidCoast()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_GBText",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_GB.png"))))
         return E_FAIL;
-
+    //Mission Complete Text
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_MissionCompleteText",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_Mission_Complete.png"))))
+        return E_FAIL;
     //UI - 하트 
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_FilledHeart",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/filled_heart.png"))))

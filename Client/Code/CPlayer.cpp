@@ -52,12 +52,13 @@ HRESULT CPlayer::Ready_GameObject()
 	if (FAILED(Add_Component()))
 		return E_FAIL;
 
-	m_pTransformCom->Set_Pos(0.f, 10.f, 0.f);
-
-	//m_pTransformCom->Set_Pos(48.f, 9.f, 97.f);
-
+	//m_pTransformCom->Set_Pos(0.f, 10.f, 0.f);
+	m_pTransformCom->Set_Pos(48.f, 9.f, 97.f);
+	
+	//m_pTransformCom->Set_Pos(-48.f, 1.f, -163.f);
+	
 	m_eArmorType = ARMOR_BARDSGARD;
-
+	
 #pragma region 파트별 크기, 오프셋
 	m_vPartScale[PART_HEAD] = { 0.40f, 0.40f, 0.40f };
 	m_vPartScale[PART_BODY] = { 0.50f, 0.50f, 0.25f };
@@ -1366,10 +1367,44 @@ void CPlayer::UnEquip(eEquipType eType)
 	}
 }
 
-void CPlayer::LaunchByTrap(_float fForce)
+void CPlayer::LaunchByTrap(_float fForce, eJumpingTrapDir eDir)
 {
 	m_fVelocityY = fForce;
 	m_bOnGround = false;
+
+	//수평 속도
+	float fHorizontalForce = fForce * 0.5f;
+
+	_vec3 vLook, vRight;
+	//플레이어 방향 기준 축 -> 어색하면 월드 기준 축으로 교체
+	m_pTransformCom->Get_Info(INFO_LOOK, &vLook);
+	m_pTransformCom->Get_Info(INFO_RIGHT, &vRight);
+	D3DXVec3Normalize(&vLook, &vLook);
+	D3DXVec3Normalize(&vRight, &vRight);
+
+	//상수 벡터로 월드 축 보장
+
+	switch (eDir)
+	{
+	case eJumpingTrapDir::LEFT:
+		//m_vLaunchVelocity = vRight * -fHorizontalForce;
+		m_vLaunchVelocity = { -fHorizontalForce, 0.f, 0.f };
+		break;
+	case eJumpingTrapDir::RIGHT:
+		//m_vLaunchVelocity = vRight * fHorizontalForce;
+		m_vLaunchVelocity = { fHorizontalForce, 0.f, 0.f };
+		break;
+	case eJumpingTrapDir::FORWARD:
+		//m_vLaunchVelocity = vLook * fHorizontalForce;
+		m_vLaunchVelocity = { 0.f, 0.f, fHorizontalForce };
+		break;
+	case eJumpingTrapDir::BACKWARD:
+		//m_vLaunchVelocity = vLook * -fHorizontalForce;
+		m_vLaunchVelocity = { 0.f, 0.f, -fHorizontalForce };
+		break;
+	default:
+		break;
+	}
 }
 
 void CPlayer::Apply_Gravity(const _float& fTimeDelta)
@@ -1377,13 +1412,20 @@ void CPlayer::Apply_Gravity(const _float& fTimeDelta)
 	if (m_bOnGround)
 		return;
 
+	//중력 적용
 	m_fVelocityY += m_fGravity * fTimeDelta;
 	if (m_fVelocityY < m_fMaxFall)
 		m_fVelocityY = m_fMaxFall;
-
 	_vec3 vPos;
 	m_pTransformCom->Get_Info(INFO_POS, &vPos);
 	vPos.y += m_fVelocityY * fTimeDelta;
+
+	//점핑 트랩 적용
+	if (m_vLaunchVelocity != _vec3(0.f, 0.f, 0.f))
+	{
+		vPos += m_vLaunchVelocity * fTimeDelta;
+	}
+
 	m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
 }
 
@@ -1429,6 +1471,7 @@ void CPlayer::Resolve_BlockCollision()
 					{
 						m_bOnGround = true;
 						m_fVelocityY = 0.f;
+						m_vLaunchVelocity = _vec3(0.f, 0.f, 0.f);
 					}
 					else
 					{

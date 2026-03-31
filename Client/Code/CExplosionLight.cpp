@@ -6,10 +6,10 @@ CExplosionLight::CExplosionLight(LPDIRECT3DDEVICE9 pGraphicDev, _vec3 vPos)
 {
     m_pGraphicDev->AddRef();
 
-    
+  
     m_pExplosionCube = Engine::CCubeTex::Create(m_pGraphicDev);
 
-   
+ 
     D3DLIGHT9 tLight;
     ZeroMemory(&tLight, sizeof(D3DLIGHT9));
     tLight.Type = D3DLIGHT_POINT;

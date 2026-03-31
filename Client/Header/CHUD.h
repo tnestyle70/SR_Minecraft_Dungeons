@@ -2,8 +2,14 @@
 #include "CGameObject.h"
 #include "CProtoMgr.h"
 
-//HUD 플레이어의 생성과 동기화를 시켜서 체력 정보를 업데이트하는 것이 핵심
+enum class eMissionType
+{
+	MISSION_MONSTER,
+	MISSION_SKELETON,
+	MISSION_END
+};
 
+//HUD 플레이어의 생성과 동기화를 시켜서 체력 정보를 업데이트하는 것이 핵심
 class CPlayer;
 class CNetworkPlayer;
 
@@ -19,6 +25,10 @@ public:
 	virtual			_int		Update_GameObject(const _float& fTimeDelta);
 	virtual			void		LateUpdate_GameObject(const _float& fTimeDelta);
 	virtual			void		Render_GameObject();
+
+private:
+	void Update_Missison(const _float fTimeDelta);
+	void Use_Posion(const _float fTimeDelta);
 	
 public:
 	void Set_Player(CPlayer* pPlayer) { m_pPlayer = pPlayer; }
@@ -33,11 +43,13 @@ private:
 	//포션 쿨타임
 	void Render_PosionCoolTime();
 	//에메랄드 개수
-	void Render_EmeraldCount();
+	void Render_CurrencyCount();
 	//미션
 	void Render_Mission();
-
-	void Use_Posion(const _float fTimeDelta);
+	void Render_Mission1();
+	void Render_Mission2();
+	//미션 성공
+	void Render_MissionComplete();
 
 private:
 	Engine::CRcTex* m_pBufferCom = nullptr;
@@ -45,6 +57,7 @@ private:
 	CTexture* m_pFilledHeart = nullptr;
 	CTexture* m_pEmptyHeart = nullptr;
 	CTexture* m_pPosionCoolTime = nullptr;
+	CTexture* m_pMissionComplete = nullptr;
 
 	CPlayer* m_pPlayer = nullptr;
 	CNetworkPlayer* m_pNetworkPlayer = nullptr;
@@ -57,6 +70,10 @@ private:
 	float m_fPosionX, m_fPosionY = 0.f;
 	float m_fPosionW, m_fPosionH = 0.f;
 
+	//MissionComplete 위치, 사이즈
+	float m_fMissionX, m_fMissionY = 0.f;
+	float m_fMissionW, m_fMissionH = 0.f;
+
 	//플레이어 체력
 	int m_iHP = 0;
 	int m_iMaxHP = 0;
@@ -66,14 +83,21 @@ private:
 	_float m_fPosionDuration = 1.f;
 	_bool m_bIsPosionCoolTime = false;
 
-	//에메랄드 
+	//에메랄드, 유물 
 	int m_iEmerald = 0;
+	int m_iArtifact = 0;
 	
 	//미션 카운트
 	int m_iZombieCount = 0;
 	int m_iCreeperCount = 0; 
 	int m_iSkeletonCount = 0;
 	int m_iSpiderCount = 0;
+	eMissionType m_eMissionType = eMissionType::MISSION_END;
+
+	bool m_bMissionComplete = false;
+	bool m_bFirstMissionComplete = true;
+	float m_fMissionCoolTime = 0.f;
+	float m_fMissionDuration = 1.f;
 
 	//원본 행렬 저장
 	_matrix m_matOriginView;
