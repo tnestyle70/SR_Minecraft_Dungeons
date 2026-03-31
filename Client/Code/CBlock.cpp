@@ -117,9 +117,13 @@ HRESULT CBlock::Add_Component()
 
 	if (m_eType == BLOCK_StoneGradient)
 	{
+		
 		m_pNormalBufferCom = dynamic_cast<CNormalCubeTex*>
 			(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_NormalCubeTex"));
+		if (!m_pNormalBufferCom)
+			return E_FAIL;
 	}
+
 
 	// Transform
 	pComponent = m_pTransformCom = dynamic_cast<CTransform*>

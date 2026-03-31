@@ -11,16 +11,20 @@ CTorch::~CTorch()
 {
 }
 
+int CTorch::s_iNextLightIdx = 5;
+
 HRESULT CTorch::Ready_GameObject()
 {
     if (FAILED(Add_Component()))
         return E_FAIL;
 
+    m_iLightIdx = s_iNextLightIdx++;  // 횃불마다 고유 인덱스
+
     m_pTransformCom->Set_Pos(0.f, 0.f, 0.f);
     m_pTransformCom->m_vScale = { 0.5f, 1.f, 0.5f };
 
     return S_OK;
-}
+} 
 
 _int CTorch::Update_GameObject(const _float& fTimeDelta)
 {
@@ -32,11 +36,28 @@ _int CTorch::Update_GameObject(const _float& fTimeDelta)
     m_pTransformCom->Get_Info(INFO_POS, &vPos);
     m_pColliderCom->Update_AABB(vPos);
 
+    // 조명을 Update에서 등록 - 블록 렌더 전에 켜져있어야 함
+    D3DLIGHT9 tLight;
+    ZeroMemory(&tLight, sizeof(tLight));
+    tLight.Type = D3DLIGHT_POINT;
+    tLight.Position = { vPos.x, vPos.y + 0.5f, vPos.z };
+    tLight.Diffuse = { 10.f, 10.f, 10.f, 10.f };  // Diffuse 값을 1 이상으로
+    tLight.Ambient = { 0.1f, 0.06f, 0.01f, 1.f };
+    tLight.Range = 15.f + sinf(m_fFlicker * 3.f) * 2.f;  // 범위 확대
+    tLight.Attenuation0 = 0.f;
+    tLight.Attenuation1 = 0.05f;  // 감쇠 줄이기
+    tLight.Attenuation2 = 0.f;
+    m_pGraphicDev->SetLight(5, &tLight);
+    m_pGraphicDev->LightEnable(5, TRUE);
+     
+    m_pGraphicDev->SetLight(m_iLightIdx, &tLight);
+    m_pGraphicDev->LightEnable(m_iLightIdx, TRUE);
+
     CRenderer::GetInstance()->Add_RenderGroup(RENDER_ALPHA, this);
 
-    return iExit;
-} 
 
+    return iExit;
+}
 void CTorch::LateUpdate_GameObject(const _float& fTimeDelta)
 {
     CGameObject::LateUpdate_GameObject(fTimeDelta);
@@ -46,19 +67,6 @@ void CTorch::Render_GameObject()
 {
     _vec3 vPos;
     m_pTransformCom->Get_Info(INFO_POS, &vPos);
-
-    D3DLIGHT9 tLight;
-    ZeroMemory(&tLight, sizeof(tLight));
-    tLight.Type = D3DLIGHT_POINT;
-    tLight.Position = { vPos.x, vPos.y + 0.5f, vPos.z };
-    tLight.Diffuse = { 1.f, 0.6f, 0.1f, 1.f };
-    tLight.Ambient = { 0.1f, 0.06f, 0.01f, 1.f };
-    tLight.Range = 8.f + sinf(m_fFlicker * 3.f) * 1.5f;
-    tLight.Attenuation1 = 0.1f;
-
-    static int s_iLightIdx = 5;
-    m_pGraphicDev->SetLight(s_iLightIdx, &tLight);
-    m_pGraphicDev->LightEnable(s_iLightIdx, TRUE);
 
     _matrix matView;
     m_pGraphicDev->GetTransform(D3DTS_VIEW, &matView);
@@ -93,19 +101,18 @@ void CTorch::Render_GameObject()
     m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
     m_pGraphicDev->SetRenderState(D3DRS_ALPHAREF, 128);
     m_pGraphicDev->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
-    m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);  
+    m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
 
     m_pGraphicDev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
     m_pGraphicDev->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
     m_pGraphicDev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
-
 
     m_pTextureCom->Set_Texture(0);
     m_pBufferCom->Render_Buffer();
 
     m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
     m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-    m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW); 
+    m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 
     D3DMATERIAL9 defaultMtrl;
     ZeroMemory(&defaultMtrl, sizeof(defaultMtrl));
@@ -114,10 +121,6 @@ void CTorch::Render_GameObject()
     defaultMtrl.Emissive = { 0.f, 0.f, 0.f, 0.f };
     m_pGraphicDev->SetMaterial(&defaultMtrl);
 
-    // 추가 - 조명 끄기
-    m_pGraphicDev->LightEnable(s_iLightIdx, FALSE);
-
-    // 추가 - 텍스처 스테이지 원상복구
     m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
     m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
     m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
@@ -163,6 +166,7 @@ CTorch* CTorch::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 }
 
 void CTorch::Free()
-{
+{ 
+    m_pGraphicDev->LightEnable(m_iLightIdx, FALSE);
     CGameObject::Free();
 }
