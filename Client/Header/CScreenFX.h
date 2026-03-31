@@ -1,5 +1,4 @@
 #pragma once
-
 #include "CBase.h"
 #include "Engine_Define.h"
 
@@ -13,6 +12,7 @@ private:
 
 public:
     HRESULT Ready(LPDIRECT3DDEVICE9 pDev, _uint iWidth, _uint iHeight);
+
     void Update(const _float& fTimeDelta);
 
     void Begin_Capture();
@@ -24,12 +24,16 @@ public:
     void Trigger_Hit(float fIntensity = 1.f);
     void Trigger_TailHit(float fIntensity = 1.f);
 
+    void Trigger_VoidFlame(bool bActive);
+    void Apply_VoidFlame(const D3DXMATRIX& matWVP, const D3DXMATRIX& matWV);
+
 private:
     HRESULT Create_RenderTarget(_uint iW, _uint iH);
     HRESULT Create_DepthBuffer(_uint iW, _uint iH);
     HRESULT Create_QuadVB();
     HRESULT Create_NoiseTex();
     HRESULT Load_Effect();
+
     void Set_EffectParams();
 
 private:
@@ -51,6 +55,7 @@ private:
     float m_fDistortAmt = 0.f;
     float m_fShakeX = 0.f;
     float m_fShakeY = 0.f;
+
     D3DXVECTOR4 m_vVoidTint = { 0.f, 0.f, 0.f, 0.f };
 
     float m_fNoiseDuration = 0.f;
@@ -60,12 +65,20 @@ private:
     float m_fShakeDuration = 0.f;
     float m_fShakePeak = 0.f;
 
-    bool m_bBreathActive = false;
+    bool  m_bBreathActive = false;
+
+    bool  m_bFlameActive = false;
+    float m_fFlameAmt = 0.f;
+
     float m_fBreathIntensity = 0.f;
     float m_fBreathCurrent = 0.f;
 
     _uint m_iWidth = 0;
     _uint m_iHeight = 0;
+
+    float m_fScreenW = 0.f;
+    float m_fScreenH = 0.f;
+
     bool m_bReady = false;
 
 public:

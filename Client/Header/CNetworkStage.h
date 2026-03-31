@@ -2,6 +2,7 @@
 #include "CDynamicCamera.h"
 #include "CNetworkPlayer.h"
 #include "CDragon.h"
+#include "CEnderDragon.h"
 
 class COcean;
 
@@ -34,4 +35,5 @@ private:
 	float           m_fInputTimer = 0.f;       // 전송 주기 제어 (20TPS)
 
 	CDragon* m_pDragon[4] = {};        // 드래곤 4마리
+	CEnderDragon* m_pEnderDragon = nullptr;
 };

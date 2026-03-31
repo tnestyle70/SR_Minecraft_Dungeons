@@ -329,7 +329,7 @@ HRESULT CNetworkStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 
 	m_pOcean = COcean::Create(m_pGraphicDev, oceanDesc);
 	pGameObject = m_pOcean;
-	
+
 	if (!pGameObject)
 		return E_FAIL;
 
@@ -378,6 +378,18 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		if (FAILED(pLayer->Add_GameObject(szDragonTag[i], m_pDragon[i])))
 			return E_FAIL;
 	}
+
+	m_pEnderDragon = CEnderDragon::Create(m_pGraphicDev);
+	if (!m_pEnderDragon)
+	{
+		MSG_BOX("Ender Dragon Create Failed");
+		return E_FAIL;
+	}
+	_vec3 vEnderDragonSpawn = { 10.f, 10.f, 10.f };
+	m_pEnderDragon->Set_RootPos(vEnderDragonSpawn);
+
+	if (FAILED(pLayer->Add_GameObject(L"EnderDragon", m_pEnderDragon)))
+		return E_FAIL;
 
 	//Player
 	pGameObject = CNetworkPlayer::Create(m_pGraphicDev);
