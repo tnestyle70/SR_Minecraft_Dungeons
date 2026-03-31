@@ -62,7 +62,7 @@ void CBlockMgr::Render()
 {
 	switch (m_eRenderMode)
 	{
-	case RENDER_EDITOR:   Render_Stage();    break;
+	case RENDER_EDITOR:   Render_Editor();    break;
 	case RENDER_BATCH:    Render_Stage();     break;
 	case RENDER_QUADTREE: Render_QuadTree(); break;
 	default: break;
@@ -511,7 +511,7 @@ HRESULT CBlockMgr::LoadBlocks(FILE* pFile)
 		}
 	}
 
-	if (m_eRenderMode == RENDER_BATCH)
+	if (m_eRenderMode == RENDER_BATCH || m_eRenderMode == RENDER_EDITOR)
 		RebuildBatchMesh();
 	else if (m_eRenderMode == RENDER_QUADTREE)
 		BuildQuadTree();

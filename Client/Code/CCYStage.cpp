@@ -275,7 +275,7 @@ HRESULT CCYStage::Ready_StageData(const _tchar* szPath)
 	
 	CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StoneGradientTexture",
 		Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL,
-			L"../Bin/Resource/Texture/blocks/stone_gradient_12.dds"));
+			L"../Bin/Resource/Texture/blocks/stone_gradient_12.png"));
 	
 	CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_EDITOR);
 	

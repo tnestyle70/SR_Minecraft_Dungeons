@@ -3,6 +3,7 @@
 #include "CProtoMgr.h"
 #include "CMonsterUV.h"
 #include "CAncientGuardianUV.h"
+#include "CNormalCubeTex.h"
 
 CLoading::CLoading(LPDIRECT3DDEVICE9 pGraphicDev)
     : m_pGraphicDev(pGraphicDev), m_bFinish(false), m_eLoadingID(LOADING_END)
@@ -62,7 +63,15 @@ _uint CLoading::Loading_SquidCoast()
     {
         if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSCubeTex", Engine::CJSCubeTex::Create(m_pGraphicDev))))
             return E_FAIL;
-    }
+    } 
+     // 구찬영
+    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CubeTex",
+    //    Engine::CCubeTex::Create(m_pGraphicDev))))
+    //    return E_FAIL;
+    
+    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_NormalCubeTex",
+    //    Engine::CNormalCubeTex::Create(m_pGraphicDev, 1.f, 1.f, 1.f))))
+    //    return E_FAIL;
 
     //UI - Inventory
     //Slot Frame
