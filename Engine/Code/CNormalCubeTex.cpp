@@ -1,6 +1,6 @@
 #include "CNormalCubeTex.h"
 
-BEGIN(Engine)
+//BEGIN(Engine)
 
 CNormalCubeTex::CNormalCubeTex()
     : CVIBuffer()
@@ -130,4 +130,4 @@ void CNormalCubeTex::Free()
     CVIBuffer::Free();
 }
 
-END
+//END

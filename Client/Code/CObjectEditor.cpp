@@ -144,7 +144,7 @@ void CObjectEditor::Render_Scene()
 
 void CObjectEditor::Render_UI()
 {
-    CBlockMgr::GetInstance()->Render_Stage();
+    CBlockMgr::GetInstance()->Render_Editor();
 
     // Object List
     ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Once);
@@ -513,7 +513,7 @@ HRESULT CObjectEditor::Ready_Prototype()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_BoxTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/T_LargeBoxChest.png"))))
         return E_FAIL;
-
+    
     // Lamp
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_LampBodyTex", Engine::CLampBodyTex::Create(m_pGraphicDev))))
         return E_FAIL;
@@ -535,15 +535,18 @@ HRESULT CObjectEditor::Ready_Prototype()
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/A_teleport_ender_duringanim.png"))))
         return E_FAIL;
 
-    //
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TriCol", Engine::CTriCol::Create(m_pGraphicDev))))
         return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RcCol", Engine::CRcCol::Create(m_pGraphicDev))))
         return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TerrainTex", Engine::CTerrainTex::Create(m_pGraphicDev))))
         return E_FAIL;
-    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CubeTex", Engine::CCubeTex::Create(m_pGraphicDev))))
+    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_CubeTex", Engine::CCubeTex::Create(m_pGraphicDev))))
+    //	return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_NormalCubeTex",
+        Engine::CNormalCubeTex::Create(m_pGraphicDev, 1.f, 1.f, 1.f))))
         return E_FAIL;
+
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemBodyTex", Engine::CRedStoneGolemBodyTex::Create(m_pGraphicDev))))
         return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemHeadTex", Engine::CRedStoneGolemHeadTex::Create(m_pGraphicDev))))
@@ -723,9 +726,9 @@ HRESULT CObjectEditor::Ready_Prototype()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Spider_LBLeg",
         Engine::CCubeBodyTex::Create(m_pGraphicDev, SpiderUV::LEG))))
         return E_FAIL;
-    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Transform",
-        Engine::CTransform::Create(m_pGraphicDev))))
-        return E_FAIL;
+    //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Transform",
+    //	Engine::CTransform::Create(m_pGraphicDev))))
+    //	return E_FAIL;
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Calculator",
         Engine::CCalculator::Create(m_pGraphicDev))))
         return E_FAIL;
@@ -740,6 +743,9 @@ HRESULT CObjectEditor::Ready_Prototype()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_PlankSpruceTexture",
         CTexture::Create(m_pGraphicDev, TEX_CUBE,
             L"../Bin/Resource/Texture/blocks/planks_spruce.dds"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StoneGradientTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/stone_gradient_12.dds"))))
         return E_FAIL;
 
     return S_OK;

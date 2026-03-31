@@ -407,6 +407,10 @@ _uint CLoading::Loading_SquidCoast()
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/minecraft_block_atlas_4x4.png"))))
         return E_FAIL;
 
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSBlockTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/CubeTex/stonebrick_cracked.png"))))
+        return E_FAIL;
+
     //=========Effect=========//
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_FootPrintTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Effect/FootPrint.png"))))

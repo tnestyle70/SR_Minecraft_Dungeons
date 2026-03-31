@@ -8,6 +8,7 @@
 #include "CCubeTex.h"
 #include "CCubeBodyTex.h"
 #include "CJSCubeTex.h"
+#include "CNormalCubeTex.h"
 
 // RedStoneGolem
 #include "CRedStoneGolemBodyTex.h"

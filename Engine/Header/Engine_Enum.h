@@ -29,5 +29,7 @@ namespace Engine
 		SOUND_WORLD,
 		MAXCHANNEL
 	};
+
+	enum TILEID { TILE_NORMAL, TILE_EMPTY, TILE_OBSTACLE, TILE_END };
 }
 #endif // Engine_Enum_h__
