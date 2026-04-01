@@ -66,7 +66,7 @@ void CJSCamera::LateUpdate_GameObject(const _float& fTimeDelta)
     
     Get_PlayerPos();
 
-    m_vEye = m_vPlayerPos + _vec3(0.f, 5.f, -8.f);
+    m_vEye = m_vPlayerPos + _vec3(0.f, 5.f, -7.f);
     m_vAt = m_vPlayerPos;
 }
 

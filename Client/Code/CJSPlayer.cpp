@@ -2,6 +2,7 @@
 #include "CJSPlayer.h"
 #include "CRenderer.h"
 #include "CDInputMgr.h"
+#include "CJSChunkMgr.h"
 
 CJSPlayer::CJSPlayer(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -20,7 +21,7 @@ HRESULT CJSPlayer::Ready_GameObject()
 	if (FAILED(Add_Component()))
 		return E_FAIL;
 
-	m_pTransformCom->Set_Pos(0.f, 1.f, 0.f);
+	m_pTransformCom->Set_Pos(0.f, 1.f, 1.f);
 
 	return S_OK;
 }
@@ -29,6 +30,7 @@ _int CJSPlayer::Update_GameObject(const _float& fTimeDelta)
 {
 	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
 
+	Falling();
 	Key_Input(fTimeDelta);
 	Jump(fTimeDelta);
 	Advance(fTimeDelta);
@@ -97,20 +99,47 @@ void CJSPlayer::Jump(const _float& fTimeDelta)
 	if (m_bJump)
 	{
 		m_fVelocityY -= m_fGravity * fTimeDelta;
+		_vec3 vUp = { 0.f, 1.f, 0.f };
+		m_pTransformCom->Move_Pos(&vUp, m_fVelocityY, fTimeDelta);
+
+		if (m_bFalling)
+			return;
 
 		_vec3 vPos;
 		m_pTransformCom->Get_Info(INFO_POS, &vPos);
-		vPos.y += m_fVelocityY * fTimeDelta;
-
 		if (vPos.y <= m_fGroundY)
 		{
 			vPos.y = m_fGroundY;
 			m_fVelocityY = 0.f;
 			m_bJump = false;
+			m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
 		}
+	}
+}
 
-		_vec3 vUp = { 0.f, 1.f, 0.f };
-		m_pTransformCom->Move_Pos(&vUp, m_fVelocityY, fTimeDelta);
+void CJSPlayer::Falling()
+{
+	if (m_bFalling)
+		return;
+
+	_vec3 vPos;
+	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+	TILEID eTileID = CJSChunkMgr::GetInstance()->Get_TileID(vPos);
+
+	// µð¹ö±ë¿ë
+	TCHAR szBuf[64];
+	wsprintf(szBuf, L"TileID: %d", eTileID);
+	OutputDebugString(szBuf);
+
+	if (eTileID == TILE_EMPTY && !m_bJump)
+	{
+		m_bFalling = true;
+		m_bJump = true;
+		m_fVelocityY = 0.f;
+	}
+	else if (eTileID == TILE_NORMAL)
+	{
+		m_bFalling = false;
 	}
 }
 
@@ -131,7 +160,7 @@ void CJSPlayer::Key_Input(const _float& fTimeDelta)
 		m_pTransformCom->Move_Pos(&vRight, m_fSideSpeed, fTimeDelta);
 	}
 
-	if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_UP) && !m_bJump)
+	if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_UP) && !m_bJump && !m_bFalling)
 	{
 		m_fVelocityY = m_fJumpPower;
 		m_bJump = true;

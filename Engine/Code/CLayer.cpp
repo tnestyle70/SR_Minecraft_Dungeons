@@ -45,6 +45,26 @@ _int CLayer::Delete_GameObject(const _float& fTimeDelta) // 몬스터 삭제
 	return 0;
 }
 
+//void CLayer::Delete_GameObjectByTag(const _tchar* pObjTag)
+//{
+//	auto range = m_mapObject.equal_range(pObjTag);
+//	for (auto it = range.first; it != range.second; ++it)
+//		Safe_Release(it->second);
+//	m_mapObject.erase(range.first, range.second);
+//}
+
+void CLayer::Delete_GameObjectByPtr(CGameObject* pTarget)
+{
+	for (auto it = m_mapObject.begin(); it != m_mapObject.end(); ++it)
+	{
+		if (it->second == pTarget)
+		{
+			m_mapObject.erase(it);
+			return;
+		}
+	}
+}
+
 HRESULT CLayer::Ready_Layer()
 {
 	return S_OK;

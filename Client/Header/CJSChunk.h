@@ -34,6 +34,9 @@ public:
 
 public:
 	void Get_Position(_vec3& vPos) { m_pTransformCom->Get_Info(INFO_POS, &vPos); }
+	virtual bool Is_Dead() override { return m_bDead; }
+	void Set_Dead() { m_bDead = true; }
+	TILEID Get_TileID(_vec3 vPlayerPos);
 
 private:
 	HRESULT Add_Component();
@@ -46,12 +49,15 @@ private:
 
 	CTransform* m_pTransformCom;
 
-	static const _int   TILE_X = 3;
+	static const _int   TILE_X = 5;
 	static const _int   TILE_Z = 16;
 	static const _float TILE_SIZE;
 
 	vector<CJSTile*> m_vecTile;
+	vector<CJSTile*> m_vecWall;
+
 	CHUNKTYPE m_eChunkType;
+	_bool m_bDead = false;
 
 private:
 	virtual void Free();
