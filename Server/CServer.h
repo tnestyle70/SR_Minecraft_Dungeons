@@ -23,10 +23,11 @@ public:
 private:
     void AcceptThread();
     void RecvThread();
-    void HandleLogin (CSession* pSession, const PKT_C2S_Login*  pPkt);
-    void HandleInput (CSession* pSession, const PKT_C2S_Input*  pPkt);
-    void HandleAttack(CSession* pSession, const PKT_C2S_Attack* pPkt); // Day 9
-    void HandleDamage(CSession* pSession, const PKT_C2S_Damage* pPkt); // Day 9
+    void HandleLogin      (CSession* pSession, const PKT_C2S_Login*       pPkt);
+    void HandleInput      (CSession* pSession, const PKT_C2S_Input*       pPkt);
+    void HandleArrow      (CSession* pSession, const PKT_C2S_Arrow*       pPkt); // C2S_ARROW
+    void HandleDragonSync (CSession* pSession, const PKT_C2S_DragonSync*  pPkt); // C2S_DRAGON_SYNC
+    void HandleDamage     (CSession* pSession, const PKT_C2S_Damage*      pPkt);
 
     // 세션 종료 공통 처리: 스폰 해제 + Despawn 브로드캐스트 + OnDisconnect
     void HandleDisconnect(int iSessId, int iPlayerId, const char* szNickname);

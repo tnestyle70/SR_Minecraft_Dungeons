@@ -24,6 +24,10 @@ public:
     void Trigger_Hit(float fIntensity = 1.f);
     void Trigger_TailHit(float fIntensity = 1.f);
 
+    void Trigger_Noise(float fIntensity, float fDuration);
+    void Trigger_GlassBreak(float fIntensity, float fDuration);
+    void Trigger_Wave(float fIntensity, float fDuration);
+
     void Trigger_VoidFlame(bool bActive);
     void Apply_VoidFlame(const D3DXMATRIX& matWVP, const D3DXMATRIX& matWV);
 
@@ -32,9 +36,11 @@ private:
     HRESULT Create_DepthBuffer(_uint iW, _uint iH);
     HRESULT Create_QuadVB();
     HRESULT Create_NoiseTex();
+    HRESULT Create_PingPongRT(_uint iW, _uint iH);
     HRESULT Load_Effect();
 
     void Set_EffectParams();
+    void ApplyPass(const char* szTechnique, IDirect3DTexture9* pSrc, IDirect3DSurface9* pWriteSurf);
 
 private:
     LPDIRECT3DDEVICE9 m_pGraphicDev = nullptr;
@@ -42,6 +48,9 @@ private:
     IDirect3DTexture9* m_pRT = nullptr;
     IDirect3DSurface9* m_pRTSurface = nullptr;
     IDirect3DSurface9* m_pRTDepth = nullptr;
+
+    IDirect3DTexture9* m_pRT_B = nullptr;
+    IDirect3DSurface9* m_pRTSurface_B = nullptr;
 
     IDirect3DSurface9* m_pOrigRT = nullptr;
     IDirect3DSurface9* m_pOrigDepth = nullptr;
@@ -64,6 +73,19 @@ private:
     float m_fDistortPeak = 0.f;
     float m_fShakeDuration = 0.f;
     float m_fShakePeak = 0.f;
+
+    float m_fGrainAmt = 0.f;
+    float m_fGrainDuration = 0.f;
+    float m_fGrainPeak = 0.f;
+    float m_fNoisePhase = 0.f;
+
+    float m_fGlassAmt = 0.f;
+    float m_fGlassDuration = 0.f;
+    float m_fGlassPeak = 0.f;
+
+    float m_fWaveAmt = 0.f;
+    float m_fWaveDuration = 0.f;
+    float m_fWavePeak = 0.f;
 
     bool  m_bBreathActive = false;
 

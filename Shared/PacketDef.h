@@ -3,7 +3,7 @@
 #include <winsock2.h>
 #include <windows.h>
 
-#define PROTOCOL_VERSION 1
+#define PROTOCOL_VERSION 2      // v2: dragon packet split, C2S_ARROW
 #define MAX_PLAYERS 50
 #define SESSION_TIMEOUT_MS 15000  // 15s timeout (after C2S_Input 20TPS verified)
 
@@ -11,17 +11,21 @@ enum PACKET_TYPE : WORD
 {
     PKT_NONE = 0,
 
-    C2S_LOGIN = 1,
-    C2S_INPUT = 2,
-    C2S_ATTACK = 4,   // Day 9: attack event (arrow)
-    C2S_DAMAGE = 5,   // Day 9: PVP damage notify
+    C2S_LOGIN        = 1,
+    C2S_INPUT        = 2,
+    // C2S_ATTACK    = 4  (Deprecated — replaced by C2S_ARROW)
+    C2S_DAMAGE       = 5,
+    C2S_DRAGON_SYNC  = 6,   // dragon rider only, 5TPS
+    C2S_ARROW        = 7,   // arrow fire event (replaces C2S_ATTACK)
 
-    S2C_LOGIN_ACK = 101,
-    S2C_SPAWN = 102,
+    S2C_LOGIN_ACK    = 101,
+    S2C_SPAWN        = 102,
     S2C_STATE_SNAPSHOT = 103,
-    S2C_DESPAWN = 104,
-    S2C_ATTACK = 106, // Day 9: attack relay
-    S2C_DAMAGE = 107, // Day 9: damage relay
+    S2C_DESPAWN      = 104,
+    // S2C_ATTACK    = 106  (Deprecated — replaced by S2C_ARROW)
+    S2C_DAMAGE       = 107,
+    S2C_ARROW        = 108,   // arrow broadcast
+    S2C_DRAGON_SYNC  = 109,   // dragon position broadcast
 };
 
 #pragma pack(push, 1)
@@ -31,6 +35,7 @@ struct PKT_HEADER
     WORD wSize;
     WORD wType;
 };
+static_assert(sizeof(PKT_HEADER) == 4, "PKT_HEADER size mismatch");
 
 struct PKT_C2S_Login
 {
@@ -64,22 +69,47 @@ struct PKT_S2C_Spawn
     PlayerSpawnInfo players[MAX_PLAYERS];
 };
 
+// PKT_C2S_Input — dragon fields removed, position kept (option B)
+// removed: bOnDragon(1), iDragonIdx(4), fDragonX/Y/Z(12) -> 17 bytes saved
 struct PKT_C2S_Input
 {
-    PKT_HEADER header;
-    int iSequence;
-    float fDirX;
-    float fDirZ;
-    float fRotY;
-    bool bMoving;
-    DWORD dwTimestamp;
-    float fX;   // client position (server correction)
-    float fY;
-    float fZ;
-    bool  bOnDragon;    // on-dragon flag
-    int   iDragonIdx;   // dragon index (0~3, -1 if none)
-    float fDragonX, fDragonY, fDragonZ;  // Day 8: dragon root position
-};
+    PKT_HEADER header;  // 4
+    int   iSequence;    // 4
+    float fDirX;        // 4
+    float fDirZ;        // 4
+    float fRotY;        // 4
+    bool  bMoving;      // 1
+    BYTE  pad[3];       // 3  (explicit padding — alignment under #pragma pack(1))
+    DWORD dwTimestamp;  // 4
+    float fX;           // 4  client position (server correction)
+    float fY;           // 4
+    float fZ;           // 4
+};                      // total 40 bytes
+static_assert(sizeof(PKT_C2S_Input) == 40, "PKT_C2S_Input size mismatch");
+
+// dragon sync — riders only, separate 5TPS
+struct PKT_C2S_DragonSync
+{
+    PKT_HEADER header;        // 4
+    int   iDragonIdx;         // 4
+    float fRootX, fRootY, fRootZ; // 12
+    float fRotY;              // 4
+    BYTE  bOnDragon;          // 1
+    BYTE  pad[3];             // 3
+};  // total 28 bytes
+static_assert(sizeof(PKT_C2S_DragonSync) == 28, "PKT_C2S_DragonSync size mismatch");
+
+struct PKT_S2C_DragonSync
+{
+    PKT_HEADER header;        // 4
+    int   iPlayerId;          // 4
+    int   iDragonIdx;         // 4
+    float fRootX, fRootY, fRootZ; // 12
+    float fRotY;              // 4
+    BYTE  bOnDragon;          // 1
+    BYTE  pad[3];             // 3
+};  // total 32 bytes
+static_assert(sizeof(PKT_S2C_DragonSync) == 32, "PKT_S2C_DragonSync size mismatch");
 
 struct PlayerState
 {
@@ -88,9 +118,9 @@ struct PlayerState
     float fRotY;
     int  iState;
     int  iLastSequence;
-    bool  bOnDragon;    // on-dragon flag
-    int   iDragonIdx;   // dragon index (0~3, -1 if none)
-    float fDragonX, fDragonY, fDragonZ;  // Day 8: dragon root position
+    bool  bOnDragon;    // on-dragon flag (kept in S2C StateSnapshot)
+    int   iDragonIdx;
+    float fDragonX, fDragonY, fDragonZ;
 };
 
 struct PKT_S2C_StateSnapshot
@@ -107,31 +137,56 @@ struct PKT_S2C_Despawn
     int iPlayerId;
 };
 
-// Day 9: attack sync
+// arrow shot — replaces C2S_ATTACK
+struct PKT_C2S_Arrow
+{
+    PKT_HEADER header;          // 4
+    float fPosX, fPosY, fPosZ; // 12  fire position
+    float fDirX, fDirY, fDirZ; // 12  normalized direction
+    float fCharge;              //  4  charge ratio (0.0~1.0)
+    BYTE  bFirework;            //  1  firework arrow flag
+    BYTE  pad[3];               //  3
+};  // total 36 bytes
+static_assert(sizeof(PKT_C2S_Arrow) == 36, "PKT_C2S_Arrow size mismatch");
+
+// arrow broadcast
+struct PKT_S2C_Arrow
+{
+    PKT_HEADER header;          // 4
+    int   iPlayerId;            // 4  attacker id
+    float fPosX, fPosY, fPosZ; // 12
+    float fDirX, fDirY, fDirZ; // 12
+    float fCharge;              //  4
+    BYTE  bFirework;            //  1
+    BYTE  pad[3];               //  3
+};  // total 40 bytes
+static_assert(sizeof(PKT_S2C_Arrow) == 40, "PKT_S2C_Arrow size mismatch");
+
+// Deprecated — backward compat (server maps recv to C2S_ARROW)
 struct PKT_C2S_Attack
 {
     PKT_HEADER header;
-    float fPosX, fPosY, fPosZ;   // 발사 위치
-    float fDirX, fDirY, fDirZ;   // 정규화된 방향
-    float fCharge;                // charge ratio (0.0~1.0)
-    bool  bFirework;              // firework arrow flag
-};
-
-struct PKT_S2C_Attack
-{
-    PKT_HEADER header;
-    int   iPlayerId;              // attacker id
     float fPosX, fPosY, fPosZ;
     float fDirX, fDirY, fDirZ;
     float fCharge;
     bool  bFirework;
 };
 
-// Day 9: PVP damage sync
+struct PKT_S2C_Attack
+{
+    PKT_HEADER header;
+    int   iPlayerId;
+    float fPosX, fPosY, fPosZ;
+    float fDirX, fDirY, fDirZ;
+    float fCharge;
+    bool  bFirework;
+};
+
+// PVP damage sync
 struct PKT_C2S_Damage
 {
     PKT_HEADER header;
-    int   iTargetPlayerId;        // target id
+    int   iTargetPlayerId;
     float fDamage;
 };
 

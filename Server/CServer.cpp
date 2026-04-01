@@ -198,8 +198,11 @@ void CServer::RecvThread()
                 case C2S_INPUT:
                     HandleInput(pSession, reinterpret_cast<const PKT_C2S_Input*>(pHdr));
                     break;
-                case C2S_ATTACK:
-                    HandleAttack(pSession, reinterpret_cast<const PKT_C2S_Attack*>(pHdr));
+                case C2S_ARROW:
+                    HandleArrow(pSession, reinterpret_cast<const PKT_C2S_Arrow*>(pHdr));
+                    break;
+                case C2S_DRAGON_SYNC:
+                    HandleDragonSync(pSession, reinterpret_cast<const PKT_C2S_DragonSync*>(pHdr));
                     break;
                 case C2S_DAMAGE:
                     HandleDamage(pSession, reinterpret_cast<const PKT_C2S_Damage*>(pHdr));
@@ -284,51 +287,78 @@ void CServer::HandleInput(CSession* pSession, const PKT_C2S_Input* pPkt)
 {
     if (!pSession->IsLoggedIn()) return;
 
-    // 탑승 중이면 Y도 클라 값 신뢰 (드래곤 고도 반영), 아닌 경우 서버 Y 유지
-    if (pPkt->bOnDragon)
+    // 드래곤 탑승 중이면 Y도 클라 값 신뢰 (고도 반영)
+    // 탑승 여부는 DragonSync가 별도 관리 — Input에서는 위치만 갱신
+    if (pSession->GetOnDragon())
         pSession->SetPosition(pPkt->fX, pPkt->fY, pPkt->fZ);
     else
         pSession->SetPosition(pPkt->fX, pSession->GetY(), pPkt->fZ);
 
     pSession->SetInput(pPkt->fDirX, pPkt->fDirZ, pPkt->fRotY);
     pSession->SetLastSeq(pPkt->iSequence);
-    pSession->SetOnDragon(pPkt->bOnDragon, pPkt->iDragonIdx);
+    CSessionMgr::GetInstance()->AddRecvCount();
+}
+
+// =====================================================================
+//  HandleArrow  —  C2S_ARROW 수신 → 발사자 제외 전체 브로드캐스트
+// =====================================================================
+void CServer::HandleArrow(CSession* pSession, const PKT_C2S_Arrow* pPkt)
+{
+    if (!pSession->IsLoggedIn()) return;
+
+    PKT_S2C_Arrow out = {};
+    FillHeader(out, S2C_ARROW);
+    out.iPlayerId = pSession->GetPlayerId();
+    out.fPosX     = pPkt->fPosX;
+    out.fPosY     = pPkt->fPosY;
+    out.fPosZ     = pPkt->fPosZ;
+    out.fDirX     = pPkt->fDirX;
+    out.fDirY     = pPkt->fDirY;
+    out.fDirZ     = pPkt->fDirZ;
+    out.fCharge   = pPkt->fCharge;
+    out.bFirework = pPkt->bFirework;
+
+    CSessionMgr::GetInstance()->BroadcastToLoggedIn(&out, sizeof(out), pSession->GetSessionId());
+}
+
+// =====================================================================
+//  HandleDragonSync  —  C2S_DRAGON_SYNC 수신 → 세션 드래곤 상태 갱신 + 브로드캐스트
+// =====================================================================
+void CServer::HandleDragonSync(CSession* pSession, const PKT_C2S_DragonSync* pPkt)
+{
+    if (!pSession->IsLoggedIn()) return;
+
+    pSession->SetOnDragon(pPkt->bOnDragon != 0, pPkt->iDragonIdx);
     if (pPkt->bOnDragon)
-        pSession->SetDragonPos(pPkt->fDragonX, pPkt->fDragonY, pPkt->fDragonZ);
+        pSession->SetDragonPos(pPkt->fRootX, pPkt->fRootY, pPkt->fRootZ);
+
     // #region agent log
-    if (pPkt->bOnDragon)
     {
         FILE* fp = nullptr;
         if (_wfopen_s(&fp, L"debug-9b3cff.log", L"a") == 0 && fp)
         {
-            fprintf(fp, "{\"sessionId\":\"9b3cff\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H3\",\"location\":\"Server/CServer.cpp:289\",\"message\":\"handle_input_on_dragon\",\"data\":{\"sessionId\":%d,\"seq\":%d,\"dragonIdx\":%d,\"x\":%.3f,\"y\":%.3f,\"z\":%.3f},\"timestamp\":%llu}\n",
-                pSession->GetSessionId(), pPkt->iSequence, pPkt->iDragonIdx, pPkt->fX, pPkt->fY, pPkt->fZ, (unsigned long long)GetTickCount64());
+            fprintf(fp, "{\"sessionId\":\"9b3cff\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H3\",\"location\":\"Server/CServer.cpp:HandleDragonSync\",\"message\":\"dragon_sync\",\"data\":{\"sessionId\":%d,\"dragonIdx\":%d,\"onDragon\":%d,\"x\":%.3f,\"y\":%.3f,\"z\":%.3f},\"timestamp\":%llu}\n",
+                pSession->GetSessionId(), pPkt->iDragonIdx, (int)pPkt->bOnDragon,
+                pPkt->fRootX, pPkt->fRootY, pPkt->fRootZ, (unsigned long long)GetTickCount64());
             fclose(fp);
         }
     }
     // #endregion
-    CSessionMgr::GetInstance()->AddRecvCount();
-}
 
-//발사자 제외 전체 브로드캐스트
-void CServer::HandleAttack(CSession* pSession, const PKT_C2S_Attack* pPkt)
-{
-    if (!pSession->IsLoggedIn()) return;
+    PKT_S2C_DragonSync out = {};
+    FillHeader(out, S2C_DRAGON_SYNC);
+    out.iPlayerId  = pSession->GetPlayerId();
+    out.iDragonIdx = pPkt->iDragonIdx;
+    out.fRootX     = pPkt->fRootX;
+    out.fRootY     = pPkt->fRootY;
+    out.fRootZ     = pPkt->fRootZ;
+    out.fRotY      = pPkt->fRotY;
+    out.bOnDragon  = pPkt->bOnDragon;
 
-    PKT_S2C_Attack out = {};
-    FillHeader(out, S2C_ATTACK);
-    out.iPlayerId = pSession->GetPlayerId();
-    out.fPosX = pPkt->fPosX;
-    out.fPosY = pPkt->fPosY;
-    out.fPosZ = pPkt->fPosZ;
-    out.fDirX = pPkt->fDirX;
-    out.fDirY = pPkt->fDirY;
-    out.fDirZ = pPkt->fDirZ;
-    out.fCharge = pPkt->fCharge;
-
-    //발사자 제외 전원 BroadCast
     CSessionMgr::GetInstance()->BroadcastToLoggedIn(&out, sizeof(out), pSession->GetSessionId());
 }
+
+// (HandleAttack 제거 — HandleArrow로 대체됨)
 
 void CServer::HandleDamage(CSession * pSession, const PKT_C2S_Damage * pPkt)
 {

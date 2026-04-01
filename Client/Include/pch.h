@@ -8,6 +8,10 @@
 #define PCH_H
 
 // 여기에 미리 컴파일하려는 헤더 추가
+// winsock2.h는 windows.h(framework.h 경유)보다 반드시 먼저 포함해야 합니다.
+// 그렇지 않으면 windows.h가 구버전 winsock.h를 먼저 끌어들여 winsock2.h 충돌이 발생합니다.
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include "framework.h"
 
 #include <d3d9.h>

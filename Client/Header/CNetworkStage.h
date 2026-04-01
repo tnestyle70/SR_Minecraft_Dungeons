@@ -33,6 +33,7 @@ private:
 	CNetworkPlayer* m_pLocalPlayer = nullptr;  // 로컬 플레이어 참조 (입력 추출용)
 	_vec3           m_vPrevPlayerPos = {};        // 이전 프레임 위치 (방향 계산용)
 	float           m_fInputTimer = 0.f;       // 전송 주기 제어 (20TPS)
+	float           m_fDragonSyncTimer = 0.f; // 드래곤 동기화 주기 제어 (5TPS)
 
 	CDragon* m_pDragon[4] = {};        // 드래곤 4마리
 	CEnderDragon* m_pEnderDragon = nullptr;
