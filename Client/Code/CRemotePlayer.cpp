@@ -220,6 +220,20 @@ void CRemotePlayer::SetTargetState(float fX, float fY, float fZ,
 }
 
 // =====================================================================
+//  SetDragonState  —  S2C_DRAGON_SYNC 수신 시 드래곤 상태만 갱신
+//  위치 보간(Lerp)에는 영향 없음
+// =====================================================================
+void CRemotePlayer::SetDragonState(bool bOnDragon, int iDragonIdx,
+    float fRootX, float fRootY, float fRootZ, float /*fRotY*/)
+{
+    m_bOnDragon        = bOnDragon;
+    m_iDragonIdx       = iDragonIdx;
+    m_fTargetDragonX   = fRootX;
+    m_fTargetDragonY   = fRootY;
+    m_fTargetDragonZ   = fRootZ;
+}
+
+// =====================================================================
 //  Update_GameObject  —  현재 위치를 목표 위치로 Lerp
 // =====================================================================
 _int CRemotePlayer::Update_GameObject(const _float& fTimeDelta)

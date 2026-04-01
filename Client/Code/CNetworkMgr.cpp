@@ -182,37 +182,54 @@ void CNetworkMgr::Render()
 //  SendInput  —  Day 3 에서 CPlayer 입력 연동 시 호출
 // =====================================================================
 void CNetworkMgr::SendInput(float fDirX, float fDirZ, float fRotY, bool bMoving,
-    float fX, float fY, float fZ, bool bOnDragon, int iDragonIdx,
-    float fDragonX, float fDragonY, float fDragonZ)
+    float fX, float fY, float fZ)
 {
     if (!m_bConnected || m_iMyPlayerId == -1)
         return;
 
     PKT_C2S_Input pkt = {};
     FillHeader(pkt, C2S_INPUT);
-    pkt.iSequence = ++m_iSequence;
-    pkt.fDirX = fDirX;
-    pkt.fDirZ = fDirZ;
-    pkt.fRotY = fRotY;
-    pkt.bMoving = bMoving;
+    pkt.iSequence   = ++m_iSequence;
+    pkt.fDirX       = fDirX;
+    pkt.fDirZ       = fDirZ;
+    pkt.fRotY       = fRotY;
+    pkt.bMoving     = bMoving;
     pkt.dwTimestamp = GetTickCount();
-    pkt.fX = fX;
-    pkt.fY = fY;
-    pkt.fZ = fZ;
-    pkt.bOnDragon = bOnDragon;
+    pkt.fX          = fX;
+    pkt.fY          = fY;
+    pkt.fZ          = fZ;
+    // #region agent log (드래곤 탑승 로그는 SendDragonSync로 이전)
+    // #endregion
+
+    Send(&pkt, sizeof(pkt));
+}
+
+// =====================================================================
+//  SendDragonSync  —  드래곤 탑승 동기화 (탑승 중일 때만 5TPS 호출)
+// =====================================================================
+void CNetworkMgr::SendDragonSync(int iDragonIdx,
+    float fRootX, float fRootY, float fRootZ,
+    float fRotY, bool bOnDragon)
+{
+    if (!m_bConnected || m_iMyPlayerId == -1)
+        return;
+
+    PKT_C2S_DragonSync pkt = {};
+    FillHeader(pkt, C2S_DRAGON_SYNC);
     pkt.iDragonIdx = iDragonIdx;
-    pkt.fDragonX = fDragonX;
-    pkt.fDragonY = fDragonY;
-    pkt.fDragonZ = fDragonZ;
+    pkt.fRootX     = fRootX;
+    pkt.fRootY     = fRootY;
+    pkt.fRootZ     = fRootZ;
+    pkt.fRotY      = fRotY;
+    pkt.bOnDragon  = bOnDragon ? 1 : 0;
 
     // #region agent log
-    if (bOnDragon)
     {
         FILE* fp = nullptr;
         if (_wfopen_s(&fp, L"debug-9b3cff.log", L"a") == 0 && fp)
         {
-            fprintf(fp, "{\"sessionId\":\"9b3cff\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H2\",\"location\":\"Client/Code/CNetworkMgr.cpp:173\",\"message\":\"send_input_on_dragon\",\"data\":{\"seq\":%d,\"dragonIdx\":%d,\"x\":%.3f,\"y\":%.3f,\"z\":%.3f},\"timestamp\":%llu}\n",
-                pkt.iSequence, pkt.iDragonIdx, pkt.fX, pkt.fY, pkt.fZ, (unsigned long long)GetTickCount64());
+            fprintf(fp, "{\"sessionId\":\"9b3cff\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H2\",\"location\":\"Client/Code/CNetworkMgr.cpp:SendDragonSync\",\"message\":\"send_dragon_sync\",\"data\":{\"dragonIdx\":%d,\"onDragon\":%d,\"x\":%.3f,\"y\":%.3f,\"z\":%.3f},\"timestamp\":%llu}\n",
+                iDragonIdx, (int)bOnDragon, fRootX, fRootY, fRootZ, (unsigned long long)GetTickCount64());
             fclose(fp);
         }
     }
@@ -294,8 +311,11 @@ void CNetworkMgr::ProcessPacket(const PKT_HEADER* pHdr)
     case S2C_STATE_SNAPSHOT:
         On_Snapshot(reinterpret_cast<const PKT_S2C_StateSnapshot*>(pHdr));
         break;
-    case S2C_ATTACK:
-        On_Attack(reinterpret_cast<const PKT_S2C_Attack*>(pHdr));
+    case S2C_ARROW:
+        On_Arrow(reinterpret_cast<const PKT_S2C_Arrow*>(pHdr));
+        break;
+    case S2C_DRAGON_SYNC:
+        On_DragonSync(reinterpret_cast<const PKT_S2C_DragonSync*>(pHdr));
         break;
     case S2C_DAMAGE:
         On_Damage(reinterpret_cast<const PKT_S2C_Damage*>(pHdr));
@@ -419,30 +439,27 @@ void CNetworkMgr::On_Snapshot(const PKT_S2C_StateSnapshot* pPkt)
 }
 
 // =====================================================================
-//  Send  —  내부 전송 헬퍼
+//  SendArrow  —  화살 발사 이벤트 전송 (C2S_ARROW)
 // =====================================================================
-// =====================================================================
-//  SendAttack  —  Day 9: 화살 발사 이벤트 전송
-// =====================================================================
-void CNetworkMgr::SendAttack(float fPosX, float fPosY, float fPosZ,
+void CNetworkMgr::SendArrow(float fPosX, float fPosY, float fPosZ,
     float fDirX, float fDirY, float fDirZ, float fCharge, bool bFirework)
 {
     if (!m_bConnected || m_iMyPlayerId == -1)
         return;
 
-    PKT_C2S_Attack pkt = {};
-    FillHeader(pkt, C2S_ATTACK);
-    pkt.fPosX = fPosX;  pkt.fPosY = fPosY;  pkt.fPosZ = fPosZ;
-    pkt.fDirX = fDirX;  pkt.fDirY = fDirY;  pkt.fDirZ = fDirZ;
-    pkt.fCharge = fCharge;
-    pkt.bFirework = bFirework;
+    PKT_C2S_Arrow pkt = {};
+    FillHeader(pkt, C2S_ARROW);
+    pkt.fPosX     = fPosX;  pkt.fPosY = fPosY;  pkt.fPosZ = fPosZ;
+    pkt.fDirX     = fDirX;  pkt.fDirY = fDirY;  pkt.fDirZ = fDirZ;
+    pkt.fCharge   = fCharge;
+    pkt.bFirework = bFirework ? 1 : 0;
 
     // #region agent log
     {
         FILE* fp = nullptr;
         if (_wfopen_s(&fp, L"debug-9b3cff.log", L"a") == 0 && fp)
         {
-            fprintf(fp, "{\"sessionId\":\"9b3cff\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H1\",\"location\":\"Client/Code/CNetworkMgr.cpp:430\",\"message\":\"send_attack\",\"data\":{\"pos\":[%.3f,%.3f,%.3f],\"dir\":[%.3f,%.3f,%.3f],\"charge\":%.3f,\"firework\":%d},\"timestamp\":%llu}\n",
+            fprintf(fp, "{\"sessionId\":\"9b3cff\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H1\",\"location\":\"Client/Code/CNetworkMgr.cpp:SendArrow\",\"message\":\"send_arrow\",\"data\":{\"pos\":[%.3f,%.3f,%.3f],\"dir\":[%.3f,%.3f,%.3f],\"charge\":%.3f,\"firework\":%d},\"timestamp\":%llu}\n",
                 pkt.fPosX, pkt.fPosY, pkt.fPosZ, pkt.fDirX, pkt.fDirY, pkt.fDirZ, pkt.fCharge, pkt.bFirework ? 1 : 0, (unsigned long long)GetTickCount64());
             fclose(fp);
         }
@@ -469,11 +486,11 @@ void CNetworkMgr::SendDamage(int iTargetPlayerId, float fDamage)
 }
 
 // =====================================================================
-//  On_Attack  —  Day 9: 원격 화살 시각 객체 생성
+//  On_Arrow  —  원격 화살 시각 객체 생성 (S2C_ARROW)
 // =====================================================================
-void CNetworkMgr::On_Attack(const PKT_S2C_Attack* pPkt)
+void CNetworkMgr::On_Arrow(const PKT_S2C_Arrow* pPkt)
 {
-    // 자신의 공격은 이미 로컬에서 생성됨 → 스킵
+    // 자신의 화살은 이미 로컬에서 생성됨 → 스킵
     if (pPkt->iPlayerId == m_iMyPlayerId) return;
 
     _vec3 vPos = { pPkt->fPosX, pPkt->fPosY, pPkt->fPosZ };
@@ -482,7 +499,7 @@ void CNetworkMgr::On_Attack(const PKT_S2C_Attack* pPkt)
     CPlayerArrow* pArrow = CPlayerArrow::Create(m_pGraphicDev, vPos, vDir, pPkt->fCharge);
     if (pArrow)
     {
-        pArrow->Set_Firework(pPkt->bFirework);
+        pArrow->Set_Firework(pPkt->bFirework != 0);
         m_vecNetArrows.push_back(pArrow);
 
         // #region agent log
@@ -490,13 +507,31 @@ void CNetworkMgr::On_Attack(const PKT_S2C_Attack* pPkt)
             FILE* fp = nullptr;
             if (_wfopen_s(&fp, L"debug-9b3cff.log", L"a") == 0 && fp)
             {
-                fprintf(fp, "{\"sessionId\":\"9b3cff\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H3\",\"location\":\"Client/Code/CNetworkMgr.cpp:468\",\"message\":\"recv_attack_spawn_arrow\",\"data\":{\"attacker\":%d,\"charge\":%.3f,\"firework\":%d,\"netArrowCount\":%d},\"timestamp\":%llu}\n",
+                fprintf(fp, "{\"sessionId\":\"9b3cff\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H3\",\"location\":\"Client/Code/CNetworkMgr.cpp:On_Arrow\",\"message\":\"recv_arrow_spawn\",\"data\":{\"attacker\":%d,\"charge\":%.3f,\"firework\":%d,\"netArrowCount\":%d},\"timestamp\":%llu}\n",
                     pPkt->iPlayerId, pPkt->fCharge, pPkt->bFirework ? 1 : 0, (int)m_vecNetArrows.size(), (unsigned long long)GetTickCount64());
                 fclose(fp);
             }
         }
         // #endregion
     }
+}
+
+// =====================================================================
+//  On_DragonSync  —  원격 플레이어 드래곤 탑승 상태 수신 (S2C_DRAGON_SYNC)
+// =====================================================================
+void CNetworkMgr::On_DragonSync(const PKT_S2C_DragonSync* pPkt)
+{
+    // 자신이면 무시
+    if (pPkt->iPlayerId == m_iMyPlayerId) return;
+
+    auto it = m_mapRemote.find(pPkt->iPlayerId);
+    if (it == m_mapRemote.end() || !it->second) return;
+
+    // 원격 플레이어에 드래곤 탑승 상태 갱신
+    it->second->SetDragonState(pPkt->bOnDragon != 0,
+        pPkt->iDragonIdx,
+        pPkt->fRootX, pPkt->fRootY, pPkt->fRootZ,
+        pPkt->fRotY);
 }
 
 // =====================================================================

@@ -193,28 +193,37 @@ _int CNetworkStage::Update_Scene(const _float& fTimeDelta)
 				float fRotY = pTr->m_vAngle.y;
 
 				// 탑승 중이면 방향/이동 0으로 명시 (서버 적분 스킵과 의미 일치)
-				bool  bOnDragon = m_pLocalPlayer->Is_Riding();
-				int   iDragonIdx = -1;
-				float fDragonX = 0.f, fDragonY = 0.f, fDragonZ = 0.f;
+				bool bOnDragon = m_pLocalPlayer->Is_Riding();
 				if (bOnDragon)
 				{
+					// 탑승 중에는 이동 방향 0 (서버 적분 스킵과 의미 일치)
 					fDirX = 0.f; fDirZ = 0.f; bMoving = false;
+				}
+
+				// Input 전송 (드래곤 필드 없음 — DragonSync가 별도 처리)
+				CNetworkMgr::GetInstance()->SendInput(fDirX, fDirZ, fRotY, bMoving,
+					vCurPos.x, vCurPos.y, vCurPos.z);
+
+				// 드래곤 동기화 — 탑승 중일 때만 5TPS
+				m_fDragonSyncTimer += fTimeDelta;  // 주의: 여기선 fTimeDelta 대신 m_fInputTimer 블록 안이라 0.05f 누적됨
+				if (bOnDragon && m_fDragonSyncTimer >= 0.2f)  // 5TPS = 200ms
+				{
+					m_fDragonSyncTimer = 0.f;
 					for (int i = 0; i < 4; ++i)
 					{
 						if (m_pDragon[i] && m_pDragon[i]->Is_Ridden())
 						{
-							iDragonIdx = i;
-							// Day 8: 용 루트 위치 전송
 							_vec3 vDP = m_pDragon[i]->Get_SpineRoot();
-							fDragonX = vDP.x; fDragonY = vDP.y; fDragonZ = vDP.z;
+							CNetworkMgr::GetInstance()->SendDragonSync(
+								i, vDP.x, vDP.y, vDP.z, fRotY, true);
 							break;
 						}
 					}
 				}
-
-				CNetworkMgr::GetInstance()->SendInput(fDirX, fDirZ, fRotY, bMoving,
-					vCurPos.x, vCurPos.y, vCurPos.z, bOnDragon, iDragonIdx,
-					fDragonX, fDragonY, fDragonZ);
+				else if (!bOnDragon)
+				{
+					m_fDragonSyncTimer = 0.f;
+				}
 
 				m_vPrevPlayerPos = vCurPos;
 			}
@@ -455,7 +464,7 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	// ── 서버 접속 — 프로세스 ID 기반 고유 닉네임 (임시, 추후 로비 UI 연동) ─
 	char szNick[32];
 	sprintf_s(szNick, sizeof(szNick), "Player%u", GetCurrentProcessId() % 10000);
-	CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.15", 9000, szNick);
+	CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.44", 9000, szNick);
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
 

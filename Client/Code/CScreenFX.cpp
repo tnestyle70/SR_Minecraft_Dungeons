@@ -39,6 +39,8 @@ HRESULT CScreenFX::Ready(LPDIRECT3DDEVICE9 pDev, _uint iWidth, _uint iHeight)
 
     if (FAILED(Create_RenderTarget(iWidth, iHeight)))
         return E_FAIL;
+    if (FAILED(Create_PingPongRT(iWidth, iHeight)))
+        return E_FAIL;
     if (FAILED(Create_DepthBuffer(iWidth, iHeight)))
         return E_FAIL;
     if (FAILED(Create_QuadVB()))
@@ -62,6 +64,21 @@ HRESULT CScreenFX::Create_RenderTarget(_uint iW, _uint iH)
     }
 
     if (FAILED(m_pRT->GetSurfaceLevel(0, &m_pRTSurface)))
+        return E_FAIL;
+
+    return S_OK;
+}
+
+HRESULT CScreenFX::Create_PingPongRT(_uint iW, _uint iH)
+{
+    if (FAILED(D3DXCreateTexture(
+        m_pGraphicDev, iW, iH, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_pRT_B)))
+    {
+        MSG_BOX("CScreenFX ping-pong RT texture create failed");
+        return E_FAIL;
+    }
+
+    if (FAILED(m_pRT_B->GetSurfaceLevel(0, &m_pRTSurface_B)))
         return E_FAIL;
 
     return S_OK;
@@ -196,6 +213,48 @@ void CScreenFX::Update(const _float& fTimeDelta)
         m_fShakeY = 0.f;
     }
 
+    // Grain noise decay
+    if (m_fGrainDuration > 0.f)
+    {
+        m_fGrainDuration -= fTimeDelta;
+        float t = max(0.f, m_fGrainDuration);
+        m_fGrainAmt = m_fGrainPeak * (t / max(m_fGrainPeak * 0.5f + 0.001f, t + 0.001f));
+        m_fGrainAmt = max(0.f, m_fGrainAmt);
+    }
+    else
+    {
+        m_fGrainAmt = 0.f;
+    }
+
+    // Glass break decay
+    if (m_fGlassDuration > 0.f)
+    {
+        m_fGlassDuration -= fTimeDelta;
+        float t = max(0.f, m_fGlassDuration);
+        m_fGlassAmt = m_fGlassPeak * (t / max(m_fGlassPeak * 0.5f + 0.001f, t + 0.001f));
+        m_fGlassAmt = max(0.f, m_fGlassAmt);
+    }
+    else
+    {
+        m_fGlassAmt = 0.f;
+    }
+
+    // Wave decay
+    if (m_fWaveDuration > 0.f)
+    {
+        m_fWaveDuration -= fTimeDelta;
+        float t = max(0.f, m_fWaveDuration);
+        m_fWaveAmt = m_fWavePeak * (t / max(m_fWavePeak * 0.5f + 0.001f, t + 0.001f));
+        m_fWaveAmt = max(0.f, m_fWaveAmt);
+    }
+    else
+    {
+        m_fWaveAmt = 0.f;
+    }
+
+    // Noise phase for per-frame grain variation
+    m_fNoisePhase += fTimeDelta * 60.f;
+
     float fBreathTarget = m_bBreathActive ? m_fBreathIntensity : 0.f;
     const float fBreathSpeed = 2.5f;
     if (m_fBreathCurrent < fBreathTarget)
@@ -233,6 +292,33 @@ void CScreenFX::End_Capture()
     if (m_pOrigDepth) { m_pOrigDepth->Release(); m_pOrigDepth = nullptr; }
 }
 
+void CScreenFX::ApplyPass(const char* szTechnique, IDirect3DTexture9* pSrc, IDirect3DSurface9* pWriteSurf)
+{
+    // Redirect output to pWriteSurf
+    IDirect3DSurface9* pPrevRT = nullptr;
+    m_pGraphicDev->GetRenderTarget(0, &pPrevRT);
+    m_pGraphicDev->SetRenderTarget(0, pWriteSurf);
+
+    // Bind source scene
+    m_pEffect->SetTexture("SceneMap", pSrc);
+    m_pEffect->SetTexture("NoiseMap", m_pNoiseTex);
+    m_pEffect->SetTechnique(szTechnique);
+
+    UINT passes = 0;
+    m_pEffect->Begin(&passes, 0);
+    for (UINT p = 0; p < passes; ++p)
+    {
+        m_pEffect->BeginPass(p);
+        m_pGraphicDev->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+        m_pEffect->EndPass();
+    }
+    m_pEffect->End();
+
+    // Restore original RT
+    m_pGraphicDev->SetRenderTarget(0, pPrevRT);
+    if (pPrevRT) pPrevRT->Release();
+}
+
 void CScreenFX::Apply_Effect()
 {
     if (!m_bReady || !m_pEffect)
@@ -240,10 +326,17 @@ void CScreenFX::Apply_Effect()
 
     Set_EffectParams();
 
-    DWORD colorWrite = 0, zEnable = 0, alphaBlend = 0;
-    m_pGraphicDev->GetRenderState(D3DRS_COLORWRITEENABLE, &colorWrite);
-    m_pGraphicDev->GetRenderState(D3DRS_ZENABLE, &zEnable);
-    m_pGraphicDev->GetRenderState(D3DRS_ALPHABLENDENABLE, &alphaBlend);
+    // Set per-technique shader params
+    m_pEffect->SetFloat("gNoiseAmt", m_fGrainAmt);
+    m_pEffect->SetFloat("gNoisePhase", m_fNoisePhase);
+    m_pEffect->SetFloat("gGlassAmt", m_fGlassAmt);
+    m_pEffect->SetFloat("gGridSize", 10.f);
+    m_pEffect->SetFloat("gWaveAmpX", 0.012f * m_fWaveAmt);
+    m_pEffect->SetFloat("gWaveAmpY", 0.008f * m_fWaveAmt);
+    m_pEffect->SetFloat("gWaveFreqX", 12.f);
+    m_pEffect->SetFloat("gWaveFreqY", 14.f);
+    m_pEffect->SetFloat("gWaveSpeedX", 2.5f);
+    m_pEffect->SetFloat("gWaveSpeedY", 1.8f);
 
     IDirect3DVertexDeclaration9* pPrevDecl = nullptr;
     IDirect3DVertexShader9* pPrevVS = nullptr;
@@ -253,16 +346,91 @@ void CScreenFX::Apply_Effect()
     m_pGraphicDev->SetFVF(QUAD_FVF);
     m_pGraphicDev->SetStreamSource(0, m_pQuadVB, 0, sizeof(QUAD_VERTEX));
 
-    UINT passes = 0;
-    HRESULT hrBegin = m_pEffect->Begin(&passes, 0);
-    for (UINT p = 0; p < passes; ++p)
+    bool bMultiPass = (m_fGrainAmt > 0.001f || m_fGlassAmt > 0.001f || m_fWaveAmt > 0.001f);
+
+    if (!bMultiPass)
     {
-        m_pEffect->BeginPass(p);
-        m_pGraphicDev->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-        m_pEffect->EndPass();
+        // Single pass: existing PostProcess technique directly to backbuffer
+        m_pEffect->SetTechnique("PostProcess");
+        UINT passes = 0;
+        m_pEffect->Begin(&passes, 0);
+        for (UINT p = 0; p < passes; ++p)
+        {
+            m_pEffect->BeginPass(p);
+            m_pGraphicDev->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+            m_pEffect->EndPass();
+        }
+        m_pEffect->End();
     }
-    m_pEffect->End();
-    // no-op: keep runtime state unchanged during diagnosis
+    else
+    {
+        // Multi-pass: ping-pong between m_pRT and m_pRT_B
+        // pRead = current source texture, pWriteSurf = current destination surface
+        IDirect3DTexture9*  pTexA  = m_pRT;
+        IDirect3DSurface9*  pSurfA = m_pRTSurface;
+        IDirect3DTexture9*  pTexB  = m_pRT_B;
+        IDirect3DSurface9*  pSurfB = m_pRTSurface_B;
+
+        IDirect3DTexture9*  pRead  = pTexA;
+        IDirect3DSurface9*  pWrite = pSurfB;
+        bool bLastIsB = true;
+
+        // Pass 0: Base PostProcess (shake + existing distort + existing noise + voidtint)
+        ApplyPass("PostProcess", pRead, pWrite);
+        // Swap: result is in pTexB, next read from B, write to A
+        pRead  = pTexB;
+        pWrite = pSurfA;
+        bLastIsB = false;
+
+        // Pass 1: Grain noise
+        if (m_fGrainAmt > 0.001f)
+        {
+            ApplyPass("TechNoise", pRead, pWrite);
+            // Swap
+            if (bLastIsB) { pRead = pTexB; pWrite = pSurfA; bLastIsB = false; }
+            else          { pRead = pTexA; pWrite = pSurfB; bLastIsB = true;  }
+        }
+
+        // Pass 2: Glass break
+        if (m_fGlassAmt > 0.001f)
+        {
+            ApplyPass("TechGlassBreak", pRead, pWrite);
+            if (bLastIsB) { pRead = pTexB; pWrite = pSurfA; bLastIsB = false; }
+            else          { pRead = pTexA; pWrite = pSurfB; bLastIsB = true;  }
+        }
+
+        // Pass 3: Wave
+        if (m_fWaveAmt > 0.001f)
+        {
+            ApplyPass("TechWave", pRead, pWrite);
+            if (bLastIsB) { pRead = pTexB; pWrite = pSurfA; bLastIsB = false; }
+            else          { pRead = pTexA; pWrite = pSurfB; bLastIsB = true;  }
+        }
+
+        // Final blit: pRead contains the final result, draw to backbuffer
+        m_pEffect->SetTexture("SceneMap", pRead);
+        m_pEffect->SetTexture("NoiseMap", m_pNoiseTex);
+
+        // Use a simple pass-through to blit (reuse PostProcess with all effects zeroed)
+        // Instead, set a minimal blit: zero out effects and just sample SceneMap
+        m_pEffect->SetFloat("fNoiseAmt", 0.f);
+        m_pEffect->SetFloat("fDistortAmt", 0.f);
+        m_pEffect->SetFloat("fShakeX", 0.f);
+        m_pEffect->SetFloat("fShakeY", 0.f);
+        D3DXVECTOR4 vZero(0.f, 0.f, 0.f, 0.f);
+        m_pEffect->SetVector("vVoidTint", &vZero);
+        m_pEffect->SetTechnique("PostProcess");
+
+        UINT passes = 0;
+        m_pEffect->Begin(&passes, 0);
+        for (UINT p = 0; p < passes; ++p)
+        {
+            m_pEffect->BeginPass(p);
+            m_pGraphicDev->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+            m_pEffect->EndPass();
+        }
+        m_pEffect->End();
+    }
 
     m_pGraphicDev->SetVertexDeclaration(pPrevDecl);
     m_pGraphicDev->SetVertexShader(pPrevVS);
@@ -330,6 +498,40 @@ void CScreenFX::Trigger_TailHit(float fIntensity)
     {
         m_fShakeDuration = fShakeDur;
         m_fShakePeak = fIntensity * 1.2f;
+    }
+
+    // Chain new effects for testing
+    Trigger_GlassBreak(fIntensity, 0.4f);
+    Trigger_Noise(fIntensity * 0.8f, 0.5f);
+}
+
+void CScreenFX::Trigger_Noise(float fIntensity, float fDuration)
+{
+    fIntensity = max(0.f, min(1.f, fIntensity));
+    if (fDuration > m_fGrainDuration || fIntensity > m_fGrainPeak)
+    {
+        m_fGrainDuration = fDuration;
+        m_fGrainPeak = fIntensity;
+    }
+}
+
+void CScreenFX::Trigger_GlassBreak(float fIntensity, float fDuration)
+{
+    fIntensity = max(0.f, min(1.f, fIntensity));
+    if (fDuration > m_fGlassDuration || fIntensity > m_fGlassPeak)
+    {
+        m_fGlassDuration = fDuration;
+        m_fGlassPeak = fIntensity;
+    }
+}
+
+void CScreenFX::Trigger_Wave(float fIntensity, float fDuration)
+{
+    fIntensity = max(0.f, min(1.f, fIntensity));
+    if (fDuration > m_fWaveDuration || fIntensity > m_fWavePeak)
+    {
+        m_fWaveDuration = fDuration;
+        m_fWavePeak = fIntensity;
     }
 }
 
@@ -413,6 +615,8 @@ void CScreenFX::Free()
     if (m_pEffect) { m_pEffect->Release(); m_pEffect = nullptr; }
     if (m_pNoiseTex) { m_pNoiseTex->Release(); m_pNoiseTex = nullptr; }
     if (m_pQuadVB) { m_pQuadVB->Release(); m_pQuadVB = nullptr; }
+    if (m_pRTSurface_B) { m_pRTSurface_B->Release(); m_pRTSurface_B = nullptr; }
+    if (m_pRT_B) { m_pRT_B->Release(); m_pRT_B = nullptr; }
     if (m_pRTSurface) { m_pRTSurface->Release(); m_pRTSurface = nullptr; }
     if (m_pRTDepth) { m_pRTDepth->Release(); m_pRTDepth = nullptr; }
     if (m_pRT) { m_pRT->Release(); m_pRT = nullptr; }

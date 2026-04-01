@@ -1,0 +1,60 @@
+{
+  "patterns": [
+    {
+      "id": "IDLE",
+      "patrol_radius": 40.0,
+      "patrol_speed": 18.0,
+      "transition": [
+        { "to": "ATTACK", "condition": "player_dist < 25" }
+      ]
+    },
+    {
+      "id": "ATTACK",
+      "chase_speed": 32.0,
+      "duration_sec": 6.0,
+      "transition": [
+        { "to": "BREATH",      "condition": "state_time > 4 && head_to_player_angle < 15" },
+        { "to": "TAIL_ATTACK", "condition": "hp_ratio < 0.5" },
+        { "to": "CIRCLE_DIVE", "condition": "state_time > 6" }
+      ]
+    },
+    {
+      "id": "BREATH",
+      "breath_duration_sec": 3.5,
+      "breath_cone_deg": 20.0,
+      "breath_damage_per_sec": 8.0,
+      "transition": [
+        { "to": "CIRCLE_DIVE", "condition": "state_time > 3.5" }
+      ]
+    },
+    {
+      "id": "CIRCLE_DIVE",
+      "circle_radius": 30.0,
+      "dive_speed": 42.0,
+      "bank_multiplier": 1.6,
+      "transition": [
+        { "to": "IDLE", "condition": "state_time > 5" }
+      ]
+    },
+    {
+      "id": "TAIL_ATTACK",
+      "swing_amp_deg": 55.0,
+      "swing_speed": 2.8,
+      "duration_sec": 3.0,
+      "transition": [
+        { "to": "ATTACK", "condition": "state_time > 3" }
+      ]
+    }
+  ],
+  "physics": {
+    "mass": 120.0,
+    "gravity": 12.0,
+    "lift_coeff": 2.8,
+    "drag_coeff": 0.55,
+    "thrust_force": 320.0,
+    "max_speed": 38.0,
+    "bank_factor": 3.0,
+    "max_bank_angle_rad": 1.194,
+    "restitution": 0.4
+  }
+}

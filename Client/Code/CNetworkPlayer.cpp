@@ -720,8 +720,8 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 				pArrow->Set_Firework(m_bFireworkArrow);
 				m_vecArrows.push_back(pArrow);
 			}
-			// Day 9: 공격 이벤트를 서버에 전송 → 다른 클라이언트에 화살 시각 객체 생성
-			CNetworkMgr::GetInstance()->SendAttack(
+			// 화살 발사 이벤트 서버 전송 → 다른 클라이언트에 시각 화살 객체 생성
+			CNetworkMgr::GetInstance()->SendArrow(
 				vPos.x, vPos.y, vPos.z,
 				m_vBowDir.x, m_vBowDir.y, m_vBowDir.z,
 				fCharge, m_bFireworkArrow);

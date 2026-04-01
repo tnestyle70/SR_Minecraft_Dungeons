@@ -38,6 +38,22 @@ float  fShakeX;        // 화면 흔들림 X 오프셋 (UV 공간)
 float  fShakeY;        // 화면 흔들림 Y 오프셋 (UV 공간)
 float4 vVoidTint;      // xyz = 보라 컬러, w = 블렌드 강도
 
+// ── Noise grain (TechNoise) ──
+float  gNoiseAmt;      // grain intensity (0~1)
+float  gNoisePhase;    // per-frame phase offset
+
+// ── Glass break (TechGlassBreak) ──
+float  gGlassAmt;      // glass distortion strength (0~1)
+float  gGridSize;      // cell count per axis (8~16)
+
+// ── Wave distortion (TechWave) ──
+float  gWaveAmpX;      // X amplitude (UV fraction)
+float  gWaveAmpY;      // Y amplitude
+float  gWaveFreqX;     // X frequency
+float  gWaveFreqY;     // Y frequency
+float  gWaveSpeedX;    // X scroll speed
+float  gWaveSpeedY;    // Y scroll speed
+
 // ──────────────────────────────────────────
 // Vertex Shader  (pass-through, NDC 좌표)
 // ──────────────────────────────────────────
@@ -119,6 +135,93 @@ technique PostProcess
         ZWriteEnable    = FALSE;
         AlphaBlendEnable= FALSE;
         CullMode        = NONE;
+    }
+}
+
+// ──────────────────────────────────────────
+// TechNoise — Film grain overlay
+// ──────────────────────────────────────────
+float4 PS_Noise(float2 uv : TEXCOORD0) : COLOR0
+{
+    float3 col = tex2D(SceneTex, uv).rgb;
+
+    // Per-frame varying UV offset via gNoisePhase
+    float2 noiseUV = uv * 8.0f + float2(
+        sin(gNoisePhase * 1.7f) * 0.01f + fTime * 23.7f,
+        cos(gNoisePhase * 2.3f) * 0.01f + fTime * 17.3f
+    );
+    float grain = tex2D(NoiseTex, noiseUV).r;
+    grain = (grain - 0.5f) * 2.0f * gNoiseAmt;
+    col += grain * 0.25f;
+
+    return float4(saturate(col), 1.0f);
+}
+
+technique TechNoise
+{
+    pass P0
+    {
+        VertexShader     = compile vs_2_0 VS_Screen();
+        PixelShader      = compile ps_2_0 PS_Noise();
+        ZEnable          = FALSE;
+        ZWriteEnable     = FALSE;
+        AlphaBlendEnable = FALSE;
+        CullMode         = NONE;
+    }
+}
+
+// ──────────────────────────────────────────
+// TechGlassBreak — Shattered-glass UV distortion
+// ──────────────────────────────────────────
+float4 PS_GlassBreak(float2 uv : TEXCOORD0) : COLOR0
+{
+    // Snap UV to grid cell center
+    float2 cell     = floor(uv * gGridSize) / gGridSize;
+    // Per-cell random offset from noise texture
+    float2 noiseOff = tex2D(NoiseTex, cell * 3.7f + fTime * 0.05f).rg;
+    noiseOff        = (noiseOff - 0.5f) * 2.0f * gGlassAmt;
+    float2 distUV   = uv + noiseOff * 0.04f;
+    distUV          = saturate(distUV);
+
+    return tex2D(SceneTex, distUV);
+}
+
+technique TechGlassBreak
+{
+    pass P0
+    {
+        VertexShader     = compile vs_2_0 VS_Screen();
+        PixelShader      = compile ps_2_0 PS_GlassBreak();
+        ZEnable          = FALSE;
+        ZWriteEnable     = FALSE;
+        AlphaBlendEnable = FALSE;
+        CullMode         = NONE;
+    }
+}
+
+// ──────────────────────────────────────────
+// TechWave — Sinusoidal wave distortion
+// ──────────────────────────────────────────
+float4 PS_Wave(float2 uv : TEXCOORD0) : COLOR0
+{
+    float2 wuv = uv;
+    wuv.x += sin(uv.y * gWaveFreqY + fTime * gWaveSpeedX) * gWaveAmpX;
+    wuv.y += cos(uv.x * gWaveFreqX + fTime * gWaveSpeedY) * gWaveAmpY;
+    wuv = saturate(wuv);
+
+    return tex2D(SceneTex, wuv);
+}
+
+technique TechWave
+{
+    pass P0
+    {
+        VertexShader     = compile vs_2_0 VS_Screen();
+        PixelShader      = compile ps_2_0 PS_Wave();
+        ZEnable          = FALSE;
+        ZWriteEnable     = FALSE;
+        AlphaBlendEnable = FALSE;
+        CullMode         = NONE;
     }
 }
 

@@ -48,16 +48,20 @@ public:
     void Render();                  // RemotePlayer Render
 
     // ── 송신 ──────────────────────────────────────────────────────────
-    // Day 3 에서 CPlayer 입력 연동 시 호출
+    // 이동 입력 (드래곤 필드 제거 — DragonSync로 분리)
     void SendInput(float fDirX, float fDirZ, float fRotY, bool bMoving,
-        float fX, float fY, float fZ,
-        bool bOnDragon = false, int iDragonIdx = -1,
-        float fDragonX = 0.f, float fDragonY = 0.f, float fDragonZ = 0.f);
+        float fX, float fY, float fZ);
 
-    // Day 9: 공격 / 피해 전송
-    void SendAttack(float fPosX, float fPosY, float fPosZ,
+    // 드래곤 탑승 동기화 — 탑승 중일 때만 5TPS 호출
+    void SendDragonSync(int iDragonIdx,
+        float fRootX, float fRootY, float fRootZ,
+        float fRotY, bool bOnDragon);
+
+    // 화살 발사 이벤트
+    void SendArrow(float fPosX, float fPosY, float fPosZ,
         float fDirX, float fDirY, float fDirZ,
         float fCharge, bool bFirework);
+
     void SendDamage(int iTargetPlayerId, float fDamage);
 
     // ── 상태 조회 ─────────────────────────────────────────────────────
@@ -79,12 +83,13 @@ private:
     void RecvAndProcess();
     void ProcessPacket(const PKT_HEADER* pHdr);
 
-    void On_LoginAck(const PKT_S2C_LoginAck* pPkt);
-    void On_Spawn(const PKT_S2C_Spawn* pPkt);
-    void On_Despawn(const PKT_S2C_Despawn* pPkt);
-    void On_Snapshot(const PKT_S2C_StateSnapshot* pPkt);
-    void On_Attack(const PKT_S2C_Attack* pPkt);   // Day 9
-    void On_Damage(const PKT_S2C_Damage* pPkt);   // Day 9
+    void On_LoginAck   (const PKT_S2C_LoginAck*       pPkt);
+    void On_Spawn      (const PKT_S2C_Spawn*           pPkt);
+    void On_Despawn    (const PKT_S2C_Despawn*         pPkt);
+    void On_Snapshot   (const PKT_S2C_StateSnapshot*   pPkt);
+    void On_Arrow      (const PKT_S2C_Arrow*           pPkt); // S2C_ARROW
+    void On_DragonSync (const PKT_S2C_DragonSync*      pPkt); // S2C_DRAGON_SYNC
+    void On_Damage     (const PKT_S2C_Damage*          pPkt);
 
     // ── 소켓 / 버퍼 ───────────────────────────────────────────────────
     bool Send(const void* pData, int iSize);

@@ -1,5 +1,8 @@
 #pragma once
 #include "CDragon.h"
+#include "CCollider.h"
+#include <vector>
+#include <string>
 
 //드래곤 파트별 뼈 개수 상수
 constexpr int ENDER_DRAGON_SPINE_COUNT = 9; //몸통 척추
@@ -9,9 +12,11 @@ constexpr int ENDER_DRAGON_WING_COUNT = 6; //날개 한 쪽 세그먼트
 
 enum class eEnderDragonState
 {
-	IDLE, //순찰, 대기
-	ATTACK, //플레이어 추적
-	TAIL_ATTACK //꼬리 공격
+	IDLE,        //순찰, 대기
+	ATTACK,      //플레이어 추적
+	BREATH,      //브래스 (머리 락온 + CVoidFlame 스폰)
+	CIRCLE_DIVE, //선회 활강
+	TAIL_ATTACK  //꼬리 공격
 };
 
 //Fight Dynamics
@@ -20,15 +25,16 @@ enum class eEnderDragonState
 //level flight 양력 = 중력 -> fFwdSpeed^2 * fLiftCoeff = fMass * fGravity
 struct DragonFlight
 {
-	_float fMass = 120.f; //질량
-	_float fGravity = 12.f; //중력 가속도
-	_float fLiftCoeff = 2.8f; //양력 계수 -> 위 방향
-	_float fDragCoeff = 0.55f; //항력 계수 -> 역방향
-	_float fThrustForce = 320.f; //다운스트로크 1회 추력
-	_float fMaxSpeed = 38.f; //최대 속도
-	_float fBankFactor = 3.f; //선회 -> 뱅킹 민감도
+	_float fMass = 120.f;              //질량
+	_float fGravity = 12.f;           //중력 가속도
+	_float fLiftCoeff = 2.8f;         //양력 계수 -> 위 방향
+	_float fDragCoeff = 0.55f;        //항력 계수 -> 역방향
+	_float fThrustForce = 320.f;      //다운스트로크 1회 추력
+	_float fMaxSpeed = 38.f;          //최대 속도
+	_float fBankFactor = 3.f;         //선회 -> 뱅킹 민감도
 	_float fMaxBankAngle = D3DX_PI * 0.38f;
-	_vec3 vAccumForce; //매 프레임 누적되는 힘
+	_float fRestitution = 0.4f;       //충돌 반발 계수 (0=완전비탄성, 1=완전탄성)
+	_vec3 vAccumForce;                 //매 프레임 누적되는 힘
 };
 
 //Dragon - Update Flow
@@ -91,9 +97,27 @@ private:
 
 	//Finite State Machine
 	void Transition_State(eEnderDragonState eNext);
+	void Evaluate_Transitions();
 	void Update_IDLE(const _float& fTimeDelta);
 	void Update_Attack(const _float& fTimeDelta);
+	void Update_BREATH(const _float& fTimeDelta);
+	void Update_CIRCLE_DIVE(const _float& fTimeDelta);
 	void Update_TailAttack(const _float& fTimeDelta);
+
+	//충돌
+	void Update_BoneColliders();
+	void Check_BodyCollision();
+
+	//JSON 로드
+	HRESULT Load_DragonPatterns(const char* pPath);
+
+	//ImGui 디버그
+	void Render_DebugPanel();
+
+	//헬퍼
+	eEnderDragonState StringToState(const std::string& s) const;
+	const char* StateToString(eEnderDragonState e) const;
+	_float Compute_HeadToPlayerAngleDeg() const;
 
 private:
 	//Inverse Kinetics - 추종 알고리즘
@@ -169,6 +193,43 @@ private:
 	_vec3  m_vInputForward;
 	_vec3  m_vInputRight;
 	_vec3  m_vPlayerPos;
+
+	// HP
+	_float m_fHP    = 100.f;
+	_float m_fMaxHP = 100.f;
+
+	// BREATH 상태 파라미터 (JSON 로드 후 덮어씀)
+	_float m_fBreathTimer       = 0.f;   //다음 CVoidFlame 스폰까지 누적 시간
+	_float m_fBreathDuration    = 3.5f;
+	_float m_fBreathDmgPerSec   = 8.f;
+	_float m_fBreathConeDeg     = 20.f;
+
+	// CIRCLE_DIVE 상태 파라미터 (JSON 로드 후 덮어씀)
+	_float m_fCircleAngle     = 0.f;   //선회 궤도 각도
+	_float m_fCircleRadius    = 30.f;
+	_float m_fDiveSpeed       = 42.f;
+	_float m_fBankMultiplier  = 1.6f;
+
+	// 척추/꼬리/날개 충돌 AABB
+	CCollider* m_pSpineCollider[ENDER_DRAGON_SPINE_COUNT] = {};
+	CCollider* m_pTailCollider[ENDER_DRAGON_TAIL_COUNT]   = {};
+	CCollider* m_pWingLCollider[ENDER_DRAGON_WING_COUNT]  = {};
+
+	// 브래스 화염 관리
+	std::vector<class CVoidFlame*> m_vecBreathFlames;
+
+	// JSON 기반 전환 규칙
+	struct TransitionRule
+	{
+		eEnderDragonState eTo         = eEnderDragonState::IDLE;
+		_float fMinStateTime          = -1.f; //-1 = 미사용
+		_float fMaxPlayerDist         = -1.f;
+		_float fMinPlayerDist         = -1.f;
+		_float fMaxHpRatio            = -1.f;
+		_float fMaxHeadAngleDeg       = -1.f;
+	};
+	// 상태 5개 각각에 대한 전환 규칙 목록
+	std::vector<TransitionRule> m_TransRules[5];
 
 private:
 	static constexpr _float m_fAttackRange = 20.f;

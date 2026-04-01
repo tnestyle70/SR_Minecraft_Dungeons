@@ -34,6 +34,10 @@ public:
     float       GetY()         const { return m_fCurY; }
     float       GetZ()         const { return m_fCurZ; }
 
+    // DragonSync 패킷 전용 — 위치 보간 없이 드래곤 상태만 갱신
+    void SetDragonState(bool bOnDragon, int iDragonIdx,
+        float fRootX, float fRootY, float fRootZ, float fRotY);
+
     bool Is_OnDragon() const { return m_bOnDragon; }
     int Get_DragonIdx() const { return m_iDragonIdx; }
     _vec3 Get_DragonPos() const 
