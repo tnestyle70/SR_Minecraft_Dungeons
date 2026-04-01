@@ -29,6 +29,11 @@ HRESULT CJSChunkMgr::Ready_Manager(LPDIRECT3DDEVICE9 pGraphicDev, CLayer* pLayer
 
 void CJSChunkMgr::Update_Manager(const _float& fTimeDelta, _vec3 vPlayerPos)
 {
+    for (auto& pChunk : m_RemoveList)
+        Safe_Release(pChunk);
+
+    m_RemoveList.clear();
+
     Remove_OldChunk(vPlayerPos);
 
     if (!m_ChunkList.empty())
@@ -41,15 +46,39 @@ void CJSChunkMgr::Update_Manager(const _float& fTimeDelta, _vec3 vPlayerPos)
     }
 }
 
+TILEID CJSChunkMgr::Get_TileID(_vec3 vPlayerPos)
+{
+    for (auto& pChunk : m_ChunkList)
+    {
+        _vec3 vChunkPos;
+        pChunk->Get_Position(vChunkPos);
+
+        // 청크 Z 범위 안에 있는지 확인
+        if (vPlayerPos.z >= vChunkPos.z &&
+            vPlayerPos.z < vChunkPos.z + m_fChunkSize)
+        {
+            return pChunk->Get_TileID(vPlayerPos);
+        }
+    }
+    return TILE_EMPTY;  // 청크 밖이면 낙하
+}
+
 void CJSChunkMgr::Spawn_Chunk(_vec3 vPos)
 {
-    CHUNKTYPE eType = (CHUNKTYPE)(rand() % CHUNK_END);
+    _int iRand = rand() % 10;
+
+    CHUNKTYPE eType = CHUNK_FULL;
+
+    if (iRand == 8)
+        eType = CHUNK_LEFT;
+    else if (iRand == 9)
+        eType = CHUNK_RIGHT;
 
     CJSChunk* pChunk = CJSChunk::Create(m_pGraphicDev, vPos, m_pLayer, eType);
     if (pChunk == nullptr)
         return;
 
-    m_pLayer->Add_GameObject(L"Environment_Layer", pChunk);
+    m_pLayer->Add_GameObject(L"Chunk", pChunk);
     m_ChunkList.push_back(pChunk);
 }
 
@@ -61,11 +90,10 @@ void CJSChunkMgr::Remove_OldChunk(_vec3 vPlayerPos)
     _vec3 vBackPos;
     m_ChunkList.front()->Get_Position(vBackPos);
 
-    if (vPlayerPos.z - vBackPos.z > m_fChunkSize)
+    if (vPlayerPos.z - vBackPos.z > m_fChunkSize + 10.f)
     {
-        // 레이어 삭제 나중에 처리
-        // 지금은 리스트에서만
-
+        m_ChunkList.front()->Set_Dead();
+        m_RemoveList.push_back(m_ChunkList.front());
         m_ChunkList.pop_front();
     }
 }

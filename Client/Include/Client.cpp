@@ -5,6 +5,7 @@
 #include "framework.h"
 #include "Client.h"
 #include "CMainApp.h"
+#include <ctime>
 
 #define MAX_LOADSTRING 100
 
@@ -29,6 +30,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_ int       nCmdShow)
 {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    srand(unsigned(time(NULL)));
 
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);

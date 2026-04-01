@@ -14,6 +14,10 @@ public:
     virtual void LateUpdate_GameObject(const _float& fTimeDelta);
     virtual void Render_GameObject();
 
+public:
+    virtual bool Is_Dead() override { return m_bDead; }
+    void Set_Dead() { m_bDead = true; }
+
 private:
     HRESULT Add_Component();
 
@@ -22,6 +26,7 @@ private:
     CTransform* m_pTransformCom;
     CTexture* m_pTextureCom;
     TILEID m_eTileID;
+    _bool m_bDead = false;
 
 public:
     TILEID  Get_TileID() { return m_eTileID; }

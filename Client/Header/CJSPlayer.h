@@ -21,6 +21,7 @@ private:
 private:
 	void Advance(const _float& fTimeDelta);
 	void Jump(const _float& fTimeDelta);
+	void Falling();
 
 public:
 	static CJSPlayer* Create(LPDIRECT3DDEVICE9 pGraphicDev);
@@ -37,6 +38,7 @@ private:
 	_float  m_fVelocityY = 0.f;      // 현재 Y 속도
 	_bool   m_bJump = false;    // 점프 중 여부
 	_float  m_fGroundY = 1.f;      // 바닥 Y 위치
+	_bool	m_bFalling = false;
 
 private:
 	virtual void Free();
