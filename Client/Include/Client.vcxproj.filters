@@ -330,6 +330,9 @@
     <ClCompile Include="..\Code\CVoidFlame.cpp">
       <Filter>01. Scene\01. Stage\07. GB\04. Network\06. VoidFlame</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CBreathFlame.cpp">
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\06. VoidFlame</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -664,6 +667,9 @@
       <Filter>02. GameObject\19. CY</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CVoidFlame.h">
+      <Filter>01. Scene\01. Stage\07. GB\04. Network\06. VoidFlame</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CBreathFlame.h">
       <Filter>01. Scene\01. Stage\07. GB\04. Network\06. VoidFlame</Filter>
     </ClInclude>
   </ItemGroup>

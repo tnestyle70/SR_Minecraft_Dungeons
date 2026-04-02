@@ -54,6 +54,13 @@ float  gWaveFreqY;     // Y frequency
 float  gWaveSpeedX;    // X scroll speed
 float  gWaveSpeedY;    // Y scroll speed
 
+// ── Dragon Breath beam (TechDragonBreath) ──
+float2 gBreathOriginUV;   // beam origin in screen UV
+float2 gBreathDirUV;      // beam axis direction (normalized)
+float  gBreathRadius;     // beam radius in screen UV
+float  gBreathLength;     // beam length in screen UV
+float  gBreathIntensity;  // overall intensity (0~1)
+
 // ──────────────────────────────────────────
 // Vertex Shader  (pass-through, NDC 좌표)
 // ──────────────────────────────────────────
@@ -226,6 +233,90 @@ technique TechWave
 }
 
 // ──────────────────────────────────────────
+// TechDragonBreath — Screen-space cylinder beam heat-haze distortion
+// ──────────────────────────────────────────
+float4 PS_DragonBreath(float2 uv : TEXCOORD0) : COLOR0
+{
+    float2 vToPixel = uv - gBreathOriginUV;
+
+    // Project onto beam axis
+    float fAlongAxis = dot(vToPixel, gBreathDirUV);
+
+    // Outside beam length range -> return scene unchanged
+    if (fAlongAxis < 0.0f || fAlongAxis > gBreathLength)
+        return tex2D(SceneTex, uv);
+
+    // Perpendicular distance from axis
+    float2 vOnAxis = gBreathDirUV * fAlongAxis;
+    float  fPerp   = length(vToPixel - vOnAxis);
+
+    // Cylinder: fixed radius (no tan, no cone widening)
+    if (gBreathRadius < 0.001f)
+        return tex2D(SceneTex, uv);
+
+    // Mask: 0 at center, 1 at edge
+    float fMask = fPerp / gBreathRadius;
+    if (fMask > 1.0f)
+        return tex2D(SceneTex, uv);
+
+    // Tip fade: smooth start near dragon mouth
+    float fTipFade = smoothstep(0.0f, 0.08f * gBreathLength, fAlongAxis);
+
+    // End fade: soft leading edge
+    float fEndFade = 1.0f - smoothstep(0.85f * gBreathLength, gBreathLength, fAlongAxis);
+
+    // Edge shimmer band: peaks around fMask=0.85
+    float fEdgeShimmer = smoothstep(0.6f, 0.82f, fMask) * smoothstep(1.0f, 0.88f, fMask);
+
+    // Interior distortion mask (weaker inside)
+    float fInterior = (1.0f - smoothstep(0.0f, 0.7f, fMask)) * 0.35f;
+
+    // Combined distortion strength
+    float fDistStrength = max(fEdgeShimmer, fInterior) * fTipFade * fEndFade * gBreathIntensity;
+
+    // Noise sampling: 2 octaves for organic shimmer
+    float2 noiseUV1 = uv * 6.0f + float2(fTime * 0.6f, -fTime * 0.35f);
+    float2 noiseUV2 = uv * 12.0f + float2(-fTime * 1.1f, fTime * 0.8f);
+    float2 noise1 = tex2D(NoiseTex, noiseUV1).rg * 2.0f - 1.0f;
+    float2 noise2 = tex2D(NoiseTex, noiseUV2).rg * 2.0f - 1.0f;
+    float2 distortion = noise1 * 0.6f + noise2 * 0.4f;
+
+    // Vertical bias: real heat haze shimmers more vertically
+    distortion.y *= 1.8f;
+
+    // Apply UV distortion
+    float2 distortedUV = uv + distortion * fDistStrength * 0.025f;
+    distortedUV = saturate(distortedUV);
+
+    float4 scene = tex2D(SceneTex, distortedUV);
+
+    // Purple tint: stronger at edges, subtle inside
+    float fConeMask = (1.0f - fMask) * fTipFade * fEndFade * gBreathIntensity;
+    float3 purpleOverlay = float3(0.25f, 0.0f, 0.5f);
+    scene.rgb = lerp(scene.rgb,
+                     scene.rgb * 0.75f + purpleOverlay * 0.25f,
+                     fConeMask * 0.4f);
+
+    // Extra purple glow at edge band
+    scene.rgb += float3(0.15f, 0.0f, 0.3f) * fEdgeShimmer * fTipFade * fEndFade * gBreathIntensity * 0.5f;
+
+    return saturate(scene);
+}
+
+technique TechDragonBreath
+{
+    pass P0
+    {
+        VertexShader     = compile vs_2_0 VS_Screen();
+        PixelShader      = compile ps_3_0 PS_DragonBreath();
+        ZEnable          = FALSE;
+        ZWriteEnable     = FALSE;
+        AlphaBlendEnable = FALSE;
+        CullMode         = NONE;
+    }
+}
+
+// ──────────────────────────────────────────
 // VoidFlame — 빌보드 구체 셰이더
 // Fresnel + fBm 3옥타브 + Screen Space 굴절 + HDR (ps_3_0)
 // ──────────────────────────────────────────
@@ -327,6 +418,89 @@ technique VoidFlame
         VertexShader     = compile vs_3_0 VS_Billboard();
         PixelShader      = compile ps_3_0 PS_VoidFlame();
         ZEnable          = TRUE;
+        ZWriteEnable     = FALSE;
+        AlphaBlendEnable = TRUE;
+        SrcBlend         = ONE;
+        DestBlend        = ONE;
+        CullMode         = NONE;
+    }
+}
+
+// ──────────────────────────────────────────
+// TechBreathBeam — 3D cube beam with VoidFlame aesthetic
+// ──────────────────────────────────────────
+struct BB_IN
+{
+    float4 pos    : POSITION;
+    float3 normal : NORMAL;
+    float2 uv     : TEXCOORD0;
+};
+
+struct BB_OUT
+{
+    float4 pos      : POSITION;
+    float3 localPos : TEXCOORD0;
+    float3 normal   : TEXCOORD1;
+    float3 eyeVec   : TEXCOORD2;
+    float2 uv       : TEXCOORD3;
+};
+
+BB_OUT VS_BreathBeam(BB_IN i)
+{
+    BB_OUT o;
+    o.pos      = mul(i.pos, matWVP);
+    o.localPos = i.pos.xyz;
+    o.normal   = i.normal;
+    o.uv       = i.uv;
+
+    float4 viewPos = mul(i.pos, matWV);
+    o.eyeVec = normalize(viewPos.xyz);
+    return o;
+}
+
+float4 PS_BreathBeam(BB_OUT i) : COLOR0
+{
+    // Radial distance from beam center axis (local XY)
+    float2 radial = float2(i.localPos.x, i.localPos.y);
+    float  fMaxExtent = max(abs(i.localPos.x), abs(i.localPos.y));
+
+    // Edge mask: 0 at center, 1 at edge
+    float fEdge = length(radial) / (fMaxExtent + 0.001f);
+    fEdge = saturate(fEdge);
+
+    // Fresnel-like rim from view angle
+    float3 N = normalize(i.normal);
+    float3 V = normalize(i.eyeVec);
+    float fresnel = pow(1.0f - saturate(abs(dot(N, V))), 3.0f);
+
+    // fBm noise for flickering
+    float fbm = fBm3(i.uv + float2(0.f, i.localPos.z * 0.05f), fTime);
+
+    // Depth fade: fade out toward beam tip
+    float fDepthRatio = saturate(i.localPos.z * 0.07f + 0.5f);
+    float fTipFade = 1.0f - smoothstep(0.7f, 1.0f, fDepthRatio);
+
+    // Color: dark void core -> HDR purple rim
+    float3 coreColor = float3(0.03f, 0.0f, 0.07f);
+    float3 rimColor  = float3(4.0f, 0.0f, 8.0f) * (1.0f + fbm * 1.5f);
+
+    float fRimMask = saturate(fresnel * 2.0f + fEdge * 0.5f);
+    float3 col = lerp(coreColor, rimColor, fRimMask);
+
+    // Alpha: solid in middle, glow at edges
+    float alpha = (0.6f + fresnel * 0.4f) * fTipFade * fFlameAmt;
+    alpha *= (0.7f + fbm * 0.3f);
+
+    return float4(col * alpha, alpha);
+}
+
+technique TechBreathBeam
+{
+    pass P0
+    {
+        VertexShader     = compile vs_3_0 VS_BreathBeam();
+        PixelShader      = compile ps_3_0 PS_BreathBeam();
+        ZEnable          = FALSE;
         ZWriteEnable     = FALSE;
         AlphaBlendEnable = TRUE;
         SrcBlend         = ONE;

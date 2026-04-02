@@ -880,47 +880,47 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 		}
 
 		// 보스 피킹
-		if (!bMonsterPicked && m_pTargetBoss)
-		{
-			CCollider* pCol = dynamic_cast<CCollider*>(
-				m_pTargetBoss->Get_Component(ID_STATIC, L"Com_Collider"));
+		//if (!bMonsterPicked && m_pTargetBoss)
+		//{
+		//	CCollider* pCol = dynamic_cast<CCollider*>(
+		//		m_pTargetBoss->Get_Component(ID_STATIC, L"Com_Collider"));
 
-			if (pCol)
-			{
-				AABB tAABB = pCol->Get_AABB();
-				_vec3 vBossCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
+		//	if (pCol)
+		//	{
+		//		AABB tAABB = pCol->Get_AABB();
+		//		_vec3 vBossCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
 
-				_vec3 vPickDiff = vPickPos - vBossCenter;
-				vPickDiff.y = 0.f;
+		//		_vec3 vPickDiff = vPickPos - vBossCenter;
+		//		vPickDiff.y = 0.f;
 
-				if (D3DXVec3Length(&vPickDiff) < 3.f)
-				{
-					_vec3 vPlayerDiff = vBossCenter - vPos;
-					vPlayerDiff.y = 0.f;
-					bool bInRange = D3DXVec3Length(&vPlayerDiff) < 3.f;
+		//		if (D3DXVec3Length(&vPickDiff) < 3.f)
+		//		{
+		//			_vec3 vPlayerDiff = vBossCenter - vPos;
+		//			vPlayerDiff.y = 0.f;
+		//			bool bInRange = D3DXVec3Length(&vPlayerDiff) < 3.f;
 
-					if (bInRange && (m_iComboStep == 0 ||
-						(m_fAtkTime >= m_fAtkDuration && m_fComboTimer > 0.f)))
-					{
-						// 바로 공격
-						m_iComboStep = (m_iComboStep % 3) + 1;
-						m_fAtkTime = 0.f;
-						m_fComboTimer = m_fComboWindow;
-						m_bHasTarget = false;
-					}
-					else
-					{
-						// 이동
-						m_vTargetPos = vBossCenter;
-						m_vTargetPos.y = 0.f;
-						m_bHasTarget = true;
-						m_pTargetMonster = nullptr;
-					}
-					bMonsterPicked = true;
-				}
-			}
-		}
-
+		//			if (bInRange && (m_iComboStep == 0 ||
+		//				(m_fAtkTime >= m_fAtkDuration && m_fComboTimer > 0.f)))
+		//			{
+		//				// 바로 공격
+		//				m_iComboStep = (m_iComboStep % 3) + 1;
+		//				m_fAtkTime = 0.f;
+		//				m_fComboTimer = m_fComboWindow;
+		//				m_bHasTarget = false;
+		//			}
+		//			else
+		//			{
+		//				// 이동
+		//				m_vTargetPos = vBossCenter;
+		//				m_vTargetPos.y = 0.f;
+		//				m_bHasTarget = true;
+		//				m_pTargetMonster = nullptr;
+		//			}
+		//			bMonsterPicked = true;
+		//		}
+		//	}
+		//}
+	
 
 		// 4. 일반 이동
 		if (!bMonsterPicked)
