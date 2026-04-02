@@ -167,6 +167,8 @@
     <ClInclude Include="..\Header\CCrystalPart.h" />
     <ClInclude Include="..\Header\CCurrencyHUD.h" />
     <ClInclude Include="..\Header\CCursorMgr.h" />
+    <ClInclude Include="..\Header\CCYCamera.h" />
+    <ClInclude Include="..\Header\CCYPlayer.h" />
     <ClInclude Include="..\Header\CCYStage.h" />
     <ClInclude Include="..\Header\CDamageMgr.h" />
     <ClInclude Include="..\Header\CDialogueBox.h" />
@@ -286,6 +288,8 @@
     <ClCompile Include="..\Code\CCrystalPart.cpp" />
     <ClCompile Include="..\Code\CCurrencyHUD.cpp" />
     <ClCompile Include="..\Code\CCursorMgr.cpp" />
+    <ClCompile Include="..\Code\CCYCamera.cpp" />
+    <ClCompile Include="..\Code\CCYPlayer.cpp" />
     <ClCompile Include="..\Code\CCYStage.cpp" />
     <ClCompile Include="..\Code\CDamageMgr.cpp" />
     <ClCompile Include="..\Code\CDialogueBox.cpp" />
