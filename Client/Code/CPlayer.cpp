@@ -596,133 +596,58 @@ void CPlayer::Key_Input(const _float& fTimeDelta)
 {
 	m_bMoving = false;
 
-	// 화살 / TNT 던지기
-	bool bRClick = (GetAsyncKeyState(VK_RBUTTON) & 0x8000);
-
-	if (GetAsyncKeyState('T') & 0x8000)
+	if (m_bWASDMode)
 	{
-		Use_Posion();
-	}
-	
-	if (m_pHeldTNT)
-	{
-		if (bRClick)
+		Combat_Input(fTimeDelta);
+		if (m_bWASDMode)
 		{
-			_vec3 vPos, vLook;
-			m_pTransformCom->Get_Info(INFO_POS, &vPos);
-			m_pTransformCom->Get_Info(INFO_LOOK, &vLook);
-			D3DXVec3Normalize(&vLook, &vLook);
-			vPos.y += 3.f;
-			m_pHeldTNT->Throw(vPos, -vLook, 10.f);
-			m_pHeldTNT = nullptr;
-		}
-	}
-	else
-	{
-		if (bRClick && m_fBowCooldown <= 0.f)
-		{
-			//시위 당기기 사운드
-			if (!m_bCharging)
+			Combat_Input(fTimeDelta);
+
+			m_bMoving = false;
+			_vec3 vDir = { 0.f, 0.f, 0.f };
+
+			if (GetAsyncKeyState('W') & 0x8000) vDir.z += 1.f;
+			if (GetAsyncKeyState('S') & 0x8000) vDir.z -= 1.f;
+			if (GetAsyncKeyState('A') & 0x8000) vDir.x -= 1.f;
+			if (GetAsyncKeyState('D') & 0x8000) vDir.x += 1.f;
+
+			if (D3DXVec3Length(&vDir) > 0.1f)
 			{
-				int iIdx = rand() % 3 + 1;
-				TCHAR szKey[MAX_PATH];
-				wsprintf(szKey, L"Player/sfx_item_CrossBowLoadTwang-%03d.wav", iIdx);
-				CSoundMgr::GetInstance()->PlayEffect(szKey, 1.f);
-			}
-			m_bCharging = true;
-			m_fCharge += fTimeDelta;
-			if (m_fCharge > m_fMaxCharge)
-				m_fCharge = m_fMaxCharge;
-
-			_vec3 vPos;
-			m_pTransformCom->Get_Info(INFO_POS, &vPos);
-			_vec3 vPickPos = Picking_OnBlock();
-
-			bool bAimedGuardian = false;
-			if (m_pTargetGuardian && !m_pTargetGuardian->Is_Dead())
-			{
-				CCollider* pCol = dynamic_cast<CCollider*>(
-					m_pTargetGuardian->Get_Component(ID_STATIC, L"Com_Collider"));
-				if (pCol)
-				{
-					AABB tAABB = pCol->Get_AABB();
-					_vec3 vCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
-
-					_vec3 vToGuardian = { vCenter.x - vPos.x, 0.f, vCenter.z - vPos.z };
-					_vec3 vToPick = { vPickPos.x - vPos.x, 0.f, vPickPos.z - vPos.z };
-					D3DXVec3Normalize(&vToGuardian, &vToGuardian);
-					D3DXVec3Normalize(&vToPick, &vToPick);
-
-					float fDot = D3DXVec3Dot(&vToGuardian, &vToPick);
-					if (fDot > 0.5f)
-					{
-						_vec3 vDir = vCenter - vPos;
-						if (D3DXVec3Length(&vDir) > 0.1f)
-						{
-							D3DXVec3Normalize(&vDir, &vDir);
-							m_vBowDir = vDir;
-							_vec3 vDirH = { vDir.x, 0.f, vDir.z };
-							if (D3DXVec3Length(&vDirH) > 0.01f)
-								m_pTransformCom->m_vAngle.y = D3DXToDegree(atan2f(vDirH.x, vDirH.z)) + 180.f;
-							bAimedGuardian = true;
-						}
-					}
-				}
-			}
-
-			if (!bAimedGuardian)
-			{
-				_vec3 vDir = vPickPos - vPos;
-				vDir.y = 0.f;
-				if (D3DXVec3Length(&vDir) > 0.1f)
-				{
-					D3DXVec3Normalize(&vDir, &vDir);
-					m_vBowDir = vDir;
+				D3DXVec3Normalize(&vDir, &vDir);
+				if (!m_bCharging)
 					m_pTransformCom->m_vAngle.y = D3DXToDegree(atan2f(vDir.x, vDir.z)) + 180.f;
+				m_pTransformCom->Move_Pos(&vDir, m_fMoveSpeed, fTimeDelta);
+				m_bMoving = true;
+				m_bHasTarget = false;
+			}
+
+			// 구르기
+			if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_SPACE))
+			{
+				if (!m_bRolling && m_fRollCooldown <= 0.f)
+				{
+					if (m_bMoving)
+						m_vRollDir = vDir;
+					else
+					{
+						_vec3 vLook;
+						m_pTransformCom->Get_Info(INFO_LOOK, &vLook);
+						m_vRollDir = -vLook;
+						m_vRollDir.y = 0.f;
+						D3DXVec3Normalize(&m_vRollDir, &m_vRollDir);
+					}
+					m_bRolling = true;
+					m_fRollTime = 0.f;
+					m_bHasTarget = false;
 				}
 			}
-		}
-		else if (m_bCharging)
-		{
-			_vec3 vPos;
-			m_pTransformCom->Get_Info(INFO_POS, &vPos);
-			vPos.y += 1.0f;
-			m_fLastChargeRatio = m_fCharge / m_fMaxCharge;
 
-			//화살 발사 사운드
-			int iIdx = rand() % 3 + 1;
-			TCHAR szKey[MAX_PATH];
-			wsprintf(szKey, L"Player/sfx_item_bowShoot-%03d_soundWave.wav", iIdx);
-			CSoundMgr::GetInstance()->PlayEffect(szKey, 1.f);
-
-			CPlayerArrow* pArrow = CPlayerArrow::Create(m_pGraphicDev, vPos, m_vBowDir, Get_BowDmg());
-			if (pArrow)
-			{
-				pArrow->Set_Firework(m_bFireworkArrow);
-				m_vecArrows.push_back(pArrow);
-			}
-			m_fBowCooldown = 1.f;
-			m_fCharge = 0.f;
-			m_bCharging = false;
-			m_bFireworkArrow = false;
+			return;
 		}
+		return;
 	}
 
-
-
-	if (GetAsyncKeyState('R') & 0x8000)
-	{
-		if (!m_bRKeyPrev)
-		{
-			m_bFireworkArrow = !m_bFireworkArrow;
-			m_bRKeyPrev = true;
-		}
-	}
-	else
-	{
-		m_bRKeyPrev = false;
-	}
-
+	Combat_Input(fTimeDelta);
 	// 마우스 클릭 이동
 	if (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
 	{
@@ -1214,6 +1139,137 @@ void CPlayer::Use_Posion()
 {
 	m_fHp = m_fMaxHp;
 	
+}
+
+void CPlayer::Combat_Input(const _float& fTimeDelta)
+{
+	// 화살 / TNT 던지기
+	bool bRClick = (GetAsyncKeyState(VK_RBUTTON) & 0x8000);
+
+	if (GetAsyncKeyState('T') & 0x8000)
+	{
+		Use_Posion();
+	}
+
+	if (m_pHeldTNT)
+	{
+		if (bRClick)
+		{
+			_vec3 vPos, vLook;
+			m_pTransformCom->Get_Info(INFO_POS, &vPos);
+			m_pTransformCom->Get_Info(INFO_LOOK, &vLook);
+			D3DXVec3Normalize(&vLook, &vLook);
+			vPos.y += 3.f;
+			m_pHeldTNT->Throw(vPos, -vLook, 10.f);
+			m_pHeldTNT = nullptr;
+		}
+	}
+	else
+	{
+		if (bRClick && m_fBowCooldown <= 0.f)
+		{
+			//시위 당기기 사운드
+			if (!m_bCharging)
+			{
+				int iIdx = rand() % 3 + 1;
+				TCHAR szKey[MAX_PATH];
+				wsprintf(szKey, L"Player/sfx_item_CrossBowLoadTwang-%03d.wav", iIdx);
+				CSoundMgr::GetInstance()->PlayEffect(szKey, 1.f);
+			}
+			m_bCharging = true;
+			m_fCharge += fTimeDelta;
+			if (m_fCharge > m_fMaxCharge)
+				m_fCharge = m_fMaxCharge;
+
+			_vec3 vPos;
+			m_pTransformCom->Get_Info(INFO_POS, &vPos);
+			_vec3 vPickPos = Picking_OnBlock();
+
+			bool bAimedGuardian = false;
+			if (m_pTargetGuardian && !m_pTargetGuardian->Is_Dead())
+			{
+				CCollider* pCol = dynamic_cast<CCollider*>(
+					m_pTargetGuardian->Get_Component(ID_STATIC, L"Com_Collider"));
+				if (pCol)
+				{
+					AABB tAABB = pCol->Get_AABB();
+					_vec3 vCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
+
+					_vec3 vToGuardian = { vCenter.x - vPos.x, 0.f, vCenter.z - vPos.z };
+					_vec3 vToPick = { vPickPos.x - vPos.x, 0.f, vPickPos.z - vPos.z };
+					D3DXVec3Normalize(&vToGuardian, &vToGuardian);
+					D3DXVec3Normalize(&vToPick, &vToPick);
+
+					float fDot = D3DXVec3Dot(&vToGuardian, &vToPick);
+					if (fDot > 0.5f)
+					{
+						_vec3 vDir = vCenter - vPos;
+						if (D3DXVec3Length(&vDir) > 0.1f)
+						{
+							D3DXVec3Normalize(&vDir, &vDir);
+							m_vBowDir = vDir;
+							_vec3 vDirH = { vDir.x, 0.f, vDir.z };
+							if (D3DXVec3Length(&vDirH) > 0.01f)
+								m_pTransformCom->m_vAngle.y = D3DXToDegree(atan2f(vDirH.x, vDirH.z)) + 180.f;
+							bAimedGuardian = true;
+						}
+					}
+				}
+			}
+
+			if (!bAimedGuardian)
+			{
+				_vec3 vDir = vPickPos - vPos;
+				vDir.y = 0.f;
+				if (D3DXVec3Length(&vDir) > 0.1f)
+				{
+					D3DXVec3Normalize(&vDir, &vDir);
+					m_vBowDir = vDir;
+					m_pTransformCom->m_vAngle.y = D3DXToDegree(atan2f(vDir.x, vDir.z)) + 180.f;
+				}
+			}
+		}
+		else if (m_bCharging)
+		{
+			_vec3 vPos;
+			m_pTransformCom->Get_Info(INFO_POS, &vPos);
+			vPos.y += 1.0f;
+			m_fLastChargeRatio = m_fCharge / m_fMaxCharge;
+
+			//화살 발사 사운드
+			int iIdx = rand() % 3 + 1;
+			TCHAR szKey[MAX_PATH];
+			wsprintf(szKey, L"Player/sfx_item_bowShoot-%03d_soundWave.wav", iIdx);
+			CSoundMgr::GetInstance()->PlayEffect(szKey, 1.f);
+
+			CPlayerArrow* pArrow = CPlayerArrow::Create(m_pGraphicDev, vPos, m_vBowDir, Get_BowDmg());
+			if (pArrow)
+			{
+				pArrow->Set_Firework(m_bFireworkArrow);
+				m_vecArrows.push_back(pArrow);
+			}
+			m_fBowCooldown = 1.f;
+			m_fCharge = 0.f;
+			m_bCharging = false;
+			m_bFireworkArrow = false;
+		}
+	}
+
+
+
+	if (GetAsyncKeyState('R') & 0x8000)
+	{
+		if (!m_bRKeyPrev)
+		{
+			m_bFireworkArrow = !m_bFireworkArrow;
+			m_bRKeyPrev = true;
+		}
+	}
+	else
+	{
+		m_bRKeyPrev = false;
+	}
+
 }
 
 void CPlayer::Render_Sword(float fAtkX, float fAtkY, float fSwing)

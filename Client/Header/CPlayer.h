@@ -45,15 +45,36 @@ public:
 
 private:
 	HRESULT			Add_Component();
-	void			Key_Input(const _float& fTimeDelta);
+
 	void			Set_OnTerrain();
 	//_vec3			Picking_OnTerrain();
-	_vec3			Picking_OnBlock();
+
 	void			Render_Part(BODYPART ePart, _float fAngleX, _float fAngleY, _float fAngleZ,
 								const _matrix& matRootWorld, Engine::CTexture* pTex = nullptr, CPlayerBody* pBuf = nullptr);
 
 	void			Render_Sword(float fAtkX, float fAtkY, float fSwing);
 	void			Render_Bow();
+
+protected:
+	virtual void	Key_Input(const _float& fTimeDelta);
+	_vec3			Picking_OnBlock();
+	_float m_fMoveSpeed = 20.f;
+	_bool	m_bMoving;		// 이동 중 여부
+	_vec3 m_vTargetPos;
+	_bool  m_bHasTarget = false;
+	_bool  m_bCharging = false;
+	_bool   m_bRolling = false;
+	_float  m_fRollCooldown = 0.f;
+	_vec3  m_vRollDir;
+	_float  m_fRollTime = 0.f;
+	Engine::CTransform* m_pTransformCom;
+
+	_float m_fCharge = 0.f;
+	_float m_fMaxCharge = 2.f;
+	_vec3 m_vBowDir = { 0.f, 0.f, 1.f };
+	vector<CPlayerArrow*> m_vecArrows;
+	_float m_fBowCooldown = 0.f;
+	_float m_fLastChargeRatio = 0.f;
 
 public:
 	const vector<CPlayerArrow*>& Get_Arrows() const { return m_vecArrows; }
@@ -65,9 +86,6 @@ private:
 	_float m_fMaxHp = 100.f;
 	_float m_fMeleeDmg = 10.f;
 	_float m_fBowDmg = 10.f;
-	_float m_fMoveSpeed = 20.f;
-
-	_float m_fBowCooldown = 0.f;
 
 	static constexpr float m_fBowCoolMax = 0.1f;
 
@@ -86,16 +104,11 @@ private:
 	_bool  m_bAtkKeyPrev = false;
 
 	//화살 발사 변수
-	_float m_fCharge = 0.f;
-	_float m_fMaxCharge = 2.f;
-	_bool  m_bCharging = false;
-	_vec3 m_vBowDir = { 0.f, 0.f, 1.f };
-	vector<CPlayerArrow*> m_vecArrows;
 	_matrix m_matLArmWorld;		//왼손위치
 	//폭죽화살 변수
 	_bool m_bFireworkArrow = false;
 	_bool m_bRKeyPrev = false;
-	_float m_fLastChargeRatio = 0.f;
+
 	
 	//TNT
 	CTNT* m_pHeldTNT = nullptr;
@@ -116,6 +129,8 @@ private:
 	static constexpr float m_fStepInterval = 0.35f;
 
 public:
+
+	void Set_WASDMode(bool b) { m_bWASDMode = b; }
 	//플레이어 정보 Get / Set
 	_float Get_Hp() const { return m_fHp; }
 	_float Get_MaxHp() const { return m_fMaxHp; }
@@ -129,6 +144,8 @@ public:
 
 	void Set_Armor(ARMOR_TYPE eType) { m_eArmorType = eType; }
 	ARMOR_TYPE Get_ArmorType() const { return m_eArmorType; }
+
+	void Set_MoveSpeed(float fSpeed) { m_fMoveSpeed = fSpeed; }
 
 	//콜라이더 박스 온오프 확인
 	_bool Get_AtkColliderActive() const { return m_bAtkColliderActive; }
@@ -156,7 +173,6 @@ public:
 private:
 	CPlayerBody* m_pBufferCom[PART_END];
 	CPlayerBody* m_pArmorBufferCom[PART_END] = {};
-	Engine::CTransform* m_pTransformCom;
 	Engine::CTexture* m_pTextureCom;
 	Engine::CCalculator* m_pCalculatorCom;
 	Engine::CCollider* m_pColliderCom;
@@ -174,10 +190,9 @@ private:
 	_vec3				m_vPartScale[PART_END];
 
 	_float				m_fWalkTime;	// 걷기 누적 시간 (사인파 입력)
-	_bool				m_bMoving;		// 이동 중 여부
 
-	_vec3 m_vTargetPos;
-	_bool  m_bHasTarget = false;
+
+
 
 	_float m_fGravity = -35.f;
 	_float m_fJumpPower = 8.f;
@@ -190,14 +205,10 @@ private:
 
 
 	//구르기
-	_bool   m_bRolling = false;
-	_float  m_fRollTime = 0.f;
-	_float  m_fRollCooldown = 0.f;
-
 	_float m_fRollDuration = 0.5f;   
 	_float m_fRollSpeed = 22.f;   
 	_float m_fRollCoolMax = 3.f;    
-	_vec3  m_vRollDir; 
+
 
 	//=======FootPrint Effect Variable=======
 	Engine::CParticleEmitter* m_pFootStepEmitter = nullptr;
@@ -230,6 +241,7 @@ private:
 	//가디언 타겟
 	CAncientGuardian* m_pTargetGuardian = nullptr;
 
+	_bool m_bWASDMode = false;
 private: //중력 적용과 충돌시 위치값 보정
 	void Apply_Gravity(const _float& fTimeDelta);
 	void Resolve_BlockCollision();
@@ -244,10 +256,13 @@ private: //중력 적용과 충돌시 위치값 보정
 
 	void Use_Posion();
 
+	void Combat_Input(const _float& fTimeDelta);
+
 public:
 	static CPlayer* Create(LPDIRECT3DDEVICE9 pGraphicDev);
 
 	void Hit(float fDamage);
+
 
 private:
 	virtual void Free();

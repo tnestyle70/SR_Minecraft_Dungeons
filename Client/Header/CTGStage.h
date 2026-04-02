@@ -1,6 +1,8 @@
-#pragma once
+﻿#pragma once
 #include "CScene.h"
 #include "CDynamicCamera.h"
+#include "CTJLevelUpUI.h"
+#include "CTJPlayer.h"
 
 class CTGStage : public CScene
 {
@@ -25,4 +27,6 @@ private:
 	virtual void Free();
 
 	CDynamicCamera* m_pDynamicCamera = nullptr;
+	CTJLevelUpUI* m_pLevelUpUI = nullptr;
+	CTJPlayer* m_pTJPlayer = nullptr;
 };

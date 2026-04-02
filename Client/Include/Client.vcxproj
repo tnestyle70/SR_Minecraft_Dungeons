@@ -244,6 +244,7 @@
     <ClInclude Include="..\Header\CTGSkyBox.h" />
     <ClInclude Include="..\Header\CTGStage.h" />
     <ClInclude Include="..\Header\CTJExpOrb.h" />
+    <ClInclude Include="..\Header\CTJLevelUpUi.h" />
     <ClInclude Include="..\Header\CTJPlayer.h" />
     <ClInclude Include="..\Header\CTJSpawnMgr.h" />
     <ClInclude Include="..\Header\CTNT.h" />
@@ -360,6 +361,7 @@
     <ClCompile Include="..\Code\CTGSkyBox.cpp" />
     <ClCompile Include="..\Code\CTGStage.cpp" />
     <ClCompile Include="..\Code\CTJExpOrb.cpp" />
+    <ClCompile Include="..\Code\CTJLevelUpUi.cpp" />
     <ClCompile Include="..\Code\CTJPlayer.cpp" />
     <ClCompile Include="..\Code\CTJSpawnMgr.cpp" />
     <ClCompile Include="..\Code\CTNT.cpp" />

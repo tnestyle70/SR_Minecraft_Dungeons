@@ -630,7 +630,85 @@ _uint CLoading::Loading_SquidCoast()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ExpOrbTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/ExpOrb.png"))))
         return E_FAIL;
+    //태준 능력치카드
+// Arrow
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Arrow1Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Arrow1.png"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Arrow2Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Arrow2.png"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Arrow3Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Arrow3.png"))))
+        return E_FAIL;
 
+    // TNT
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TNT1Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/TNT1.png"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TNT2Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/TNT2.png"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TNT3Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/TNT3.png"))))
+        return E_FAIL;
+
+    // HP
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_HP1Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/HP1.png"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_HP2Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/HP2.png"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_HP3Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/HP3.png"))))
+        return E_FAIL;
+
+    // Fire
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Fire1Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Fire1.png"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Fire2Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Fire2.png"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Fire3Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Fire3.png"))))
+        return E_FAIL;
+
+    // Thunder
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Thunder1Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Thunder1.png"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Thunder2Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Thunder2.png"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Thunder3Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Thunder3.png"))))
+        return E_FAIL;
+
+    // Blade
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Blade1Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Blade1.png"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Blade2Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Blade2.png"))))
+        return E_FAIL;
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_Blade3Texture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Blade3.png"))))
+        return E_FAIL;
+
+    // 이펙트 텍스처
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ThunderEffectTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Thunder.png"))))
+        return E_FAIL;
+
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_BladeEffectTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Blade.png"))))
+        return E_FAIL;
+
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_FireTrailEffectTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/FireTrail.png"))))
+        return E_FAIL;
 
     lstrcpy(m_szLoading, L"기타 등등 로딩");
 
