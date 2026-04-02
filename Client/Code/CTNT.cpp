@@ -58,7 +58,7 @@ HRESULT CTNT::Add_Component()
     m_mapComponent[ID_STATIC].insert({ L"Com_TopCube", m_pTopCubeCom });
 
     m_pExplodeColliderCom = CCollider::Create(m_pGraphicDev,
-        _vec3(5.f, 5.f, 5.f), _vec3(0.f, 0.f, 0.f));
+        _vec3(10.f, 10.f, 10.f), _vec3(0.f, 0.f, 0.f));
     if (!m_pExplodeColliderCom) return E_FAIL;
     m_mapComponent[ID_STATIC].insert({ L"Com_ExplodeCollider", m_pExplodeColliderCom });
 
@@ -83,7 +83,18 @@ _int CTNT::Update_GameObject(const _float& fTimeDelta)
         CRenderer::GetInstance()->Add_RenderGroup(RENDER_NONALPHA, this);
 
     if (m_bDead)
+    {
+        if (m_bExploding)
+        {
+            m_fExplodeTimer -= fTimeDelta;
+            _vec3 vPos;
+            m_pTransformCom->Get_Info(INFO_POS, &vPos);
+            m_pExplodeColliderCom->Update_AABB(vPos);
+            if (m_fExplodeTimer <= 0.f)
+                m_bExploding = false;
+        }
         return 0;
+    }
 
     _int iExit = CGameObject::Update_GameObject(fTimeDelta);
 

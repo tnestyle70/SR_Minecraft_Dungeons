@@ -19,7 +19,8 @@
 #include "CInventoryMgr.h"
 #include "CTGSkyBox.h"
 #include "CTJSpawnMgr.h"
-#include "CTJPlayer.h"
+#include "CTJLevelUpUI.h"
+
 
 CTGStage::CTGStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -57,6 +58,28 @@ _int CTGStage::Update_Scene(const _float& fTimeDelta)
 	if (CInventoryMgr::GetInstance()->IsActive())
 		return 0;
 
+	// 레벨업 UI 활성화 시 게임 정지
+	if (m_pLevelUpUI && m_pLevelUpUI->Is_Visible())
+	{
+		m_pLevelUpUI->Update_GameObject(fTimeDelta);
+		m_pLevelUpUI->LateUpdate_GameObject(fTimeDelta);
+
+		if (m_pLevelUpUI->Is_Selected())
+		{
+			m_pTJPlayer->Apply_Ability(m_pLevelUpUI->Get_Selected());
+			m_pLevelUpUI->Reset_Selected();
+			m_pLevelUpUI->Hide();
+		}
+		return 0;
+	}
+	// 레벨업 체크
+	if (m_pTJPlayer && m_pTJPlayer->Is_LevelUp())
+	{
+		m_pTJPlayer->Set_LevelUp(false);
+		m_pLevelUpUI->Show(m_pTJPlayer);
+	}
+
+
 	_int iExit = CScene::Update_Scene(fTimeDelta);
 
 	CBlockMgr::GetInstance()->Update(fTimeDelta);
@@ -69,6 +92,8 @@ _int CTGStage::Update_Scene(const _float& fTimeDelta)
 
 	CTJSpawnMgr::GetInstance()->Update(fTimeDelta);
 
+	CParticleMgr::GetInstance()->Update(fTimeDelta);
+
 	if (GetAsyncKeyState(VK_RETURN) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
 	{
 		//Render Group Clear Before Change Scene!!!!
@@ -79,6 +104,7 @@ _int CTGStage::Update_Scene(const _float& fTimeDelta)
 		CMonsterMgr::GetInstance()->Clear();
 		CParticleMgr::GetInstance()->Clear_Emitters();
 		CInventoryMgr::GetInstance()->Clear_Player();
+		CTJSpawnMgr::GetInstance()->Clear();
 		CTJSpawnMgr::GetInstance()->Clear();
 		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CY)))
 		{
@@ -120,6 +146,8 @@ void CTGStage::Render_Scene()
 	}
 
 	CBlockMgr::GetInstance()->Render();
+
+	CParticleMgr::GetInstance()->Render();
 }
 
 void CTGStage::Render_UI()
@@ -193,6 +221,10 @@ HRESULT CTGStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 
 	CTJPlayer* pPlayer = dynamic_cast<CTJPlayer*>(pGameObject);
 
+	m_pTJPlayer = pPlayer;
+
+	pPlayer->Get_Transform()->Set_Pos(0.f, 5.f, 0.f);
+	pPlayer->Set_MoveSpeed(10.f);
 	//HUD
 	pGameObject = CHUD::Create(m_pGraphicDev);
 
@@ -206,7 +238,11 @@ HRESULT CTGStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 
 	pHUD->Set_Player(pPlayer);
 
-	m_mapLayer.insert({ pLayerTag, pLayer });
+	//레벨업 능력카드
+	m_pLevelUpUI = CTJLevelUpUI::Create(m_pGraphicDev);
+	if (!m_pLevelUpUI) return E_FAIL;
+	if (FAILED(pLayer->Add_GameObject(L"LevelUpUI", m_pLevelUpUI)))
+		return E_FAIL;
 
 	//Inventory 세팅
 	if (CInventoryMgr::GetInstance()->Ready_InventoryMgr(m_pGraphicDev))
@@ -333,6 +369,7 @@ CTGStage* CTGStage::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 
 void CTGStage::Free()
 {
-	CTJSpawnMgr::DestroyInstance();
+	m_pLevelUpUI = nullptr;
+	m_pTJPlayer = nullptr;
 	CScene::Free();
 }

@@ -320,9 +320,13 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
     {
         for (auto& pTNT : pPlayer->Get_TNTs())
         {
-            if (!pTNT->Is_Exploding()) continue;
+            if (!pTNT || (pTNT->Is_Dead() && !pTNT->Is_Exploding()))
+                continue;
+            if (!pTNT->Is_Exploding())
+                continue;
             CCollider* pExplodeCollider = pTNT->Get_ExplodeCollider();
-            if (!pExplodeCollider) continue;
+            if (!pExplodeCollider)
+                continue;
             if (m_pColliderCom->IsColliding(pExplodeCollider->Get_AABB()))
                 Take_Damage(50);
         }
