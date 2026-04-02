@@ -11,20 +11,16 @@ CTorch::~CTorch()
 {
 }
 
-int CTorch::s_iNextLightIdx = 5;
-
 HRESULT CTorch::Ready_GameObject()
 {
     if (FAILED(Add_Component()))
         return E_FAIL;
 
-    m_iLightIdx = s_iNextLightIdx++;  // 횃불마다 고유 인덱스
-
     m_pTransformCom->Set_Pos(0.f, 0.f, 0.f);
     m_pTransformCom->m_vScale = { 0.5f, 1.f, 0.5f };
 
     return S_OK;
-} 
+}
 
 _int CTorch::Update_GameObject(const _float& fTimeDelta)
 {
@@ -36,25 +32,25 @@ _int CTorch::Update_GameObject(const _float& fTimeDelta)
     m_pTransformCom->Get_Info(INFO_POS, &vPos);
     m_pColliderCom->Update_AABB(vPos);
 
-    // 조명을 Update에서 등록 - 블록 렌더 전에 켜져있어야 함
-    D3DLIGHT9 tLight;
-    ZeroMemory(&tLight, sizeof(tLight));
-    tLight.Type = D3DLIGHT_POINT;
-    tLight.Position = { vPos.x, vPos.y + 0.5f, vPos.z };
-    tLight.Diffuse = { 10.f, 10.f, 10.f, 10.f };  // Diffuse 값을 1 이상으로
-    tLight.Ambient = { 0.1f, 0.06f, 0.01f, 1.f };
-    tLight.Range = 15.f + sinf(m_fFlicker * 3.f) * 2.f;  // 범위 확대
-    tLight.Attenuation0 = 0.f;
-    tLight.Attenuation1 = 0.05f;  // 감쇠 줄이기
-    tLight.Attenuation2 = 0.f;
-    m_pGraphicDev->SetLight(5, &tLight);
-    m_pGraphicDev->LightEnable(5, TRUE);
-     
-    m_pGraphicDev->SetLight(m_iLightIdx, &tLight);
-    m_pGraphicDev->LightEnable(m_iLightIdx, TRUE);
+    // 에디터 모드에서는 자체적으로 조명 등록
+    if (m_iLightIdx < 0)
+    {
+        // 인덱스가 없으면 임시로 5번 사용
+        D3DLIGHT9 tLight;
+        ZeroMemory(&tLight, sizeof(tLight));
+        tLight.Type = D3DLIGHT_POINT;
+        tLight.Position = { vPos.x, vPos.y + 0.5f, vPos.z };
+        tLight.Diffuse = { 2.f, 1.2f, 0.2f, 1.f };
+        tLight.Ambient = { 0.1f, 0.06f, 0.01f, 1.f };
+        tLight.Range = 15.f + sinf(m_fFlicker * 3.f) * 2.f;
+        tLight.Attenuation0 = 0.f;
+        tLight.Attenuation1 = 0.05f;
+        tLight.Attenuation2 = 0.f;
+        m_pGraphicDev->SetLight(5, &tLight);
+        m_pGraphicDev->LightEnable(5, TRUE);
+    }
 
     CRenderer::GetInstance()->Add_RenderGroup(RENDER_ALPHA, this);
-
 
     return iExit;
 }
@@ -126,6 +122,34 @@ void CTorch::Render_GameObject()
     m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
 }
 
+void CTorch::Apply_Light()
+{
+    if (m_iLightIdx < 0) return;
+
+    _vec3 vPos = Get_Pos();
+
+    D3DLIGHT9 tLight;
+    ZeroMemory(&tLight, sizeof(tLight));
+    tLight.Type = D3DLIGHT_POINT;
+    tLight.Position = { vPos.x, vPos.y + 0.5f, vPos.z };
+    tLight.Diffuse = { 2.f, 1.2f, 0.2f, 1.f };
+    tLight.Ambient = { 0.1f, 0.06f, 0.01f, 1.f };
+    tLight.Range = 15.f + sinf(m_fFlicker * 3.f) * 2.f;
+    tLight.Attenuation0 = 0.f;
+    tLight.Attenuation1 = 0.05f;
+    tLight.Attenuation2 = 0.f;
+
+    m_pGraphicDev->SetLight(m_iLightIdx, &tLight);
+    m_pGraphicDev->LightEnable(m_iLightIdx, TRUE);
+}
+
+void CTorch::Disable_Light()
+{
+    if (m_iLightIdx < 0) return;
+    m_pGraphicDev->LightEnable(m_iLightIdx, FALSE);
+    m_iLightIdx = -1;
+}
+
 HRESULT CTorch::Add_Component()
 {
     CComponent* pComponent = nullptr;
@@ -166,7 +190,8 @@ CTorch* CTorch::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 }
 
 void CTorch::Free()
-{ 
-    m_pGraphicDev->LightEnable(m_iLightIdx, FALSE);
+{
+    if (m_iLightIdx >= 0)
+        m_pGraphicDev->LightEnable(m_iLightIdx, FALSE);
     CGameObject::Free();
 }
