@@ -339,6 +339,12 @@
     <ClCompile Include="..\Code\CJSScoreMgr.cpp">
       <Filter>03. Manager</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CJSCornerChunk.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSBaseChunk.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -683,6 +689,12 @@
     </ClInclude>
     <ClInclude Include="..\Header\CJSScoreMgr.h">
       <Filter>03. Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSCornerChunk.h">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSBaseChunk.h">
+      <Filter>02. GameObject\17. JS</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

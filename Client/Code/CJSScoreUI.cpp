@@ -18,7 +18,7 @@ HRESULT CJSScoreUI::Ready_GameObject()
     if (FAILED(CFontMgr::GetInstance()->Ready_Font(
         m_pGraphicDev,
         L"Font_Score",
-        L"Arial",
+        L"Minecraft",
         20, 40, 700)))
         return E_FAIL;
 

@@ -96,7 +96,7 @@ HRESULT CJSTile::Set_Material()
 
 	tMtrl.Diffuse = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
 	tMtrl.Specular = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
-	tMtrl.Ambient = D3DXCOLOR(0.2f, 0.2f, 0.2f, 1.f);
+	tMtrl.Ambient = D3DXCOLOR(0.4f, 0.4f, 0.4f, 1.f);
 
 	tMtrl.Emissive = D3DXCOLOR(0.f, 0.f, 0.f, 0.f);
 	tMtrl.Power = 0.f;

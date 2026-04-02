@@ -3,12 +3,12 @@
 #include "CRenderer.h"
 #include "CLayer.h"
 #include "CJSScoreMgr.h"
+#include "CSoundMgr.h"
 
 const _float CJSChunk::TILE_SIZE = 2.0f;
 
 CJSChunk::CJSChunk(LPDIRECT3DDEVICE9 pGraphicDev)
-	: CGameObject(pGraphicDev)
-	, m_pLayer(nullptr)
+	: CJSBaseChunk(pGraphicDev)
 	, m_pTransformCom(nullptr)
     , m_eChunkType(CHUNK_FULL)
 {
@@ -18,10 +18,11 @@ CJSChunk::~CJSChunk()
 {
 }
 
-HRESULT CJSChunk::Ready_GameObject(_vec3 vPos, CLayer* pLayer, CHUNKTYPE eType)
+HRESULT CJSChunk::Ready_GameObject(_vec3 vPos, CLayer* pLayer, CHUNKTYPE eType, DIRECTION eDir)
 {
 	m_pLayer = pLayer;
     m_eChunkType = eType;
+    m_eDir = eDir;
 
 	if (FAILED(Add_Component()))
 		return E_FAIL;
@@ -61,6 +62,7 @@ HRESULT CJSChunk::Ready_Tile(_vec3 vChunkPos)
         for (_int x = 0; x < TILE_X; ++x)
         {
             _bool bWall = (x == 0 || x == 4);
+            _vec3 vTilePos = Calc_TilePos(vChunkPos, x, z);
 
             if (bWall)
             {
@@ -69,22 +71,15 @@ HRESULT CJSChunk::Ready_Tile(_vec3 vChunkPos)
                     if (m_eChunkType == CHUNK_GAP)
                     {
                         _int iMidZ = TILE_Z / 2;
-                        if (z >= iMidZ - 2 && z <= iMidZ + 2)
+                        if (z >= iMidZ - 1 && z <= iMidZ + 1)
                             continue;
                     }
 
-                    _vec3 vTilePos =
-                    {
-                        vChunkPos.x + (x - 2) * TILE_SIZE,
-                        vChunkPos.y + y * TILE_SIZE,
-                        vChunkPos.z + z * TILE_SIZE
-                    };
+                    _vec3 vWallPos = vTilePos;
+                    vWallPos.y = vChunkPos.y + y * TILE_SIZE;
 
-                    CJSTile* pTile = CJSTile::Create(m_pGraphicDev, vTilePos, TILE_NORMAL);
-
-                    if (pTile == nullptr)
-                        return E_FAIL;
-
+                    CJSTile* pTile = CJSTile::Create(m_pGraphicDev, vWallPos, TILE_NORMAL);
+                    if (!pTile) return E_FAIL;
                     m_pLayer->Add_GameObject(L"Tile", pTile);
                     m_vecWall.push_back(pTile);
                 }
@@ -92,42 +87,27 @@ HRESULT CJSChunk::Ready_Tile(_vec3 vChunkPos)
             else
             {
                 TILEID eTileID = TILE_NORMAL;
-
                 switch (m_eChunkType)
                 {
                 case CHUNK_LEFT:
-                    if (x != 1)
-                        eTileID = TILE_EMPTY;
+                    if (x != 1) eTileID = TILE_EMPTY;
                     break;
-
                 case CHUNK_RIGHT:
-                    if (x != 3)
-                        eTileID = TILE_EMPTY;
+                    if (x != 3) eTileID = TILE_EMPTY;
                     break;
-
                 case CHUNK_GAP:
                 {
-                    _int iMidZ = TILE_Z / 2;  // 8
-                    if (z >= iMidZ - 2 && z <= iMidZ + 2)
+                    _int iMidZ = TILE_Z / 2;
+                    if (z >= iMidZ - 1 && z <= iMidZ + 1)
                         eTileID = TILE_EMPTY;
+                    break;
                 }
-                break;
-
                 default:
                     break;
                 }
 
-                _vec3 vTilePos =
-                {
-                    vChunkPos.x + (x - 2) * TILE_SIZE,
-                    vChunkPos.y,
-                    vChunkPos.z + z * TILE_SIZE
-                };
-
                 CJSTile* pTile = CJSTile::Create(m_pGraphicDev, vTilePos, eTileID);
-                if (pTile == nullptr)
-                    return E_FAIL;
-
+                if (!pTile) return E_FAIL;
                 m_pLayer->Add_GameObject(L"Tile", pTile);
                 m_vecTile.push_back(pTile);
             }
@@ -226,13 +206,7 @@ TILEID CJSChunk::Get_TileID(_vec3 vPlayerPos)
 
     _int iX = (_int)((fSnappedX - (vChunkPos.x - 1.f * TILE_SIZE)) / TILE_SIZE);
     _int iZ = (_int)((vPlayerPos.z - vChunkPos.z) / TILE_SIZE);
-
-    TCHAR szBuf[128];
-    wsprintf(szBuf, L"iX: %d, iZ: %d, ChunkZ: %d, PlayerZ: %d",
-        iX, iZ, (_int)vChunkPos.z, (_int)vPlayerPos.z);
-    OutputDebugString(szBuf);
         
-    // 범위 체크
     if (iX < 0 || iX >= 3 || iZ < 0 || iZ >= TILE_Z)
         return TILE_EMPTY;
 
@@ -251,12 +225,38 @@ void CJSChunk::Check_Collect(_vec3 vPlayerPos)
         if ((*it)->Check_Collect(vPlayerPos))
         {
             (*it)->Set_Dead();
+
             CJSScoreMgr::GetInstance()->Add_Score(1);
+
+            CSoundMgr::GetInstance()->PlayEffect(L"Emerald/sfx_item_emerald-001_soundWave.wav", 0.8f);
+
             it = m_vecEmerald.erase(it);
         }
         else
             ++it;
     }
+}
+
+_vec3 CJSChunk::Get_EndPos()
+{
+    _vec3 vPos;
+    m_pTransformCom->Get_Info(INFO_POS, &vPos);
+
+    _float fChunkLength = TILE_SIZE * TILE_Z;
+
+    switch (m_eDir)
+    {
+    case DIR_FORWARD:
+        vPos.z += fChunkLength;
+        break;
+    case DIR_RIGHT:
+        vPos.x += fChunkLength;
+        break;
+    case DIR_LEFT:
+        vPos.x -= fChunkLength;
+        break;
+    }
+    return vPos;
 }
 
 HRESULT CJSChunk::Add_Component()
@@ -274,11 +274,37 @@ HRESULT CJSChunk::Add_Component()
 	return S_OK;
 }
 
-CJSChunk* CJSChunk::Create(LPDIRECT3DDEVICE9 pGraphicDev, _vec3 vPos, CLayer* pLayer, CHUNKTYPE eType)
+_vec3 CJSChunk::Calc_TilePos(_vec3 vChunkPos, _int x, _int z)
+{
+    _vec3 vPos = {};
+    vPos.y = vChunkPos.y;
+
+    switch (m_eDir)
+    {
+    case DIR_FORWARD:
+        vPos.x = vChunkPos.x + (x - 2) * TILE_SIZE;
+        vPos.z = vChunkPos.z + z * TILE_SIZE;
+        break;
+
+    case DIR_RIGHT:
+        vPos.x = vChunkPos.x + z * TILE_SIZE;
+        vPos.z = vChunkPos.z - (x - 2) * TILE_SIZE;
+        break;
+
+    case DIR_LEFT:
+        vPos.x = vChunkPos.x - z * TILE_SIZE;
+        vPos.z = vChunkPos.z + (x - 2) * TILE_SIZE;
+        break;
+    }
+
+    return vPos;
+}
+
+CJSChunk* CJSChunk::Create(LPDIRECT3DDEVICE9 pGraphicDev, _vec3 vPos, CLayer* pLayer, CHUNKTYPE eType, DIRECTION eDir)
 {
 	CJSChunk* pJSChunk = new CJSChunk(pGraphicDev);
 
-	if (FAILED(pJSChunk->Ready_GameObject(vPos, pLayer, eType)))
+	if (FAILED(pJSChunk->Ready_GameObject(vPos, pLayer, eType, eDir)))
 	{
 		Safe_Release(pJSChunk);
 		MSG_BOX("JSChunk Create Failed");

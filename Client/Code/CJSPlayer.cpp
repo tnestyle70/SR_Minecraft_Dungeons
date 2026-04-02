@@ -4,6 +4,7 @@
 #include "CDInputMgr.h"
 #include "CJSChunkMgr.h"
 #include "CJSScoreMgr.h"
+#include "CSoundMgr.h"
 
 CJSPlayer::CJSPlayer(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -142,16 +143,13 @@ void CJSPlayer::Falling()
 	m_pTransformCom->Get_Info(INFO_POS, &vPos);
 	TILEID eTileID = CJSChunkMgr::GetInstance()->Get_TileID(vPos);
 
-	// µð¹ö±ë¿ë
-	TCHAR szBuf[64];
-	wsprintf(szBuf, L"TileID: %d", eTileID);
-	OutputDebugString(szBuf);
-
 	if (eTileID == TILE_EMPTY && !m_bJump)
 	{
 		m_bFalling = true;
 		m_bJump = true;
 		m_fVelocityY = 0.f;
+
+		CSoundMgr::GetInstance()->PlayEffect(L"Player/Scream.wav", 0.8f);
 	}
 	else if (eTileID == TILE_NORMAL)
 	{
@@ -189,6 +187,8 @@ void CJSPlayer::Key_Input(const _float& fTimeDelta)
 	{
 		m_fVelocityY = m_fJumpPower;
 		m_bJump = true;
+
+		CSoundMgr::GetInstance()->PlayEffect(L"Player/Grunt-Jump.wav", 0.8f);
 	}
 }
 

@@ -23,7 +23,7 @@ CJSStage::~CJSStage()
 HRESULT CJSStage::Ready_Scene()
 {
 	CSoundMgr::GetInstance()->StopAll();
-	CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_JSStage.wav", 0.6f);
+	CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_JSStage.wav", 0.8f);
 
 	if (FAILED(Ready_Light()))
 		return E_FAIL;
@@ -163,11 +163,6 @@ void CJSStage::Clear_DeadObject(const _tchar* pLayerTag, const _float& fTimeDelt
 	if (iter != m_mapLayer.end())
 	{
 		iter->second->Delete_GameObject(fTimeDelta);
-
-		// 사이즈 확인
-		TCHAR szBuf[64];
-		wsprintf(szBuf, L"MapObject Size: %d", iter->second->Get_MapSize());
-		OutputDebugString(szBuf);
 	}
 }
 
