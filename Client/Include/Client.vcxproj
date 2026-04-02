@@ -193,7 +193,10 @@
     <ClInclude Include="..\Header\CJSCamera.h" />
     <ClInclude Include="..\Header\CJSChunk.h" />
     <ClInclude Include="..\Header\CJSChunkMgr.h" />
+    <ClInclude Include="..\Header\CJSEmerald.h" />
     <ClInclude Include="..\Header\CJSPlayer.h" />
+    <ClInclude Include="..\Header\CJSScoreMgr.h" />
+    <ClInclude Include="..\Header\CJSScoreUI.h" />
     <ClInclude Include="..\Header\CJSStage.h" />
     <ClInclude Include="..\Header\CJSTile.h" />
     <ClInclude Include="..\Header\CJumpingTrap.h" />
@@ -311,7 +314,10 @@
     <ClCompile Include="..\Code\CJSCamera.cpp" />
     <ClCompile Include="..\Code\CJSChunk.cpp" />
     <ClCompile Include="..\Code\CJSChunkMgr.cpp" />
+    <ClCompile Include="..\Code\CJSEmerald.cpp" />
     <ClCompile Include="..\Code\CJSPlayer.cpp" />
+    <ClCompile Include="..\Code\CJSScoreMgr.cpp" />
+    <ClCompile Include="..\Code\CJSScoreUI.cpp" />
     <ClCompile Include="..\Code\CJSStage.cpp" />
     <ClCompile Include="..\Code\CJSTile.cpp" />
     <ClCompile Include="..\Code\CJumpingTrap.cpp" />

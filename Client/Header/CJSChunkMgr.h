@@ -23,6 +23,7 @@ public:
 
 public:
 	TILEID Get_TileID(_vec3 vPlayerPos);
+	void Check_Collect(_vec3 vPlayerPos);
 
 private:
 	void Spawn_Chunk(_vec3 vPos);
@@ -33,8 +34,8 @@ private:
 	CLayer* m_pLayer = nullptr;
 	list<CJSChunk*> m_ChunkList;
 	list<CJSChunk*> m_RemoveList;
-	_float m_fChunkSize = 16.f;
-	_int m_iRenderCount = 5;
+	_float m_fChunkSize = 64.f;
+	_int m_iRenderCount = 3;
 
 private:
 	virtual void Free();

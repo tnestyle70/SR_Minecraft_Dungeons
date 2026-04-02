@@ -21,9 +21,20 @@ HRESULT CJSChunkMgr::Ready_Manager(LPDIRECT3DDEVICE9 pGraphicDev, CLayer* pLayer
     for (_int i = 0; i < m_iRenderCount; ++i)
     {
         _vec3 vPos = { 0.f, 0.f, m_fChunkSize * i };
-        Spawn_Chunk(vPos);
-    }
 
+        // 첫 번째 청크는 무조건 FULL
+        if (i == 0)
+        {
+            CJSChunk* pChunk = CJSChunk::Create(m_pGraphicDev, vPos, m_pLayer, CHUNK_FULL);
+            if (pChunk)
+            {
+                m_pLayer->Add_GameObject(L"Chunk", pChunk);
+                m_ChunkList.push_back(pChunk);
+            }
+        }
+        else
+            Spawn_Chunk(vPos);
+    }
     return S_OK;
 }
 
@@ -53,14 +64,26 @@ TILEID CJSChunkMgr::Get_TileID(_vec3 vPlayerPos)
         _vec3 vChunkPos;
         pChunk->Get_Position(vChunkPos);
 
-        // 청크 Z 범위 안에 있는지 확인
+        TCHAR szBuf[128];
+        wsprintf(szBuf, L"ChunkZ: %d ~ %d, PlayerZ: %d",
+            (_int)vChunkPos.z, (_int)(vChunkPos.z + m_fChunkSize), (_int)vPlayerPos.z);
+        OutputDebugString(szBuf);
+
         if (vPlayerPos.z >= vChunkPos.z &&
             vPlayerPos.z < vChunkPos.z + m_fChunkSize)
         {
             return pChunk->Get_TileID(vPlayerPos);
         }
     }
-    return TILE_EMPTY;  // 청크 밖이면 낙하
+    return TILE_EMPTY;
+}
+
+void CJSChunkMgr::Check_Collect(_vec3 vPlayerPos)
+{
+    for (auto& pChunk : m_ChunkList)
+    {
+        pChunk->Check_Collect(vPlayerPos);
+    }
 }
 
 void CJSChunkMgr::Spawn_Chunk(_vec3 vPos)
@@ -69,7 +92,9 @@ void CJSChunkMgr::Spawn_Chunk(_vec3 vPos)
 
     CHUNKTYPE eType = CHUNK_FULL;
 
-    if (iRand == 8)
+    if (iRand == 7)
+        eType = CHUNK_GAP;
+    else if (iRand == 8)
         eType = CHUNK_LEFT;
     else if (iRand == 9)
         eType = CHUNK_RIGHT;

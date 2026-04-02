@@ -3,6 +3,7 @@
 #include "CRenderer.h"
 #include "CDInputMgr.h"
 #include "CJSChunkMgr.h"
+#include "CJSScoreMgr.h"
 
 CJSPlayer::CJSPlayer(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -21,7 +22,7 @@ HRESULT CJSPlayer::Ready_GameObject()
 	if (FAILED(Add_Component()))
 		return E_FAIL;
 
-	m_pTransformCom->Set_Pos(0.f, 1.f, 1.f);
+	m_pTransformCom->Set_Pos(0.f, 2.f, 0.f);
 
 	return S_OK;
 }
@@ -31,9 +32,10 @@ _int CJSPlayer::Update_GameObject(const _float& fTimeDelta)
 	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
 
 	Falling();
-	Key_Input(fTimeDelta);
 	Jump(fTimeDelta);
+	Key_Input(fTimeDelta);
 	Advance(fTimeDelta);
+	Check_Collect();
 
 	return iExit;
 }
@@ -88,31 +90,45 @@ void CJSPlayer::Advance(const _float& fTimeDelta)
 {
 	_vec3 vLook;
 	m_pTransformCom->Get_Info(INFO_LOOK, &vLook);
-
 	m_pTransformCom->Move_Pos(&vLook, m_fSpeed, fTimeDelta);
 
-	m_fSpeed += fTimeDelta;
+	_vec3 vPos;
+	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+
+	CJSScoreMgr::GetInstance()->Set_Distance(vPos.z);
+
+	if (vPos.z >= m_fNextSpeedUpZ && m_fSpeed < m_fMaxSpeed)
+	{
+		m_fSpeed += m_fSpeedUpAmount;
+		m_fNextSpeedUpZ += m_fSpeedUpInterval;
+
+		CJSScoreMgr::GetInstance()->Set_Speed(m_fSpeed);
+	}
 }
 
 void CJSPlayer::Jump(const _float& fTimeDelta)
 {
 	if (m_bJump)
 	{
+		_vec3 vMyPos;
+		m_pTransformCom->Get_Info(INFO_POS, &vMyPos);
+
 		m_fVelocityY -= m_fGravity * fTimeDelta;
+
+		vMyPos.y += m_fVelocityY;
+
 		_vec3 vUp = { 0.f, 1.f, 0.f };
-		m_pTransformCom->Move_Pos(&vUp, m_fVelocityY, fTimeDelta);
+		m_pTransformCom->Set_Pos(vMyPos.x, vMyPos.y, vMyPos.z);
 
 		if (m_bFalling)
 			return;
 
-		_vec3 vPos;
-		m_pTransformCom->Get_Info(INFO_POS, &vPos);
-		if (vPos.y <= m_fGroundY)
+		if (vMyPos.y <= m_fGroundY)
 		{
-			vPos.y = m_fGroundY;
+			vMyPos.y = m_fGroundY;
 			m_fVelocityY = 0.f;
 			m_bJump = false;
-			m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
+			m_pTransformCom->Set_Pos(vMyPos.x, vMyPos.y, vMyPos.z);
 		}
 	}
 }
@@ -141,6 +157,15 @@ void CJSPlayer::Falling()
 	{
 		m_bFalling = false;
 	}
+}
+
+void CJSPlayer::Check_Collect()
+{
+	_vec3 vPos;
+
+	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+	
+	CJSChunkMgr::GetInstance()->Check_Collect(vPos);
 }
 
 void CJSPlayer::Key_Input(const _float& fTimeDelta)

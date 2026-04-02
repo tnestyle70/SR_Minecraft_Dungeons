@@ -2,8 +2,9 @@
 #include "CJSChunk.h"
 #include "CRenderer.h"
 #include "CLayer.h"
+#include "CJSScoreMgr.h"
 
-const _float CJSChunk::TILE_SIZE = 1.0f;
+const _float CJSChunk::TILE_SIZE = 2.0f;
 
 CJSChunk::CJSChunk(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -30,6 +31,9 @@ HRESULT CJSChunk::Ready_GameObject(_vec3 vPos, CLayer* pLayer, CHUNKTYPE eType)
 
 	if (FAILED(Ready_Tile(vPos)))
 		return E_FAIL;
+
+    if (FAILED(Ready_Emerald(vPos)))
+        return E_FAIL;
 
 	return S_OK;
 }
@@ -60,9 +64,15 @@ HRESULT CJSChunk::Ready_Tile(_vec3 vChunkPos)
 
             if (bWall)
             {
-                // y축 3칸, 아래, 중간, 위
                 for (_int y = 0; y <= 2; ++y)
                 {
+                    if (m_eChunkType == CHUNK_GAP)
+                    {
+                        _int iMidZ = TILE_Z / 2;
+                        if (z >= iMidZ - 2 && z <= iMidZ + 2)
+                            continue;
+                    }
+
                     _vec3 vTilePos =
                     {
                         vChunkPos.x + (x - 2) * TILE_SIZE,
@@ -71,6 +81,7 @@ HRESULT CJSChunk::Ready_Tile(_vec3 vChunkPos)
                     };
 
                     CJSTile* pTile = CJSTile::Create(m_pGraphicDev, vTilePos, TILE_NORMAL);
+
                     if (pTile == nullptr)
                         return E_FAIL;
 
@@ -88,10 +99,20 @@ HRESULT CJSChunk::Ready_Tile(_vec3 vChunkPos)
                     if (x != 1)
                         eTileID = TILE_EMPTY;
                     break;
+
                 case CHUNK_RIGHT:
                     if (x != 3)
                         eTileID = TILE_EMPTY;
                     break;
+
+                case CHUNK_GAP:
+                {
+                    _int iMidZ = TILE_Z / 2;  // 8
+                    if (z >= iMidZ - 2 && z <= iMidZ + 2)
+                        eTileID = TILE_EMPTY;
+                }
+                break;
+
                 default:
                     break;
                 }
@@ -115,16 +136,102 @@ HRESULT CJSChunk::Ready_Tile(_vec3 vChunkPos)
     return S_OK;
 }
 
+HRESULT CJSChunk::Ready_Emerald(_vec3 vChunkPos)
+{
+    switch (m_eChunkType)
+    {
+    case CHUNK_FULL:
+        Ready_Emerald_Line(vChunkPos, 2);
+        break;
+
+    case CHUNK_LEFT:
+        //Ready_Emerald_Line(vChunkPos, 1);
+        break;
+
+    case CHUNK_RIGHT:
+        //Ready_Emerald_Line(vChunkPos, 3);
+        break;
+
+    case CHUNK_GAP:
+        Ready_Emerald_Parabola(vChunkPos);
+        break;
+
+    case CHUNK_END:
+        break;
+
+    default:
+        break;
+    }
+
+    return S_OK;
+}
+
+HRESULT CJSChunk::Ready_Emerald_Line(_vec3 vChunkPos, _int iX)
+{
+    for (_int z = 0; z < TILE_Z; z += 3)
+    {
+        _vec3 vPos =
+        {
+            vChunkPos.x + (iX - 2) * TILE_SIZE,
+            vChunkPos.y + 3.0f,
+            vChunkPos.z + z * TILE_SIZE
+        };
+
+        CJSEmerald* pEmerald = CJSEmerald::Create(m_pGraphicDev, vPos);
+
+        if (pEmerald == nullptr)
+            return E_FAIL;
+
+        m_pLayer->Add_GameObject(L"JSEmerald", pEmerald);
+        m_vecEmerald.push_back(pEmerald);
+    }
+
+    return S_OK;
+}
+
+HRESULT CJSChunk::Ready_Emerald_Parabola(_vec3 vChunkPos)
+{
+    _int iMidZ = TILE_Z / 2;
+
+    for (_int z = 0; z < TILE_Z; z += 3)
+    {
+        _float fT = (_float)(z - iMidZ) / (_float)iMidZ;  // -1 ~ +1
+        _float fParabolaY = 4.5f * (1.f - fT * fT);        // 최고점 4.5f
+
+        _vec3 vPos =
+        {
+            vChunkPos.x,           // 가운데 X
+            vChunkPos.y + 3.0f + fParabolaY,
+            vChunkPos.z + z * TILE_SIZE
+        };
+
+        CJSEmerald* pEmerald = CJSEmerald::Create(m_pGraphicDev, vPos);
+
+        if (pEmerald == nullptr)
+            return E_FAIL;
+
+        m_pLayer->Add_GameObject(L"JSEmerald", pEmerald);
+        m_vecEmerald.push_back(pEmerald);
+    }
+
+    return S_OK;
+}
+
 TILEID CJSChunk::Get_TileID(_vec3 vPlayerPos)
 {
     _vec3 vChunkPos;
     m_pTransformCom->Get_Info(INFO_POS, &vChunkPos);
 
-    // X 인덱스 (바닥 타일은 x=1,2,3 → 인덱스 0,1,2)
-    _int iX = (_int)((vPlayerPos.x - (vChunkPos.x - 1.f * TILE_SIZE)) / TILE_SIZE);
-    // Z 인덱스
+    _float fSnappedX = roundf(vPlayerPos.x / TILE_SIZE) * TILE_SIZE;
+
+    _int iX = (_int)((fSnappedX - (vChunkPos.x - 1.f * TILE_SIZE)) / TILE_SIZE);
     _int iZ = (_int)((vPlayerPos.z - vChunkPos.z) / TILE_SIZE);
 
+    TCHAR szBuf[128];
+    wsprintf(szBuf, L"iX: %d, iZ: %d, ChunkZ: %d, PlayerZ: %d",
+        iX, iZ, (_int)vChunkPos.z, (_int)vPlayerPos.z);
+    OutputDebugString(szBuf);
+        
     // 범위 체크
     if (iX < 0 || iX >= 3 || iZ < 0 || iZ >= TILE_Z)
         return TILE_EMPTY;
@@ -135,6 +242,21 @@ TILEID CJSChunk::Get_TileID(_vec3 vPlayerPos)
         return TILE_EMPTY;
 
     return m_vecTile[iIndex]->Get_TileID();
+}
+
+void CJSChunk::Check_Collect(_vec3 vPlayerPos)
+{
+    for (auto it = m_vecEmerald.begin(); it != m_vecEmerald.end();)
+    {
+        if ((*it)->Check_Collect(vPlayerPos))
+        {
+            (*it)->Set_Dead();
+            CJSScoreMgr::GetInstance()->Add_Score(1);
+            it = m_vecEmerald.erase(it);
+        }
+        else
+            ++it;
+    }
 }
 
 HRESULT CJSChunk::Add_Component()
@@ -175,6 +297,10 @@ void CJSChunk::Free()
     for (auto& pWall : m_vecWall)
         pWall->Set_Dead();
     m_vecWall.clear();
+
+    for (auto& pEmerald : m_vecEmerald)
+        pEmerald->Set_Dead();
+    m_vecEmerald.clear();
 
     CGameObject::Free();
 }
