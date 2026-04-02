@@ -255,6 +255,12 @@ void CScreenFX::Update(const _float& fTimeDelta)
     // Noise phase for per-frame grain variation
     m_fNoisePhase += fTimeDelta * 60.f;
 
+    // Dragon breath cone fade
+    if (m_bDragonBreathActive)
+        m_fDBreathFadeIn = min(1.f, m_fDBreathFadeIn + fTimeDelta * 4.f);
+    else
+        m_fDBreathFadeIn = max(0.f, m_fDBreathFadeIn - fTimeDelta * 3.3f);
+
     float fBreathTarget = m_bBreathActive ? m_fBreathIntensity : 0.f;
     const float fBreathSpeed = 2.5f;
     if (m_fBreathCurrent < fBreathTarget)
@@ -346,7 +352,8 @@ void CScreenFX::Apply_Effect()
     m_pGraphicDev->SetFVF(QUAD_FVF);
     m_pGraphicDev->SetStreamSource(0, m_pQuadVB, 0, sizeof(QUAD_VERTEX));
 
-    bool bMultiPass = (m_fGrainAmt > 0.001f || m_fGlassAmt > 0.001f || m_fWaveAmt > 0.001f);
+    bool bMultiPass = (m_fGrainAmt > 0.001f || m_fGlassAmt > 0.001f || m_fWaveAmt > 0.001f
+                       || m_fDBreathFadeIn > 0.001f);
 
     if (!bMultiPass)
     {
@@ -403,6 +410,20 @@ void CScreenFX::Apply_Effect()
         if (m_fWaveAmt > 0.001f)
         {
             ApplyPass("TechWave", pRead, pWrite);
+            if (bLastIsB) { pRead = pTexB; pWrite = pSurfA; bLastIsB = false; }
+            else          { pRead = pTexA; pWrite = pSurfB; bLastIsB = true;  }
+        }
+
+        // Pass N: Dragon breath heat-haze
+        if (m_fDBreathFadeIn > 0.001f)
+        {
+            m_pEffect->SetFloatArray("gBreathOriginUV", (float*)&m_vBreathOriginUV, 2);
+            m_pEffect->SetFloatArray("gBreathDirUV", (float*)&m_vBreathDirUV, 2);
+            m_pEffect->SetFloat("gBreathRadius", m_fBreathRadiusUV);
+            m_pEffect->SetFloat("gBreathLength", m_fBreathMaxLenUV);
+            m_pEffect->SetFloat("gBreathIntensity", m_fDBreathFadeIn);
+
+            ApplyPass("TechDragonBreath", pRead, pWrite);
             if (bLastIsB) { pRead = pTexB; pWrite = pSurfA; bLastIsB = false; }
             else          { pRead = pTexA; pWrite = pSurfB; bLastIsB = true;  }
         }
@@ -608,6 +629,16 @@ void CScreenFX::SetBreathActive(bool bActive, float fIntensity)
 void CScreenFX::Set_BreathActive(bool bActive, float fIntensity)
 {
     SetBreathActive(bActive, fIntensity);
+}
+
+void CScreenFX::Set_DragonBreath(bool bActive, const D3DXVECTOR2& vOriginUV,
+    const D3DXVECTOR2& vDirUV, float fRadiusUV, float fLengthUV)
+{
+    m_bDragonBreathActive = bActive;
+    m_vBreathOriginUV     = vOriginUV;
+    m_vBreathDirUV        = vDirUV;
+    m_fBreathRadiusUV     = fRadiusUV;
+    m_fBreathMaxLenUV     = fLengthUV;
 }
 
 void CScreenFX::Free()

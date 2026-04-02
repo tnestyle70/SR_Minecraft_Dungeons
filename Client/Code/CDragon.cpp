@@ -3,6 +3,7 @@
 #include "CRenderer.h"
 #include "CManagement.h"
 #include "CDInputMgr.h"
+#include "CBreathFlame.h"
 #include <fstream>
 #include <string>
 #include <algorithm>
@@ -268,6 +269,20 @@ void CDragon::Handle_Input(const _float& fTimeDelta)
 void CDragon::Force_Idle_State()
 {
 	Transition_State(eDragonState::IDLE);
+}
+
+void CDragon::Void_Breath(bool bActivate)
+{
+	if (bActivate && !m_bBreathFiring)
+	{
+		m_bBreathFiring = true;
+		CBreathFlame::GetInstance()->Activate(m_pGraphicDev, 1.f, 15.f);
+	}
+	else if (!bActivate && m_bBreathFiring)
+	{
+		m_bBreathFiring = false;
+		CBreathFlame::GetInstance()->Deactivate();
+	}
 }
 
 // Day 8: 네트워크 동기화용 — 루트 뼈를 즉시 지정 위치로 이동

@@ -257,6 +257,7 @@
     <ClInclude Include="..\Header\CUI_Json.h" />
     <ClInclude Include="..\Header\CVengefuHeartofEnder.h" />
     <ClInclude Include="..\Header\CVoidFlame.h" />
+    <ClInclude Include="..\Header\CBreathFlame.h" />
     <ClInclude Include="..\Header\IGolemState.h" />
     <ClInclude Include="..\Header\StageData.h" />
     <ClInclude Include="..\Header\Templateblocks.h" />
@@ -374,6 +375,7 @@
     <ClCompile Include="..\Code\CUI_Json.cpp" />
     <ClCompile Include="..\Code\CVengefuHeartofEnder.cpp" />
     <ClCompile Include="..\Code\CVoidFlame.cpp" />
+    <ClCompile Include="..\Code\CBreathFlame.cpp" />
     <ClCompile Include="..\Code\imgui.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>

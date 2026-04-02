@@ -6,6 +6,7 @@
 #include "CMonsterMgr.h"
 #include "CPlayer.h"
 #include "CVoidFlame.h"
+#include "CBreathFlame.h"
 #include "CCollider.h"
 #include "CScreenFX.h"
 #include <nlohmann/json.hpp>
@@ -15,7 +16,7 @@
 
 using json = nlohmann::json;
 
-// 순찰 지점 - 엔더드래곤 크기에 맞게 확장
+// Patrol waypoints - scaled for Ender Dragon size
 static const _vec3 s_PatrolPoints[] =
 {
 	_vec3(30.f, 22.f,  30.f),
@@ -25,7 +26,7 @@ static const _vec3 s_PatrolPoints[] =
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 생성 / 소멸
+// Construction / Destruction
 // ─────────────────────────────────────────────────────────────────────────────
 CEnderDragon::CEnderDragon(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -51,10 +52,11 @@ CEnderDragon::CEnderDragon(LPDIRECT3DDEVICE9 pGraphicDev)
 	ZeroMemory(m_WingL, sizeof(m_WingL));
 	ZeroMemory(m_WingR, sizeof(m_WingR));
 
-	// ZeroMemory 후 쿼터니언 명시 초기화 (0,0,0,0은 유효하지 않은 쿼터니언)
-	for (int i = 0; i < DRAGON_SPINE_COUNT; ++i) D3DXQuaternionIdentity(&m_Spine[i].qRot);
-	for (int i = 0; i < DRAGON_NECK_COUNT; ++i) D3DXQuaternionIdentity(&m_Neck[i].qRot);
-	for (int i = 0; i < DRAGON_TAIL_COUNT; ++i) D3DXQuaternionIdentity(&m_Tail[i].qRot);
+	// Explicit quaternion init after ZeroMemory (0,0,0,0 is invalid)
+	// Use ENDER_DRAGON_* constants (larger arrays than CDragon's DRAGON_*)
+	for (int i = 0; i < ENDER_DRAGON_SPINE_COUNT; ++i) D3DXQuaternionIdentity(&m_Spine[i].qRot);
+	for (int i = 0; i < ENDER_DRAGON_NECK_COUNT; ++i) D3DXQuaternionIdentity(&m_Neck[i].qRot);
+	for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i) D3DXQuaternionIdentity(&m_Tail[i].qRot);
 	D3DXQuaternionIdentity(&m_Head.qRot);
 }
 
@@ -82,16 +84,16 @@ CEnderDragon::CEnderDragon(const CEnderDragon& rhs)
 	ZeroMemory(m_WingL, sizeof(m_WingL));
 	ZeroMemory(m_WingR, sizeof(m_WingR));
 
-	for (int i = 0; i < DRAGON_SPINE_COUNT; ++i) D3DXQuaternionIdentity(&m_Spine[i].qRot);
-	for (int i = 0; i < DRAGON_NECK_COUNT; ++i) D3DXQuaternionIdentity(&m_Neck[i].qRot);
-	for (int i = 0; i < DRAGON_TAIL_COUNT; ++i) D3DXQuaternionIdentity(&m_Tail[i].qRot);
+	for (int i = 0; i < ENDER_DRAGON_SPINE_COUNT; ++i) D3DXQuaternionIdentity(&m_Spine[i].qRot);
+	for (int i = 0; i < ENDER_DRAGON_NECK_COUNT; ++i) D3DXQuaternionIdentity(&m_Neck[i].qRot);
+	for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i) D3DXQuaternionIdentity(&m_Tail[i].qRot);
 	D3DXQuaternionIdentity(&m_Head.qRot);
 }
 
 CEnderDragon::~CEnderDragon() {}
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 초기화
+// Initialization
 // ─────────────────────────────────────────────────────────────────────────────
 HRESULT CEnderDragon::Ready_GameObject()
 {
@@ -112,10 +114,10 @@ HRESULT CEnderDragon::Ready_GameObject()
 		return E_FAIL;
 	}
 
-	// JSON 파라미터 로드 (실패해도 하드코딩 기본값으로 동작)
+	// Load JSON parameters (falls back to hardcoded defaults on failure)
 	Load_DragonPatterns("Data/dragon_patterns.json");
 
-	// 척추 AABB 콜라이더 생성 (Gotcha #3: Create() 직접 사용)
+	// Spine AABB collider creation (Gotcha #3: use Create() directly)
 	for (int i = 0; i < ENDER_DRAGON_SPINE_COUNT; ++i)
 	{
 		m_pSpineCollider[i] = CCollider::Create(m_pGraphicDev,
@@ -124,7 +126,7 @@ HRESULT CEnderDragon::Ready_GameObject()
 		m_mapComponent[ID_STATIC].insert({ L"Com_SpineCol", m_pSpineCollider[i] });
 	}
 
-	// 꼬리 콜라이더
+	// Tail colliders
 	for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
 	{
 		m_pTailCollider[i] = CCollider::Create(m_pGraphicDev,
@@ -133,7 +135,7 @@ HRESULT CEnderDragon::Ready_GameObject()
 		m_mapComponent[ID_STATIC].insert({ L"Com_TailCol", m_pTailCollider[i] });
 	}
 
-	// 날개(좌) 콜라이더
+	// Left wing colliders
 	for (int i = 0; i < ENDER_DRAGON_WING_COUNT; ++i)
 	{
 		m_pWingLCollider[i] = CCollider::Create(m_pGraphicDev,
@@ -169,11 +171,11 @@ HRESULT CEnderDragon::Create_FlexBoneBuffer(DRAGON_BONE& bone, const MESH& mesh)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Init: 척추 (9개, 기존 7개보다 큼)
+// Init: Spine chain (9 bones, larger than original 7)
 // ─────────────────────────────────────────────────────────────────────────────
 HRESULT CEnderDragon::Init_SpineChain()
 {
-	// Index 0 = 목 쪽(앞), 8 = 꼬리 쪽(뒤)
+	// Index 0 = neck end (front), 8 = tail end (back)
 	const _float fW[ENDER_DRAGON_SPINE_COUNT] = { 3.2f, 3.0f, 2.8f, 2.6f, 2.4f, 2.1f, 1.8f, 1.5f, 1.2f };
 	const _float fH[ENDER_DRAGON_SPINE_COUNT] = { 2.4f, 2.2f, 2.0f, 1.9f, 1.8f, 1.6f, 1.4f, 1.2f, 0.9f };
 	const _float fD[ENDER_DRAGON_SPINE_COUNT] = { 2.4f, 2.2f, 2.0f, 1.9f, 1.8f, 1.6f, 1.4f, 1.2f, 0.9f };
@@ -192,14 +194,14 @@ HRESULT CEnderDragon::Init_SpineChain()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Init: 목(5개) + 머리
+// Init: Neck (5 bones) + Head
 // ─────────────────────────────────────────────────────────────────────────────
 HRESULT CEnderDragon::Init_NeckAndHead()
 {
 	const _float fNeckLen = 1.6f;
 	FACE_UV uv = { 0.f, 0.f, 1.f, 1.f };
 
-	// 목 두께: 루트에서 머리 쪽으로 좁아짐
+	// Neck thickness: tapers from root toward head
 	const _float fNW[ENDER_DRAGON_NECK_COUNT] = { 1.4f, 1.2f, 1.0f, 0.85f, 0.7f };
 	const _float fNH[ENDER_DRAGON_NECK_COUNT] = { 1.3f, 1.1f, 0.95f, 0.8f, 0.65f };
 
@@ -215,7 +217,7 @@ HRESULT CEnderDragon::Init_NeckAndHead()
 		if (FAILED(Create_BoneBuffer(m_Neck[i], fNW[i], fNH[i], 1.4f, uv))) return E_FAIL;
 	}
 
-	// 머리 - 목 끝에 붙음
+	// Head - attached at neck end
 	_vec3 vNeckEnd = m_Neck[ENDER_DRAGON_NECK_COUNT - 1].vPos;
 	m_Head.vPos = _vec3(vNeckEnd.x, vNeckEnd.y + 0.5f, vNeckEnd.z + fNeckLen);
 	m_Head.vDir = _vec3(0.f, 0.f, 1.f);
@@ -226,7 +228,7 @@ HRESULT CEnderDragon::Init_NeckAndHead()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Init: 꼬리 (8개)
+// Init: Tail chain (8 bones)
 // ─────────────────────────────────────────────────────────────────────────────
 HRESULT CEnderDragon::Init_TailChain()
 {
@@ -247,23 +249,23 @@ HRESULT CEnderDragon::Init_TailChain()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Init: 날개 (6세그먼트, 칼날 테이퍼)
+// Init: Wings (6 segments, blade taper)
 // ─────────────────────────────────────────────────────────────────────────────
 HRESULT CEnderDragon::Init_WingChains()
 {
 	_vec3 vWingRoot = m_Spine[2].vPos;
 	const _float fWingLen = 3.0f;
-	const _float hd = fWingLen * 0.5f; // 로컬 Z 절반
+	const _float hd = fWingLen * 0.5f; // half local Z depth
 	FACE_UV uv = { 0.f, 0.f, 1.f, 1.f };
 
-	// fwd < 0 : +X 방향 날 끝 (상향 칼날)
-	// bkd     : 등날 (완만한 테이퍼)
-	// hh      : 두께 절반
+	// fwd < 0 : +X blade tip (upward edge)
+	// bkd     : back edge (gentle taper)
+	// hh      : half thickness
 	struct BladeFace { float fwd, bkd, hh; };
 
-	// outer[i] = inner[i+1] → 세그먼트 간 이음새 연속성 보장
+	// outer[i] = inner[i+1] -> ensures seam continuity between segments
 	const BladeFace inner[ENDER_DRAGON_WING_COUNT] = {
-		{ -5.6f, 0.80f, 0.18f },  // [0] 루트 (가장 넓음)
+		{ -5.6f, 0.80f, 0.18f },  // [0] root (widest)
 		{ -4.8f, 0.68f, 0.15f },  // [1]
 		{ -4.0f, 0.56f, 0.12f },  // [2]
 		{ -3.0f, 0.42f, 0.09f },  // [3]
@@ -276,14 +278,14 @@ HRESULT CEnderDragon::Init_WingChains()
 		{ -3.0f, 0.42f, 0.09f },  // outer[2] = inner[3] ✓
 		{ -2.0f, 0.28f, 0.06f },  // outer[3] = inner[4] ✓
 		{ -1.0f, 0.16f, 0.03f },  // outer[4] = inner[5] ✓
-		{ -0.05f, 0.06f, 0.01f }, // outer[5] = 칼끝
+		{ -0.05f, 0.06f, 0.01f }, // outer[5] = blade tip
 	};
 
 	for (_int i = 0; i < ENDER_DRAGON_WING_COUNT; ++i)
 	{
 		_float fOfs = (_float)(i + 1) * fWingLen;
-		_float fZFwdR = (_float)i * (-0.5f); // 오른쪽: 끝으로 갈수록 -Z
-		_float fZFwdL = (_float)i * (+0.5f); // 왼쪽: 반대 방향
+		_float fZFwdR = (_float)i * (-0.5f); // right wing: -Z toward tip
+		_float fZFwdL = (_float)i * (+0.5f); // left wing: opposite direction
 
 		m_WingL[i].vPos = _vec3(vWingRoot.x - fOfs, vWingRoot.y, vWingRoot.z + fZFwdL);
 		m_WingL[i].vDir = _vec3(-1.f, 0.f, 0.f);
@@ -293,13 +295,13 @@ HRESULT CEnderDragon::Init_WingChains()
 		m_WingR[i].vDir = _vec3(1.f, 0.f, 0.f);
 		m_WingR[i].fBoneLen = fWingLen;
 
-		// 코너 인덱스:
-		// [0..3] tip쪽 (Z=+hd, 날개끝)   [4..7] body쪽 (Z=-hd, 몸통)
+		// Corner indices:
+		// [0..3] tip side (Z=+hd)   [4..7] body side (Z=-hd)
 		MESH mesh{};
 		mesh.front = mesh.back = mesh.top = mesh.bottom = mesh.right = mesh.left = uv;
 
-		const BladeFace& o = outer[i]; // tip쪽 (좁음)
-		const BladeFace& n = inner[i]; // body쪽 (넓음)
+		const BladeFace& o = outer[i]; // tip side (narrow)
+		const BladeFace& n = inner[i]; // body side (wide)
 
 		mesh.corners[0] = { -o.fwd, +o.hh, +hd };
 		mesh.corners[1] = { +o.bkd, +o.hh, +hd };
@@ -310,7 +312,7 @@ HRESULT CEnderDragon::Init_WingChains()
 		mesh.corners[6] = { -n.fwd, -n.hh, -hd };
 		mesh.corners[7] = { +n.bkd, -n.hh, -hd };
 
-		// 왼쪽 날개: X 미러 + CCW 와인딩 복원
+		// Left wing: X mirror + restore CCW winding
 		MESH meshL = mesh;
 		for (auto& c : meshL.corners) c.x = -c.x;
 		std::swap(meshL.corners[0], meshL.corners[1]);
@@ -329,16 +331,16 @@ HRESULT CEnderDragon::Init_WingChains()
 // ─────────────────────────────────────────────────────────────────────────────
 _int CEnderDragon::Update_GameObject(const _float& fTimeDelta)
 {
-	// fTimeDelta 클램프: 씬 로드 등 첫 프레임 폭발 방지
+	// Clamp fTimeDelta: prevent first-frame spike during scene load
 	const _float dt = min(fTimeDelta, 0.05f);
 
 	Handle_Input(dt);
 	m_fStateTimer += dt;
 
-	// ── 매 프레임 힘 초기화 ──────────────────────────────────────────
+	// ── Reset accumulated force per frame ──────────────────────────────────────────
 	m_Flight.vAccumForce = _vec3(0.f, 0.f, 0.f);
 
-	// ── FSM: 스티어링 힘 누적 + Spine[0].vDir 갱신 ───────────────────
+	// ── FSM: accumulate steering force + update Spine[0].vDir ───────────────────
 	switch (m_eState)
 	{
 	case eEnderDragonState::IDLE:        Update_IDLE(dt);        break;
@@ -349,62 +351,70 @@ _int CEnderDragon::Update_GameObject(const _float& fTimeDelta)
 	default: break;
 	}
 
-	// ── JSON 조건 기반 상태 전환 평가 ─────────────────────────────────
+	// ── Evaluate JSON-based state transitions ─────────────────────────────────
 	Evaluate_Transitions();
 
-	// ── 물리 힘 누적: 중력 + 항력 + 양력 ────────────────────────────
+	// ── Accumulate physics forces: gravity + drag + lift ────────────────────────────
 	Accumulate_Forces(dt);
 
-	// ── 날개짓: sin 파형 + 다운스트로크 추력 ─────────────────────────
+	// ── Wing flap: sin wave + downstroke thrust ─────────────────────────
 	Update_WingFlap(dt);
 
-	// ── 물리 적분: F=ma → 속도 → 위치 ───────────────────────────────
+	// ── Physics integration: F=ma -> velocity -> position ───────────────────────────────
 	Integrate_Physics(dt);
 
-	// ── 뼈 콜라이더 갱신 + 플레이어 충돌 ───────────────────────────────
+	// ── Update bone colliders + player collision ───────────────────────────────
 	Update_BoneColliders();
 	Check_BodyCollision();
 
-	// ── 체인 해석 (Spine[0] 위치 확정 후) ────────────────────────────
+	// ── Chain solving (after Spine[0] position finalized) ────────────────────────────
 	Solve_FollowLeader(m_Spine, ENDER_DRAGON_SPINE_COUNT);
 
-	// 목 루트 = Spine[0] 약간 위
+	// Neck root = slightly above Spine[0]
 	m_Neck[0].vPos = m_Spine[0].vPos + _vec3(0.f, 0.5f, 0.f);
 
-	// 목/머리 CCD + Slerp
+	// Neck/Head CCD + Slerp
 	{
 		DRAGON_BONE combined[ENDER_DRAGON_NECK_COUNT + 1];
 		for (int i = 0; i < ENDER_DRAGON_NECK_COUNT; ++i) combined[i] = m_Neck[i];
 		combined[ENDER_DRAGON_NECK_COUNT] = m_Head;
 
-		// BREATH: 머리가 플레이어를 직접 락온
-		_vec3 vNeckTarget = (m_eState == eEnderDragonState::BREATH)
+		// BREATH/CIRCLE_DIVE/ATTACK: head locks on to player directly
+		bool bLockOnPlayer = (m_eState == eEnderDragonState::BREATH
+			|| m_eState == eEnderDragonState::CIRCLE_DIVE
+			|| m_eState == eEnderDragonState::ATTACK);
+		_vec3 vNeckTarget = bLockOnPlayer
 			? m_vPlayerPos
 			: m_vMoveTarget + _vec3(0.f, 1.5f, 0.f);
 
-		_float fCCDAngle = (m_eState == eEnderDragonState::ATTACK || m_eState == eEnderDragonState::BREATH)
-			? D3DX_PI * 0.5f : D3DX_PI * 0.2f;
-		_int   iCCDIter = (m_eState == eEnderDragonState::ATTACK || m_eState == eEnderDragonState::BREATH) ? 10 : 6;
+		_float fCCDAngle = bLockOnPlayer ? D3DX_PI * 0.5f : D3DX_PI * 0.2f;
+		_int   iCCDIter = bLockOnPlayer ? 10 : 6;
 		Solve_CCD(combined, ENDER_DRAGON_NECK_COUNT + 1, vNeckTarget, iCCDIter, fCCDAngle);
 
 		DRAGON_BONE current[ENDER_DRAGON_NECK_COUNT + 1];
 		for (int i = 0; i < ENDER_DRAGON_NECK_COUNT; ++i) current[i] = m_Neck[i];
 		current[ENDER_DRAGON_NECK_COUNT] = m_Head;
 
-		_float fSlerpAlpha = (m_eState == eEnderDragonState::BREATH)
-			? dt * 12.f
-			: (m_eState == eEnderDragonState::ATTACK) ? dt * 8.f : dt * 3.f;
+		_float fSlerpAlpha = (m_eState == eEnderDragonState::BREATH) ? dt * 12.f
+			: bLockOnPlayer ? dt * 8.f : dt * 3.f;
 		Slerp_NeckChain(combined, current, ENDER_DRAGON_NECK_COUNT + 1, fSlerpAlpha);
 
 		for (int i = 0; i < ENDER_DRAGON_NECK_COUNT; ++i) m_Neck[i] = current[i];
 		m_Head = current[ENDER_DRAGON_NECK_COUNT];
 	}
 
-	// 꼬리 추종
+	// Tail follow-the-leader
 	m_Tail[0].vPos = m_Spine[ENDER_DRAGON_SPINE_COUNT - 1].vPos;
 	Solve_FollowLeader(m_Tail, ENDER_DRAGON_TAIL_COUNT);
 
-	// ── 행렬 갱신 ────────────────────────────────────────────────────
+	// ── Post-chain deformation: state-specific placement after FollowLeader ──────
+	Apply_IdleCurlPostChain(dt);
+	Apply_TailSwingPostChain(dt);
+
+	// Re-update colliders after post-deformation (latest positions after swing/curl)
+	Update_BoneColliders();
+
+	// ── Matrix update ────────────────────────────────────────────────────
 	Update_ChainMatrices(m_Spine, ENDER_DRAGON_SPINE_COUNT);
 	Update_ChainMatrices(m_Neck, ENDER_DRAGON_NECK_COUNT);
 	Compute_BoneMatrix(m_Head);
@@ -412,10 +422,10 @@ _int CEnderDragon::Update_GameObject(const _float& fTimeDelta)
 	Update_ChainMatrices(m_WingL, ENDER_DRAGON_WING_COUNT);
 	Update_ChainMatrices(m_WingR, ENDER_DRAGON_WING_COUNT);
 
-	// ── 뱅킹: 선회 시 Spine Roll 시각 효과 ───────────────────────────
+	// ── Banking: visual roll effect on spine during turns ───────────────────────────
 	Update_Banking(dt);
 
-	// ── 브래스 화염 업데이트 / 정리 ──────────────────────────────────
+	// ── Breath flame update / cleanup ──────────────────────────────────
 	for (auto iter = m_vecBreathFlames.begin(); iter != m_vecBreathFlames.end();)
 	{
 		(*iter)->Update_GameObject(dt);
@@ -429,6 +439,14 @@ _int CEnderDragon::Update_GameObject(const _float& fTimeDelta)
 			++iter;
 	}
 
+	// CBreathFlame 3D beam update — runs in any state if active (debug key 9)
+	if (CBreathFlame::GetInstance()->Is_Active())
+	{
+		_vec3 vBeamDir = m_vPlayerPos - m_Head.vPos;
+		D3DXVec3Normalize(&vBeamDir, &vBeamDir);
+		CBreathFlame::GetInstance()->Update(dt, m_Head.vPos, vBeamDir);
+	}
+
 	CRenderer::GetInstance()->Add_RenderGroup(RENDER_NONALPHA, this);
 	return CGameObject::Update_GameObject(fTimeDelta);
 }
@@ -439,7 +457,7 @@ void CEnderDragon::LateUpdate_GameObject(const _float& fTimeDelta)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 렌더
+// Render
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Render_GameObject()
 {
@@ -464,14 +482,18 @@ void CEnderDragon::Render_GameObject()
 	Render_Chain(m_WingR, ENDER_DRAGON_WING_COUNT);
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
 
-	// 브래스 화염 렌더링
+	// Breath flame rendering
 	for (auto& pFlame : m_vecBreathFlames)
 	{
 		if (pFlame && !pFlame->Is_Dead())
 			pFlame->Render_GameObject();
 	}
 
-	// ImGui 디버그 패널
+	// 3D beam breath
+	if (CBreathFlame::GetInstance()->Is_Active())
+		CBreathFlame::GetInstance()->Render();
+
+	// ImGui debug panel
 	Render_DebugPanel();
 }
 
@@ -481,15 +503,15 @@ void CEnderDragon::Set_RootPos(const _vec3 vPos)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 동역학 ① — 힘 누적 (중력 / 항력 / 양력)
+// Dynamics (1) - Force accumulation (gravity / drag / lift)
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Accumulate_Forces(const _float& fTimeDelta)
 {
-	// ① 중력 : F = -Y * m * g
+	// (1) Gravity : F = -Y * m * g
 	m_Flight.vAccumForce += _vec3(0.f, -(m_Flight.fMass * m_Flight.fGravity), 0.f);
 
-	// ② 항력 : F = -normalize(v) * |v|² * Cd
-	//    빠를수록 저항이 급증 → 최대 속도를 자연스럽게 제한
+	// (2) Drag : F = -normalize(v) * |v|² * Cd
+	//    Faster speed -> quadratic resistance -> natural speed limit
 	_float fSpeed = D3DXVec3Length(&m_vVelocity);
 	if (fSpeed > 0.01f)
 	{
@@ -498,10 +520,10 @@ void CEnderDragon::Accumulate_Forces(const _float& fTimeDelta)
 		m_Flight.vAccumForce += vDragDir * (fSpeed * fSpeed * m_Flight.fDragCoeff);
 	}
 
-	// ③ 양력 : F = +Y * fwdSpeed² * Cl
-	//    전진 속도가 빠를수록 위로 뜨는 힘 발생
-	//    수평 순항 조건: fwdSpeed² * Cl = m * g
-	//    → Cl=2.8, m=120, g=12 → 순항 속도 ≈ sqrt(1440/2.8) ≈ 22.7 m/s
+	// (3) Lift : F = +Y * fwdSpeed² * Cl
+	//    Higher forward speed generates upward lift
+	//    Level flight condition: fwdSpeed² * Cl = m * g
+	//    → Cl=2.8, m=120, g=12 → cruise speed ≈ sqrt(1440/2.8) ≈ 22.7 m/s
 	_vec3 vLook = m_Spine[0].vDir;
 	_float fFwdSpeed = D3DXVec3Dot(&m_vVelocity, &vLook);
 	if (fFwdSpeed > 0.f)
@@ -512,7 +534,7 @@ void CEnderDragon::Accumulate_Forces(const _float& fTimeDelta)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 동역학 ② — 물리 적분 (F = ma → 속도 → 위치)
+// Dynamics (2) - Physics integration (F = ma -> velocity -> position)
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Integrate_Physics(const _float& fTimeDelta)
 {
@@ -520,7 +542,7 @@ void CEnderDragon::Integrate_Physics(const _float& fTimeDelta)
 	_vec3 vAccel = m_Flight.vAccumForce * (1.f / m_Flight.fMass);
 	m_vVelocity += vAccel * fTimeDelta;
 
-	// 최대 속도 클램프
+	// Clamp to max speed
 	_float fSpeed = D3DXVec3Length(&m_vVelocity);
 	if (fSpeed > m_Flight.fMaxSpeed)
 	{
@@ -528,15 +550,15 @@ void CEnderDragon::Integrate_Physics(const _float& fTimeDelta)
 		m_vVelocity *= m_Flight.fMaxSpeed;
 	}
 
-	// 위치 적분
+	// Position integration
 	m_Spine[0].vPos += m_vVelocity * fTimeDelta;
 
-	// 다음 프레임을 위해 누적 힘 초기화 (Accumulate_Forces가 매 프레임 시작에도 초기화함)
+	// Reset accumulated force for next frame (also reset at start of Accumulate_Forces)
 	m_Flight.vAccumForce = _vec3(0.f, 0.f, 0.f);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 동역학 ③ — 뱅킹 (선회 시 Spine 행렬에 Roll 추가, 순수 시각 효과)
+// Dynamics (3) - Banking (adds Roll to spine matrices during turns, visual only)
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_Banking(const _float& fTimeDelta)
 {
@@ -544,12 +566,12 @@ void CEnderDragon::Update_Banking(const _float& fTimeDelta)
 
 	_float fSpeed = D3DXVec3Length(&m_vVelocity);
 
-	// 이전 Look 과의 외적 Y성분 = 수평 선회율 (양수: 오른쪽)
+	// Cross product Y component = horizontal turn rate (positive: right)
 	_vec3 vCross;
 	D3DXVec3Cross(&vCross, &m_vLookPrev, &vLookCur);
 	_float fTurnRate = vCross.y / max(fTimeDelta, 0.001f);
 
-	// 목표 뱅킹 각도 계산 + 클램프
+	// Compute target banking angle + clamp
 	_float fBankFact = m_Flight.fBankFactor;
 	_float fBankMax  = m_Flight.fMaxBankAngle;
 	if (m_eState == eEnderDragonState::CIRCLE_DIVE)
@@ -560,13 +582,13 @@ void CEnderDragon::Update_Banking(const _float& fTimeDelta)
 	_float fTargetBank = -fTurnRate * fBankFact;
 	fTargetBank = max(-fBankMax, min(fBankMax, fTargetBank));
 
-	// 뱅킹 각도 부드럽게 보간
+	// Smooth interpolation of banking angle
 	m_fBankAngle += (fTargetBank - m_fBankAngle) * min(fTimeDelta * 4.f, 1.f);
 	m_vLookPrev = vLookCur;
 
 	if (fabsf(m_fBankAngle) < 0.001f) return;
 
-	// Spine 행렬에 Roll 적용 (Look 축 기준 회전)
+	// Apply Roll to spine matrices (rotation around Look axis)
 	for (int i = 0; i < ENDER_DRAGON_SPINE_COUNT; ++i)
 	{
 		_vec3 vLook(m_Spine[i].matWorld._31,
@@ -575,7 +597,7 @@ void CEnderDragon::Update_Banking(const _float& fTimeDelta)
 		_matrix matRoll;
 		D3DXMatrixRotationAxis(&matRoll, &vLook, m_fBankAngle);
 
-		// 이동 성분 분리 후 회전 적용, 이동 성분 복원
+		// Separate translation, apply rotation, restore translation
 		_vec3 vPos(m_Spine[i].matWorld._41,
 			m_Spine[i].matWorld._42,
 			m_Spine[i].matWorld._43);
@@ -588,37 +610,44 @@ void CEnderDragon::Update_Banking(const _float& fTimeDelta)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FSM — IDLE: 순찰 + 스티어링 힘 누적
+// FSM - IDLE: curled idle + player distance monitoring
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_IDLE(const _float& fTimeDelta)
 {
-	if (!m_bManualControl && !m_bNetworkControlled)
+	// Only update curl blend value (actual positioning in Apply_IdleCurlPostChain)
+	m_fIdleCurlBlend = min(1.f, m_fIdleCurlBlend + fTimeDelta * 0.8f);
+
+	// ── Hover: counteract gravity (stationary flight) ──
+	m_Flight.vAccumForce += _vec3(0.f, m_Flight.fMass * m_Flight.fGravity * 0.95f, 0.f);
+
+	// Velocity damping (bring to halt)
+	_float fSpeed = D3DXVec3Length(&m_vVelocity);
+	if (fSpeed > 0.01f)
 	{
-		_float fDist = D3DXVec3Length(&(m_vMoveTarget - m_Spine[0].vPos));
-		if (fDist < 2.5f)
-			m_iPatrolIndex = (m_iPatrolIndex + 1) % m_iPatrolCount;
-		m_vMoveTarget = s_PatrolPoints[m_iPatrolIndex];
+		_vec3 vBrake = -m_vVelocity;
+		D3DXVec3Normalize(&vBrake, &vBrake);
+		m_Flight.vAccumForce += vBrake * (fSpeed * m_Flight.fMass * 1.5f);
 	}
 
-	_vec3 vToTarget = m_vMoveTarget - m_Spine[0].vPos;
-	_float fDist = D3DXVec3Length(&vToTarget);
-
-	if (fDist > 1.f)
+	// ── Player distance monitoring ──
+	_float fPlayerDist = DistToPlayer();
+	if (fPlayerDist < m_fDetectRange)
 	{
-		_vec3 vDir;
-		D3DXVec3Normalize(&vDir, &vToTarget);
-		D3DXVec3Normalize(&m_Spine[0].vDir, &vDir);
-
-		// 스티어링 힘: 거리에 비례하되 최대치 클램프
-		// m * targetSpeed = 관성 기준 → 적절한 응답성
-		_float fSteerMag = min(fDist * m_Flight.fMass * 3.f,
-			m_Flight.fMass * m_fMoveSpeed);
-		m_Flight.vAccumForce += vDir * fSteerMag;
+		m_fDetectTimer += fTimeDelta;
+		if (m_fDetectTimer >= m_fDetectThreshold)
+		{
+			Transition_State(eEnderDragonState::CIRCLE_DIVE);
+			return;
+		}
+	}
+	else
+	{
+		m_fDetectTimer = max(0.f, m_fDetectTimer - fTimeDelta * 0.5f);
 	}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FSM — ATTACK: 플레이어 추적 + 스티어링 힘 누적
+// FSM - ATTACK: player tracking + steering force accumulation
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_Attack(const _float& fTimeDelta)
 {
@@ -640,7 +669,7 @@ void CEnderDragon::Update_Attack(const _float& fTimeDelta)
 		D3DXVec3Normalize(&vDir, &vToTarget);
 		D3DXVec3Normalize(&m_Spine[0].vDir, &vDir);
 
-		// 공격 상태: 더 강한 스티어링 (4배)
+		// Attack state: stronger steering (4x)
 		_float fSteerMag = min(fDist * m_Flight.fMass * 5.f,
 			m_Flight.fMass * m_fMoveSpeed * 1.5f);
 		m_Flight.vAccumForce += vDir * fSteerMag;
@@ -648,11 +677,11 @@ void CEnderDragon::Update_Attack(const _float& fTimeDelta)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FSM — BREATH: 머리 락온 + CVoidFlame 0.15초 간격 스폰
+// FSM - BREATH: head lock-on + CVoidFlame spawn at 0.15s intervals
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_BREATH(const _float& fTimeDelta)
 {
-	// 플레이어 위치 갱신
+	// Update player position
 	CComponent* pCom = CManagement::GetInstance()->Get_Component(
 		ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
 	if (pCom)
@@ -661,10 +690,10 @@ void CEnderDragon::Update_BREATH(const _float& fTimeDelta)
 		if (pTrans) pTrans->Get_Info(INFO_POS, &m_vPlayerPos);
 	}
 
-	// 드래곤 본체 호버링 (중력의 일부를 상쇄)
+	// Dragon body hover (partially counteract gravity)
 	m_Flight.vAccumForce += _vec3(0.f, m_Flight.fMass * m_Flight.fGravity * 0.5f, 0.f);
 
-	// CVoidFlame 스폰 (0.15초 간격)
+	// CVoidFlame spawn (0.15s interval)
 	m_fBreathTimer += fTimeDelta;
 	if (m_fBreathTimer >= 0.15f)
 	{
@@ -680,14 +709,16 @@ void CEnderDragon::Update_BREATH(const _float& fTimeDelta)
 				m_vecBreathFlames.push_back(pFlame);
 		}
 	}
+
+	// CBreathFlame update is now outside FSM switch (Update_GameObject)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FSM — CIRCLE_DIVE: 플레이어 중심 원 궤도 선회 활강
+// FSM - CIRCLE_DIVE: orbit around player + alternating VoidFlame/Beam attack
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_CIRCLE_DIVE(const _float& fTimeDelta)
 {
-	// 플레이어 위치 갱신
+	// Update player position
 	CComponent* pCom = CManagement::GetInstance()->Get_Component(
 		ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
 	if (pCom)
@@ -696,17 +727,15 @@ void CEnderDragon::Update_CIRCLE_DIVE(const _float& fTimeDelta)
 		if (pTrans) pTrans->Get_Info(INFO_POS, &m_vPlayerPos);
 	}
 
-	// 원 궤도 각도 증가 (각속도 = 선속도 / 반경)
+	// ── Circular orbit ──
 	_float fAngSpeed = m_fDiveSpeed / m_fCircleRadius;
 	m_fCircleAngle += fAngSpeed * fTimeDelta;
 
-	// 목표 위치: 플레이어 중심 원 궤도 + 고도 유지
 	_vec3 vOrbitTarget;
 	vOrbitTarget.x = m_vPlayerPos.x + cosf(m_fCircleAngle) * m_fCircleRadius;
 	vOrbitTarget.z = m_vPlayerPos.z + sinf(m_fCircleAngle) * m_fCircleRadius;
 	vOrbitTarget.y = m_vPlayerPos.y + 8.f;
 
-	// 플레이어보다 낮아지면 상승
 	if (m_Spine[0].vPos.y < m_vPlayerPos.y)
 		vOrbitTarget.y = m_vPlayerPos.y + 12.f;
 
@@ -724,57 +753,158 @@ void CEnderDragon::Update_CIRCLE_DIVE(const _float& fTimeDelta)
 			m_Flight.fMass * m_fDiveSpeed * 1.2f);
 		m_Flight.vAccumForce += vDir * fSteer;
 	}
+
+	// ── VoidFlame / Beam alternating attack ──
+	m_fCircleAttackTimer += fTimeDelta;
+
+	_float fPhaseDuration = m_bCirclePhaseIsBeam ? m_fBeamDuration : m_fVoidFlameDuration;
+	if (m_fCircleAttackTimer >= fPhaseDuration)
+	{
+		// Phase transition
+		m_fCircleAttackTimer = 0.f;
+		m_bCirclePhaseIsBeam = !m_bCirclePhaseIsBeam;
+
+		if (m_bCirclePhaseIsBeam)
+		{
+			// Begin Beam phase
+			Void_Breath(true);
+			CScreenFX* pFX = CScreenFX::GetInstance();
+			if (pFX) pFX->Trigger_VoidFlame(true);
+		}
+		else
+		{
+			// Begin VoidFlame phase (end Beam)
+			Void_Breath(false);
+			CScreenFX* pFX = CScreenFX::GetInstance();
+			if (pFX) pFX->Trigger_VoidFlame(false);
+			m_fBreathTimer = 0.f;
+		}
+	}
+
+	// Execute attack based on current phase
+	if (m_bCirclePhaseIsBeam)
+	{
+		// Beam: CBreathFlame auto-updates in Update_GameObject
+		// Head direction faces player (handled by CCD IK)
+	}
+	else
+	{
+		// VoidFlame: projectile spawn at 0.15s intervals
+		m_fBreathTimer += fTimeDelta;
+		if (m_fBreathTimer >= 0.15f)
+		{
+			m_fBreathTimer = 0.f;
+			_vec3 vFireDir = m_vPlayerPos - m_Head.vPos;
+			_float fLen = D3DXVec3Length(&vFireDir);
+			if (fLen > 0.01f)
+			{
+				D3DXVec3Normalize(&vFireDir, &vFireDir);
+				float fDamage = m_fBreathDmgPerSec * 0.15f;
+				CVoidFlame* pFlame = CVoidFlame::Create(m_pGraphicDev, m_Head.vPos, vFireDir, fDamage);
+				if (pFlame)
+					m_vecBreathFlames.push_back(pFlame);
+			}
+		}
+	}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FSM — TAIL_ATTACK: 꼬리 좌우 스윙 + 콜라이더 활성화
+// FSM - TAIL_ATTACK: rush toward player + tail swing + hit detection
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_TailAttack(const _float& fTimeDelta)
 {
-	m_fTailSwingTimer += fTimeDelta;
-
-	// 꼬리 스윙 각도 (sin 파형)
-	_float fSwingAng = m_fTailSwingAmp * sinf(m_fTailSwingTimer * 2.8f);
-	(void)fSwingAng; // 실제 뼈 회전은 Update_TailSwing()이 담당, 여기서는 타이머만 구동
-
-	// 꼬리 AABB 위치 갱신 (충돌 감지용)
-	for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
+	// Update player position
+	CComponent* pCom = CManagement::GetInstance()->Get_Component(
+		ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
+	if (pCom)
 	{
-		if (m_pTailCollider[i])
-			m_pTailCollider[i]->Update_AABB(m_Tail[i].vPos);
+		CTransform* pTrans = dynamic_cast<CTransform*>(pCom);
+		if (pTrans) pTrans->Get_Info(INFO_POS, &m_vPlayerPos);
 	}
 
-	// 몸체를 제자리에 유지: 약한 제동
-	_float fSpeed = D3DXVec3Length(&m_vVelocity);
-	if (fSpeed > 0.01f)
+	m_fTailSwingTimer += fTimeDelta;
+
+	// ── High-speed rush toward player ──
+	_vec3 vToPlayer = m_vPlayerPos - m_Spine[0].vPos;
+	vToPlayer.y += 2.f;
+	_float fDist = D3DXVec3Length(&vToPlayer);
+
+	if (fDist > 3.f)
 	{
-		_vec3 vBrake = -m_vVelocity;
-		D3DXVec3Normalize(&vBrake, &vBrake);
-		m_Flight.vAccumForce += vBrake * (fSpeed * m_Flight.fMass * 0.8f);
+		_vec3 vDir;
+		D3DXVec3Normalize(&vDir, &vToPlayer);
+		D3DXVec3Normalize(&m_Spine[0].vDir, &vDir);
+
+		_float fSteerMag = min(fDist * m_Flight.fMass * 6.f,
+			m_Flight.fMass * m_fTailRushSpeed * 1.5f);
+		m_Flight.vAccumForce += vDir * fSteerMag;
+	}
+
+	// Tail swing positioning done in Apply_TailSwingPostChain (after Solve_FollowLeader)
+
+	// ── Tail hit detection (colliders updated after Apply_TailSwingPostChain) ──
+	//if (!m_bTailHitApplied)
+	//{
+	//	CPlayer* pPlayer = CMonsterMgr::GetInstance()->Get_Player();
+	//	if (pPlayer)
+	//	{
+	//		CCollider* pPlayerCol = dynamic_cast<CCollider*>(
+	//			pPlayer->Get_Component(ID_STATIC, L"Com_Collider"));
+	//		if (pPlayerCol)
+	//		{
+	//			AABB tPlayerAABB = pPlayerCol->Get_AABB();
+	//			for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
+	//			{
+	//				if (!m_pTailCollider[i]) continue;
+	//				if (m_pTailCollider[i]->IsColliding(tPlayerAABB))
+	//				{
+	//					pPlayer->Hit(12.f); // triggers knockback
+	//					m_bTailHitApplied = true;
+
+	//					// Screen effects
+	//					CScreenFX* pFX = CScreenFX::GetInstance();
+	//					if (pFX)
+	//					{
+	//						pFX->Trigger_GlassBreak(1.0f, 0.4f);
+	//						pFX->Trigger_Noise(0.8f, 0.5f);
+	//						pFX->Trigger_Hit(1.0f);
+	//					}
+	//					break;
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+
+	// ── Time expired -> return to CIRCLE ──
+	if (m_fStateTimer >= m_fTailAttackDuration)
+	{
+		Transition_State(eEnderDragonState::CIRCLE_DIVE);
+		return;
 	}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 날개짓 — sin 파형 + 다운스트로크 추력
+// Wing flap - sin wave + downstroke thrust
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_WingFlap(const _float& fTimeDelta)
 {
 	m_fWingTimer += fTimeDelta * m_fWingSpeed;
 
-	// ── 다운스트로크 감지 ────────────────────────────────────────────
-	// sin 값이 양→음으로 영점 교차 = 날개가 최고점에서 아래로 내려치는 시작
+	// ── Downstroke detection ────────────────────────────────────────────
+	// sin crossing positive to negative = wing begins downstroke from peak
 	_float fCurSin = sinf(m_fWingTimer);
 	if (m_fPrevSinVal > 0.05f && fCurSin <= 0.05f)
 	{
-		// 추력: 전진 방향 + 위 방향 성분
+		// Thrust: forward direction + upward component
 		_vec3 vThrust = m_Spine[0].vDir * m_Flight.fThrustForce;
-		vThrust.y += m_Flight.fThrustForce * 0.55f; // 상승 성분
+		vThrust.y += m_Flight.fThrustForce * 0.55f; // upward component
 		m_Flight.vAccumForce += vThrust;
 	}
 
 	m_fPrevSinVal = fCurSin;
 
-	// ── 날개 뼈 위치 계산 ────────────────────────────────────────────
+	// ── Wing bone position calculation ────────────────────────────────────────────
 	_matrix matBodyRot = m_Spine[2].matWorld;
 	matBodyRot._41 = 0.f; matBodyRot._42 = 0.f; matBodyRot._43 = 0.f;
 
@@ -796,11 +926,11 @@ void CEnderDragon::Update_WingFlap(const _float& fTimeDelta)
 		_vec3 vBaseL = _vec3(-m_WingL[i].fBoneLen, 0.f, 0.f);
 		_vec3 vBaseR = _vec3(m_WingR[i].fBoneLen, 0.f, 0.f);
 
-		// 1단계: 로컬 플랩 회전
+		// Step 1: local flap rotation
 		D3DXVec3TransformNormal(&vBaseL, &vBaseL, &matFlapL);
 		D3DXVec3TransformNormal(&vBaseR, &vBaseR, &matFlapR);
 
-		// 2단계: 몸통 회전 적용
+		// Step 2: apply body rotation
 		_vec3 vWorldOffsetL, vWorldOffsetR;
 		D3DXVec3TransformNormal(&vWorldOffsetL, &vBaseL, &matBodyRot);
 		D3DXVec3TransformNormal(&vWorldOffsetR, &vBaseR, &matBodyRot);
@@ -815,7 +945,90 @@ void CEnderDragon::Update_WingFlap(const _float& fTimeDelta)
 
 void CEnderDragon::Update_TailSwing(const _float& fTimeDelta)
 {
-	// TODO
+	// Unused - replaced by Apply_TailSwingPostChain
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Post-chain deformation: IDLE curl (applied after Solve_FollowLeader)
+// ─────────────────────────────────────────────────────────────────────────────
+void CEnderDragon::Apply_IdleCurlPostChain(const _float& fTimeDelta)
+{
+	if (m_eState != eEnderDragonState::IDLE) return;
+
+	_vec3 vCenter = m_Spine[0].vPos;
+	const _float fCurlRadius = 6.f;
+
+	// Spine curl: blend from FollowLeader position toward circular layout
+	for (int i = 1; i < ENDER_DRAGON_SPINE_COUNT; ++i)
+	{
+		_float fAngle = D3DX_PI * (_float)i / (ENDER_DRAGON_SPINE_COUNT - 1);
+		_vec3 vCurled;
+		vCurled.x = vCenter.x + fCurlRadius * sinf(fAngle);
+		vCurled.y = vCenter.y - 1.5f * (_float)i / ENDER_DRAGON_SPINE_COUNT;
+		vCurled.z = vCenter.z - fCurlRadius * cosf(fAngle);
+
+		// Blend strength = curl blend * dt interpolation
+		_float fBlend = m_fIdleCurlBlend * min(fTimeDelta * 3.f, 1.f);
+		m_Spine[i].vPos += (vCurled - m_Spine[i].vPos) * fBlend;
+
+		// Also update direction (toward next bone)
+		if (i < ENDER_DRAGON_SPINE_COUNT - 1)
+		{
+			_vec3 vNextCurled;
+			_float fNextAngle = D3DX_PI * (_float)(i + 1) / (ENDER_DRAGON_SPINE_COUNT - 1);
+			vNextCurled.x = vCenter.x + fCurlRadius * sinf(fNextAngle);
+			vNextCurled.y = vCenter.y - 1.5f * (_float)(i + 1) / ENDER_DRAGON_SPINE_COUNT;
+			vNextCurled.z = vCenter.z - fCurlRadius * cosf(fNextAngle);
+
+			_vec3 vDir = vNextCurled - m_Spine[i].vPos;
+			if (D3DXVec3Length(&vDir) > 0.01f)
+				D3DXVec3Normalize(&m_Spine[i].vDir, &vDir);
+		}
+	}
+
+	// Tail curl: wrap toward body
+	for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
+	{
+		_float fAngle = D3DX_PI + D3DX_PI * 0.5f * (_float)i / (ENDER_DRAGON_TAIL_COUNT - 1);
+		_float fTailRadius = fCurlRadius * 0.6f;
+		_vec3 vCurled;
+		vCurled.x = vCenter.x + fTailRadius * sinf(fAngle);
+		vCurled.y = vCenter.y - 2.f;
+		vCurled.z = vCenter.z - fTailRadius * cosf(fAngle);
+
+		_float fBlend = m_fIdleCurlBlend * min(fTimeDelta * 3.f, 1.f);
+		m_Tail[i].vPos += (vCurled - m_Tail[i].vPos) * fBlend;
+	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Post-chain deformation: TAIL_ATTACK tail swing (applied after Solve_FollowLeader)
+// ─────────────────────────────────────────────────────────────────────────────
+void CEnderDragon::Apply_TailSwingPostChain(const _float& fTimeDelta)
+{
+	if (m_eState != eEnderDragonState::TAIL_ATTACK) return;
+
+	_float fSwingAng = m_fTailSwingAmp * sinf(m_fTailSwingTimer * 2.8f);
+
+	// Swing perpendicular to spine direction (rightward)
+	_vec3 vSpineRight;
+	_vec3 vUp(0.f, 1.f, 0.f);
+	D3DXVec3Cross(&vSpineRight, &m_Spine[0].vDir, &vUp);
+	if (D3DXVec3Length(&vSpineRight) > 0.001f)
+		D3DXVec3Normalize(&vSpineRight, &vSpineRight);
+	else
+		vSpineRight = _vec3(1.f, 0.f, 0.f);
+
+	for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
+	{
+		_float fSwingScale = (_float)(i + 1) / ENDER_DRAGON_TAIL_COUNT;
+		_vec3 vSwingOffset = vSpineRight * (fSwingAng * fSwingScale * 3.f);
+		m_Tail[i].vPos += vSwingOffset;
+
+		// Update colliders (latest position after swing)
+		if (m_pTailCollider[i])
+			m_pTailCollider[i]->Update_AABB(m_Tail[i].vPos);
+	}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -882,7 +1095,7 @@ void CEnderDragon::Solve_FollowLeader(DRAGON_BONE* pChain, _int iCount)
 	}
 }
 // ─────────────────────────────────────────────────────────────────────────────
-// 쿼터니언 유틸
+// Quaternion utilities
 // ─────────────────────────────────────────────────────────────────────────────
 D3DXQUATERNION CEnderDragon::DirToQuaternion(const _vec3& vDir)
 {
@@ -942,7 +1155,7 @@ void CEnderDragon::Slerp_NeckChain(DRAGON_BONE* pResult,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 뼈 행렬 계산 (Look-At 방식, DX9 Row-Major)
+// Bone matrix computation (Look-At, DX9 Row-Major)
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Compute_BoneMatrix(DRAGON_BONE& bone)
 {
@@ -988,15 +1201,25 @@ void CEnderDragon::Render_Chain(DRAGON_BONE* pChain, _int iCount)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FSM 전환
+// FSM state transition
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Transition_State(eEnderDragonState eNext)
 {
 	if (m_eState == eNext) return;
 
-	// BREATH 상태 이탈 시 VoidFlame 화면 효과 끄기
+	// Disable VoidFlame + BreathFlame when leaving BREATH state
 	if (m_eState == eEnderDragonState::BREATH)
 	{
+		CScreenFX* pFX = CScreenFX::GetInstance();
+		if (pFX) pFX->Trigger_VoidFlame(false);
+		Void_Breath(false);
+	}
+
+	// Clean up in-progress attacks when leaving CIRCLE_DIVE state
+	if (m_eState == eEnderDragonState::CIRCLE_DIVE)
+	{
+		if (m_bCirclePhaseIsBeam)
+			Void_Breath(false);
 		CScreenFX* pFX = CScreenFX::GetInstance();
 		if (pFX) pFX->Trigger_VoidFlame(false);
 	}
@@ -1007,10 +1230,11 @@ void CEnderDragon::Transition_State(eEnderDragonState eNext)
 	switch (eNext)
 	{
 	case eEnderDragonState::IDLE:
-		m_fWingSpeed = 2.8f;
-		m_fWingAmp = D3DX_PI * 0.32f;
-		m_fMoveSpeed = 22.f;
-		m_vMoveTarget = s_PatrolPoints[m_iPatrolIndex];
+		m_fWingSpeed = 1.2f;          // wings folded: slow subtle movement
+		m_fWingAmp = D3DX_PI * 0.05f; // nearly folded
+		m_fMoveSpeed = 0.f;           // stationary
+		m_fDetectTimer = 0.f;
+		m_fIdleCurlBlend = 0.f;       // reset curl blend
 		break;
 	case eEnderDragonState::ATTACK:
 		m_fWingSpeed = 5.5f;
@@ -1023,35 +1247,44 @@ void CEnderDragon::Transition_State(eEnderDragonState eNext)
 		m_fWingSpeed = 3.5f;
 		m_fWingAmp = D3DX_PI * 0.35f;
 		m_fMoveSpeed = 8.f;
-		// 화면 VoidFlame 효과 시작
+		// Start screen VoidFlame effect
 		CScreenFX* pFX = CScreenFX::GetInstance();
 		if (pFX) pFX->Trigger_VoidFlame(true);
+		// Start heat-haze breath cone
+		Void_Breath(true);
 		break;
 	}
 	case eEnderDragonState::CIRCLE_DIVE:
-		// 선회 시작 각도를 현재 드래곤 위치 기준으로 초기화
+		// Initialize orbit angle based on current dragon position
 		m_fCircleAngle = atan2f(
 			m_Spine[0].vPos.z - m_vPlayerPos.z,
 			m_Spine[0].vPos.x - m_vPlayerPos.x);
 		m_fWingSpeed = 6.0f;
 		m_fWingAmp = D3DX_PI * 0.50f;
 		m_fMoveSpeed = m_fDiveSpeed;
+		// Initialize attack alternation
+		m_fCircleAttackTimer = 0.f;
+		m_bCirclePhaseIsBeam = false; // VoidFlame first
+		m_fBreathTimer = 0.f;
 		break;
 	case eEnderDragonState::TAIL_ATTACK:
 		m_fTailSwingTimer = 0.f;
 		m_fTailSwingAmp = D3DX_PI * 0.85f;
-		m_fMoveSpeed = 12.f;
+		m_fMoveSpeed = m_fTailRushSpeed;
+		m_fWingSpeed = 7.0f;
+		m_fWingAmp = D3DX_PI * 0.55f;
+		m_bTailHitApplied = false;
 		break;
 	default: break;
 	}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FSM — JSON 조건 기반 전환 평가
+// FSM - JSON condition-based transition evaluation
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Evaluate_Transitions()
 {
-	// 전환 규칙이 없으면 스킵
+	// Skip if no transition rules exist
 	int iSrc = (int)m_eState;
 	if (m_TransRules[iSrc].empty()) return;
 
@@ -1080,6 +1313,22 @@ void CEnderDragon::Force_Idle_State()
 	Transition_State(eEnderDragonState::IDLE);
 }
 
+void CEnderDragon::Void_Breath(bool bActivate)
+{
+	if (bActivate && !m_bBreathFiring)
+	{
+		m_bBreathFiring = true;
+		CBreathFlame::GetInstance()->Activate(m_pGraphicDev, 1.f, 15.f);
+		// SetBreathActive is separate — global purple tint, not the 3D beam
+		// Transition_State already calls Trigger_VoidFlame for the tint
+	}
+	else if (!bActivate && m_bBreathFiring)
+	{
+		m_bBreathFiring = false;
+		CBreathFlame::GetInstance()->Deactivate();
+	}
+}
+
 void CEnderDragon::Force_RootPos(const _vec3& vPos)
 {
 	m_Spine[0].vPos = vPos;
@@ -1089,44 +1338,79 @@ void CEnderDragon::Force_RootPos(const _vec3& vPos)
 
 void CEnderDragon::Handle_Input(const _float& fTimeDelta)
 {
-	// F5 → JSON 런타임 리로드
-	if (GetAsyncKeyState(VK_F5) & 0x0001) // 0x0001: just pressed
+	// F5 -> JSON runtime reload
+	if (GetAsyncKeyState(VK_F5) & 0x0001)
 		Load_DragonPatterns("Data/dragon_patterns.json");
 
-	// ── Debug keys: ScreenFX effect testing ──
+	// ── H/J/K/L: force state transition debug keys (always works, independent of CScreenFX) ──
+	if (GetAsyncKeyState('H') & 0x0001)
+	{
+		Transition_State(eEnderDragonState::IDLE);
+		OutputDebugStringA("[Dragon-FSM] H: -> IDLE\n");
+	}
+	if (GetAsyncKeyState('J') & 0x0001)
+	{
+		Transition_State(eEnderDragonState::CIRCLE_DIVE);
+		OutputDebugStringA("[Dragon-FSM] J: -> CIRCLE_DIVE\n");
+	}
+	if (GetAsyncKeyState('K') & 0x0001)
+	{
+		Transition_State(eEnderDragonState::TAIL_ATTACK);
+		OutputDebugStringA("[Dragon-FSM] K: -> TAIL_ATTACK\n");
+	}
+	if (GetAsyncKeyState('L') & 0x0001)
+	{
+		Transition_State(eEnderDragonState::BREATH);
+		OutputDebugStringA("[Dragon-FSM] L: -> BREATH\n");
+	}
+
+	// ── Debug keys: ScreenFX effect testing (skip this block if pFX is null) ──
 	CScreenFX* pFX = CScreenFX::GetInstance();
-	if (!pFX) return;
-
-	// 5 → Breath start (Wave + Noise + VoidTint)
-	if (GetAsyncKeyState('5') & 0x0001)
+	if (pFX)
 	{
-		pFX->Trigger_Wave(0.6f, 3.5f);
-		pFX->Trigger_Noise(0.4f, 3.5f);
-		pFX->Set_BreathActive(true, 1.f);
-		OutputDebugStringA("[ScreenFX-DBG] Key5: Breath ON  (Wave 0.6/3.5s + Noise 0.4/3.5s + BreathTint)\n");
+		// 5 → Breath start (Wave + Noise + VoidTint)
+		if (GetAsyncKeyState('5') & 0x0001)
+		{
+			pFX->Trigger_Wave(0.6f, 3.5f);
+			pFX->Trigger_Noise(0.4f, 3.5f);
+			pFX->Set_BreathActive(true, 1.f);
+			OutputDebugStringA("[ScreenFX-DBG] Key5: Breath ON\n");
+		}
+		// 6 → Breath end
+		if (GetAsyncKeyState('6') & 0x0001)
+		{
+			pFX->Set_BreathActive(false);
+			OutputDebugStringA("[ScreenFX-DBG] Key6: Breath OFF\n");
+		}
+		// 7 → Tail hit (GlassBreak + Noise)
+		if (GetAsyncKeyState('7') & 0x0001)
+		{
+			pFX->Trigger_GlassBreak(1.0f, 0.4f);
+			pFX->Trigger_Noise(0.8f, 0.5f);
+			pFX->Trigger_Hit(1.0f);
+			OutputDebugStringA("[ScreenFX-DBG] Key7: TailHit\n");
+		}
+		// 8 → Body collision (Wave only)
+		if (GetAsyncKeyState('8') & 0x0001)
+		{
+			pFX->Trigger_Wave(0.5f, 0.8f);
+			OutputDebugStringA("[ScreenFX-DBG] Key8: BodyHit\n");
+		}
 	}
 
-	// 6 → Breath end (all effects fade out)
-	if (GetAsyncKeyState('6') & 0x0001)
+	// 9 → BreathFlame heat-haze toggle (independent of CScreenFX)
+	if (GetAsyncKeyState('9') & 0x8000)
 	{
-		pFX->Set_BreathActive(false);
-		OutputDebugStringA("[ScreenFX-DBG] Key6: Breath OFF (fade out)\n");
-	}
-
-	// 7 → Tail hit (GlassBreak + Noise)
-	if (GetAsyncKeyState('7') & 0x0001)
-	{
-		pFX->Trigger_GlassBreak(1.0f, 0.4f);
-		pFX->Trigger_Noise(0.8f, 0.5f);
-		pFX->Trigger_Hit(1.0f);
-		OutputDebugStringA("[ScreenFX-DBG] Key7: TailHit (GlassBreak 1.0/0.4s + Noise 0.8/0.5s + Shake)\n");
-	}
-
-	// 8 → Body collision (Wave only)
-	if (GetAsyncKeyState('8') & 0x0001)
-	{
-		pFX->Trigger_Wave(0.5f, 0.8f);
-		OutputDebugStringA("[ScreenFX-DBG] Key8: BodyHit (Wave 0.5/0.8s)\n");
+		if (CBreathFlame::GetInstance()->Is_Active())
+		{
+			Void_Breath(false);
+			OutputDebugStringA("[ScreenFX-DBG] Key9: BreathFlame OFF\n");
+		}
+		else
+		{
+			Void_Breath(true);
+			OutputDebugStringA("[ScreenFX-DBG] Key9: BreathFlame ON\n");
+		}
 	}
 }
 
@@ -1145,7 +1429,7 @@ _float CEnderDragon::DistToPlayer() const
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 헬퍼 — 상태 ↔ 문자열 변환
+// Helper - state <-> string conversion
 // ─────────────────────────────────────────────────────────────────────────────
 eEnderDragonState CEnderDragon::StringToState(const string& s) const
 {
@@ -1186,7 +1470,7 @@ _float CEnderDragon::Compute_HeadToPlayerAngleDeg() const
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// JSON 로드 — dragon_patterns.json
+// JSON loading - dragon_patterns.json
 // ─────────────────────────────────────────────────────────────────────────────
 HRESULT CEnderDragon::Load_DragonPatterns(const char* pPath)
 {
@@ -1197,7 +1481,7 @@ HRESULT CEnderDragon::Load_DragonPatterns(const char* pPath)
 	try { file >> j; }
 	catch (...) { return E_FAIL; }
 
-	// physics 블록 → DragonFlight 필드 오버라이드
+	// physics block -> DragonFlight field overrides
 	if (j.contains("physics"))
 	{
 		auto& phy = j["physics"];
@@ -1212,7 +1496,7 @@ HRESULT CEnderDragon::Load_DragonPatterns(const char* pPath)
 		m_Flight.fRestitution = phy.value("restitution",     m_Flight.fRestitution);
 	}
 
-	// patterns 배열 → 상태별 파라미터 + 전환 규칙
+	// patterns array -> per-state parameters + transition rules
 	if (j.contains("patterns"))
 	{
 		for (auto& pat : j["patterns"])
@@ -1221,15 +1505,15 @@ HRESULT CEnderDragon::Load_DragonPatterns(const char* pPath)
 			eEnderDragonState eSrc = StringToState(id);
 			int iSrc = (int)eSrc;
 
-			// 상태별 파라미터 오버라이드
+			// Per-state parameter overrides
 			if (id == "IDLE")
 			{
 				m_fMoveSpeed = pat.value("patrol_speed", 18.f);
 			}
 			else if (id == "ATTACK")
 			{
-				// chase_speed → Transition_State 에서 m_fMoveSpeed에 반영됨
-				// 여기서는 읽어서 별도 저장하지 않음 (Transition_State 에 이미 하드코딩)
+				// chase_speed -> reflected in m_fMoveSpeed via Transition_State
+				// Not stored separately here (already hardcoded in Transition_State)
 			}
 			else if (id == "BREATH")
 			{
@@ -1249,7 +1533,7 @@ HRESULT CEnderDragon::Load_DragonPatterns(const char* pPath)
 				m_fTailSwingAmp = D3DXToRadian(fAmpDeg);
 			}
 
-			// 전환 규칙 파싱
+			// Parse transition rules
 			if (pat.contains("transition"))
 			{
 				m_TransRules[iSrc].clear();
@@ -1259,7 +1543,7 @@ HRESULT CEnderDragon::Load_DragonPatterns(const char* pPath)
 					tr.eTo = StringToState(rule.value("to", string("IDLE")));
 					string cond = rule.value("condition", string(""));
 
-					// "&&"로 분리해서 각 조건 토큰 파싱
+					// Split by "&&" and parse each condition token
 					istringstream iss(cond);
 					string segment;
 					while (getline(iss, segment, '&'))
@@ -1299,18 +1583,18 @@ HRESULT CEnderDragon::Load_DragonPatterns(const char* pPath)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 충돌 — 뼈 AABB 갱신 + 플레이어 충돌 감지
+// Collision - bone AABB update + player collision detection
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_BoneColliders()
 {
-	// 척추 AABB (항상 갱신)
+	// Spine AABB (always updated)
 	for (int i = 0; i < ENDER_DRAGON_SPINE_COUNT; ++i)
 	{
 		if (m_pSpineCollider[i])
 			m_pSpineCollider[i]->Update_AABB(m_Spine[i].vPos);
 	}
 
-	// 꼬리 AABB (TAIL_ATTACK 상태에서만 활성)
+	// Tail AABB (active only in TAIL_ATTACK state)
 	if (m_eState == eEnderDragonState::TAIL_ATTACK)
 	{
 		for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
@@ -1320,7 +1604,7 @@ void CEnderDragon::Update_BoneColliders()
 		}
 	}
 
-	// 날개 AABB (좌측만, 다운스트로크 시)
+	// Wing AABB (left side only, during downstroke)
 	for (int i = 0; i < ENDER_DRAGON_WING_COUNT; ++i)
 	{
 		if (m_pWingLCollider[i])
@@ -1339,13 +1623,12 @@ void CEnderDragon::Check_BodyCollision()
 
 	//AABB tPlayerAABB = pPlayerCol->Get_AABB();
 
-	//// ── 척추 AABB 충돌 → 반발 임펄스 ──────────────────────────────────
+	//// ── Spine AABB collision -> restitution impulse ──
 	//for (int i = 0; i < ENDER_DRAGON_SPINE_COUNT; ++i)
 	//{
 	//	if (!m_pSpineCollider[i]) continue;
 	//	if (!m_pSpineCollider[i]->IsColliding(tPlayerAABB)) continue;
 
-	//	// 충돌 법선: 플레이어 ← 뼈 위치
 	//	_vec3 vPlayerPos;
 	//	CTransform* pTrans = dynamic_cast<CTransform*>(
 	//		pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform"));
@@ -1357,53 +1640,100 @@ void CEnderDragon::Check_BodyCollision()
 	//	if (fLen < 0.01f) break;
 	//	D3DXVec3Normalize(&vNormal, &vNormal);
 
-	//	// 반발 임펄스 계산
 	//	const _float fMassP = 80.f;
 	//	const _float fMassD = m_Flight.fMass;
 	//	_float fRelVel = D3DXVec3Dot(&m_vVelocity, &vNormal);
-	//	if (fRelVel >= 0.f) break; // 이미 분리 중
+	//	if (fRelVel >= 0.f) break; // already separating
 
 	//	_float fImpulse = -(1.f + m_Flight.fRestitution) * fRelVel
 	//		/ (1.f / fMassP + 1.f / fMassD);
 
-	//	// 드래곤 속도 변화 (질량이 크므로 거의 안 밀림)
+	//	// Dragon velocity change
 	//	m_vVelocity += vNormal * (fImpulse / fMassD);
 
-	//	// 플레이어 → Hit() 호출 (5 데미지, 넉백 임계 이하)
 	//	pPlayer->Hit(5.f);
-	//	break; // 첫 충돌만 처리
+	//	break; // process only first collision
 	//}
 
-	//// ── 꼬리 충돌 (TAIL_ATTACK: 피해 12 + 넉백) ────────────────────────
-	//if (m_eState == eEnderDragonState::TAIL_ATTACK)
-	//{
-	//	for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
-	//	{
-	//		if (!m_pTailCollider[i]) continue;
-	//		if (!m_pTailCollider[i]->IsColliding(tPlayerAABB)) continue;
+	//// ── Tail collision handled in Update_TailAttack (TAIL_ATTACK only) ──
 
-	//		pPlayer->Hit(12.f); // >= threshold(12) → 넉백 발동
-	//		break;
-	//	}
-	//}
-
-	//// ── 날개 충돌 (다운스트로크 시 넉백만, 경미한 피해) ──────────────────
+	//// ── Wing collision (knockback during downstroke) ──
 	//_float fCurSin = sinf(m_fWingTimer);
-	//if (m_fPrevSinVal > 0.f && fCurSin <= 0.f) // 다운스트로크 구간
+	//if (m_fPrevSinVal > 0.f && fCurSin <= 0.f) // downstroke phase
 	//{
 	//	for (int i = 0; i < ENDER_DRAGON_WING_COUNT; ++i)
 	//	{
 	//		if (!m_pWingLCollider[i]) continue;
 	//		if (!m_pWingLCollider[i]->IsColliding(tPlayerAABB)) continue;
 
-	//		pPlayer->Hit(12.f); // 넉백 트리거, 날개에 맞으면 날아감
+	//		pPlayer->Hit(12.f);
 	//		break;
 	//	}
 	//}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ImGui 디버그 패널
+// Collision - dragon vs dragon restitution
+// Usage (when multiple dragons exist, call pairwise once per frame in scene/manager):
+//   for (int a = 0; a < vecDragons.size(); ++a)
+//       for (int b = a+1; b < vecDragons.size(); ++b)
+//           vecDragons[a]->Check_DragonCollision(vecDragons[b]);
+// Currently only 1 dragon in scene, so no call site - API only.
+// ─────────────────────────────────────────────────────────────────────────────
+void CEnderDragon::Check_DragonCollision(CEnderDragon* pOther)
+{
+	if (!pOther || pOther == this) return;
+
+	// Only check front body (Spine 0~3) for performance
+	const int iCheckCount = 4;
+	for (int i = 0; i < iCheckCount; ++i)
+	{
+		if (!m_pSpineCollider[i]) continue;
+		AABB tMyAABB = m_pSpineCollider[i]->Get_AABB();
+
+		for (int j = 0; j < iCheckCount; ++j)
+		{
+			CCollider* pOtherCol = pOther->Get_SpineCollider(j);
+			if (!pOtherCol) continue;
+			if (!pOtherCol->IsColliding(tMyAABB)) continue;
+
+			// Collision detected! Compute restitution force
+			_vec3 vNormal = m_Spine[0].vPos - pOther->Get_SpineRoot();
+			_float fLen = D3DXVec3Length(&vNormal);
+			if (fLen < 0.01f)
+				vNormal = _vec3(1.f, 0.f, 0.f); // fallback
+			else
+				D3DXVec3Normalize(&vNormal, &vNormal);
+
+			// Relative velocity
+			_vec3 vRelVel = m_vVelocity - pOther->Get_Velocity();
+			_float fRelVelN = D3DXVec3Dot(&vRelVel, &vNormal);
+
+			if (fRelVelN >= 0.f) return; // already separating
+
+			// Impulse calculation
+			_float fMassA = m_Flight.fMass;
+			_float fMassB = pOther->Get_Mass();
+			_float fRestitution = m_Flight.fRestitution;
+
+			_float fImpulse = -(1.f + fRestitution) * fRelVelN
+				/ (1.f / fMassA + 1.f / fMassB);
+
+			// Apply impulse to both sides
+			m_vVelocity += vNormal * (fImpulse / fMassA);
+			pOther->Add_Impulse(vNormal * (-fImpulse / fMassB));
+
+			// Screen effect (light collision)
+			CScreenFX* pFX = CScreenFX::GetInstance();
+			if (pFX) pFX->Trigger_Wave(0.3f, 0.5f);
+
+			return; // once per frame only
+		}
+	}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ImGui debug panel
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Render_DebugPanel()
 {
@@ -1424,12 +1754,29 @@ void CEnderDragon::Render_DebugPanel()
 	ImGui::Text("HeadAngle: %.1f deg", Compute_HeadToPlayerAngleDeg());
 	ImGui::Separator();
 
-	// 물리 파라미터
+	// Physics parameters
 	ImGui::Text("-- Physics --");
 	ImGui::Text("Mass: %.1f  Gravity: %.1f", m_Flight.fMass, m_Flight.fGravity);
 	ImGui::Text("Lift: %.2f  Drag: %.2f", m_Flight.fLiftCoeff, m_Flight.fDragCoeff);
 	ImGui::Text("Thrust: %.1f  MaxSpeed: %.1f", m_Flight.fThrustForce, m_Flight.fMaxSpeed);
 	ImGui::Text("Restitution: %.2f", m_Flight.fRestitution);
+
+	ImGui::Separator();
+	ImGui::Text("-- State Debug Keys --");
+	ImGui::Text("H: IDLE  J: CIRCLE  K: TAIL  L: BREATH");
+
+	// IDLE detection info
+	if (m_eState == eEnderDragonState::IDLE)
+	{
+		ImGui::Text("DetectTimer: %.2f / %.2f", m_fDetectTimer, m_fDetectThreshold);
+		ImGui::Text("DetectRange: %.1f", m_fDetectRange);
+	}
+	// CIRCLE attack alternation info
+	if (m_eState == eEnderDragonState::CIRCLE_DIVE)
+	{
+		ImGui::Text("AttackPhase: %s", m_bCirclePhaseIsBeam ? "BEAM" : "VOIDFLAME");
+		ImGui::Text("AttackTimer: %.2f", m_fCircleAttackTimer);
+	}
 
 	if (ImGui::Button("Reload JSON (F5)"))
 		Load_DragonPatterns("Data/dragon_patterns.json");
@@ -1468,12 +1815,12 @@ void CEnderDragon::Free()
 	ReleaseChain(m_WingL, ENDER_DRAGON_WING_COUNT);
 	ReleaseChain(m_WingR, ENDER_DRAGON_WING_COUNT);
 
-	// 브래스 화염 해제
+	// Release breath flames
 	for (auto& pFlame : m_vecBreathFlames)
 		Safe_Release(pFlame);
 	m_vecBreathFlames.clear();
 
-	// 콜라이더 해제 (Gotcha #6: Safe_Release)
+	// Release colliders (Gotcha #6: Safe_Release)
 	for (int i = 0; i < ENDER_DRAGON_SPINE_COUNT; ++i)
 		Safe_Release(m_pSpineCollider[i]);
 	for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
@@ -1481,6 +1828,6 @@ void CEnderDragon::Free()
 	for (int i = 0; i < ENDER_DRAGON_WING_COUNT; ++i)
 		Safe_Release(m_pWingLCollider[i]);
 
-	// Gotcha #7: 베이스 호출은 반드시 마지막
+	// Gotcha #7: base class call must be last
 	CGameObject::Free();
 }

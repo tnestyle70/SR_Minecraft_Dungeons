@@ -31,6 +31,12 @@ public:
     void Trigger_VoidFlame(bool bActive);
     void Apply_VoidFlame(const D3DXMATRIX& matWVP, const D3DXMATRIX& matWV);
 
+    void Set_DragonBreath(bool bActive, const D3DXVECTOR2& vOriginUV,
+        const D3DXVECTOR2& vDirUV, float fRadiusUV, float fLengthUV);
+
+    ID3DXEffect* Get_Effect() const { return m_pEffect; }
+    IDirect3DTexture9* Get_NoiseTex() const { return m_pNoiseTex; }
+
 private:
     HRESULT Create_RenderTarget(_uint iW, _uint iH);
     HRESULT Create_DepthBuffer(_uint iW, _uint iH);
@@ -102,6 +108,14 @@ private:
     float m_fScreenH = 0.f;
 
     bool m_bReady = false;
+
+    // Dragon breath cone
+    bool    m_bDragonBreathActive = false;
+    float   m_fDBreathFadeIn     = 0.f;
+    D3DXVECTOR2 m_vBreathOriginUV = { 0.f, 0.f };
+    D3DXVECTOR2 m_vBreathDirUV    = { 0.f, 1.f };
+    float   m_fBreathRadiusUV     = 0.05f;
+    float   m_fBreathMaxLenUV     = 0.5f;
 
 public:
     virtual void Free() override;

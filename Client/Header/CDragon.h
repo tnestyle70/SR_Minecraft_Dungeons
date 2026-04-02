@@ -21,6 +21,7 @@ constexpr int DRAGON_NECK_COUNT = 3; //목
 constexpr int DRAGON_TAIL_COUNT = 6; //꼬리
 constexpr int DRAGON_WING_COUNT = 4; //날개 한 쪽 세그먼트
 
+
 enum class eDragonState
 {
 	IDLE, //순찰, 대기
@@ -61,11 +62,14 @@ public:
 	bool  Is_Ridden()     const { return m_bRidden; }
 	void  Set_Ridden(bool bVal) { m_bRidden = bVal; }
 	void  Force_Idle_State();   // CDragon.cpp에 구현
+	void  Void_Breath(bool bActivate);
 	//네트워크 원격 제어 API
 	void  Set_NetworkControlled(bool b) { m_bNetworkControlled = b; }
 	bool  Is_NetworkControlled()  const { return m_bNetworkControlled; }
 	void  Force_RootPos(const _vec3& vPos);
 	
+protected:
+	bool m_bBreathFiring = false;
 private:
 	bool m_bRidden = false;
 	bool m_bNetworkControlled = false;
