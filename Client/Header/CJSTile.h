@@ -20,6 +20,7 @@ public:
 
 private:
     HRESULT Add_Component();
+    HRESULT Set_Material();
 
 private:
     CJSCubeTex* m_pBufferCom;

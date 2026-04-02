@@ -31,5 +31,7 @@ namespace Engine
 	};
 
 	enum TILEID { TILE_NORMAL, TILE_EMPTY, TILE_OBSTACLE, TILE_END };
+
+	enum DIRECTION { DIR_FORWARD, DIR_LEFT, DIR_RIGHT, /*DIR_BACKWARD*/ DIR_END };
 }
 #endif // Engine_Enum_h__

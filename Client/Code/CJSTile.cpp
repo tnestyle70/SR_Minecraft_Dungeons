@@ -23,6 +23,7 @@ HRESULT CJSTile::Ready_GameObject(_vec3 vPos, TILEID eTileID)
 		return E_FAIL;
 
 	m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
+	m_pTransformCom->Set_Scale(2.f);
 	m_pTransformCom->Update_Component(0.f);
 
 	return S_OK;
@@ -47,13 +48,20 @@ void CJSTile::LateUpdate_GameObject(const _float& fTimeDelta)
 
 void CJSTile::Render_GameObject()
 {
-	m_pGraphicDev->SetTransform(D3DTS_WORLD, m_pTransformCom->Get_World());
+	m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
 
+	m_pGraphicDev->SetTransform(D3DTS_WORLD, m_pTransformCom->Get_World());
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+
 	m_pTextureCom->Set_Texture(0);
+
+	if (FAILED(Set_Material()))
+		return;
+
 	m_pBufferCom->Render_Buffer();
 
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+	m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE);
 }
 
 HRESULT CJSTile::Add_Component()
@@ -77,6 +85,23 @@ HRESULT CJSTile::Add_Component()
 	if (pComponent == nullptr)
 		return E_FAIL;
 	m_mapComponent[ID_STATIC].insert({ L"Com_Texture", pComponent });
+
+	return S_OK;
+}
+
+HRESULT CJSTile::Set_Material()
+{
+	D3DMATERIAL9			tMtrl;
+	ZeroMemory(&tMtrl, sizeof(D3DMATERIAL9));
+
+	tMtrl.Diffuse = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
+	tMtrl.Specular = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
+	tMtrl.Ambient = D3DXCOLOR(0.4f, 0.4f, 0.4f, 1.f);
+
+	tMtrl.Emissive = D3DXCOLOR(0.f, 0.f, 0.f, 0.f);
+	tMtrl.Power = 0.f;
+
+	m_pGraphicDev->SetMaterial(&tMtrl);
 
 	return S_OK;
 }

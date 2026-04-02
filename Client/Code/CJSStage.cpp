@@ -7,6 +7,9 @@
 #include "CJSPlayer.h"
 #include "CManagement.h"
 #include "CSoundMgr.h"
+#include "CLightMgr.h"
+#include "CJSScoreUI.h"
+#include "CJSScoreMgr.h"
 
 CJSStage::CJSStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -20,7 +23,7 @@ CJSStage::~CJSStage()
 HRESULT CJSStage::Ready_Scene()
 {
 	CSoundMgr::GetInstance()->StopAll();
-	CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_JSStage.wav", 0.6f);
+	CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_JSStage.wav", 0.8f);
 
 	if (FAILED(Ready_Light()))
 		return E_FAIL;
@@ -122,6 +125,14 @@ HRESULT CJSStage::Ready_UI_Layer(const _tchar* pLayerTag)
 
 	CGameObject* pGameObject = nullptr;
 
+	pGameObject = CJSScoreUI::Create(m_pGraphicDev);
+
+	if (!pGameObject)
+		return E_FAIL;
+
+	if (FAILED(pLayer->Add_GameObject(L"JSUI", pGameObject)))
+		return E_FAIL;
+
 	m_mapLayer.insert({ pLayerTag, pLayer });
 
 	return S_OK;
@@ -129,6 +140,20 @@ HRESULT CJSStage::Ready_UI_Layer(const _tchar* pLayerTag)
 
 HRESULT CJSStage::Ready_Light()
 {
+	D3DLIGHT9   tLightInfo;
+	ZeroMemory(&tLightInfo, sizeof(D3DLIGHT9));
+
+	tLightInfo.Type = D3DLIGHT_DIRECTIONAL;
+
+	tLightInfo.Diffuse = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
+	tLightInfo.Specular = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
+	tLightInfo.Ambient = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
+
+	tLightInfo.Direction = { 1.f, -1.f, 1.f };
+
+	if (FAILED(CLightMgr::GetInstance()->Ready_Light(m_pGraphicDev, &tLightInfo, 0)))
+		return E_FAIL;
+
 	return S_OK;
 }
 
@@ -138,11 +163,6 @@ void CJSStage::Clear_DeadObject(const _tchar* pLayerTag, const _float& fTimeDelt
 	if (iter != m_mapLayer.end())
 	{
 		iter->second->Delete_GameObject(fTimeDelta);
-
-		// 사이즈 확인
-		TCHAR szBuf[64];
-		wsprintf(szBuf, L"MapObject Size: %d", iter->second->Get_MapSize());
-		OutputDebugString(szBuf);
 	}
 }
 
@@ -162,6 +182,7 @@ CJSStage* CJSStage::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 
 void CJSStage::Free()
 {
+	CJSScoreMgr::DestroyInstance();
 	CJSChunkMgr::DestroyInstance();
 	CScene::Free();
 }

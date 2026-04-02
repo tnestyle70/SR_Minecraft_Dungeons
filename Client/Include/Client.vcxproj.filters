@@ -342,6 +342,21 @@
     <ClCompile Include="..\Code\CBreathFlame.cpp">
       <Filter>01. Scene\01. Stage\07. GB\04. Network\06. VoidFlame</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CJSEmerald.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSScoreUI.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSScoreMgr.cpp">
+      <Filter>03. Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSCornerChunk.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSBaseChunk.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -689,6 +704,21 @@
     </ClInclude>
     <ClInclude Include="..\Header\CBreathFlame.h">
       <Filter>01. Scene\01. Stage\07. GB\04. Network\06. VoidFlame</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSEmerald.h">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSScoreUI.h">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSScoreMgr.h">
+      <Filter>03. Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSCornerChunk.h">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSBaseChunk.h">
+      <Filter>02. GameObject\17. JS</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

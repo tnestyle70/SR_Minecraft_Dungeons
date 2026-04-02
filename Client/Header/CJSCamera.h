@@ -22,16 +22,9 @@ public:
 	virtual void	Render_GameObject() {}
 
 private:
-	void		Key_Input(const _float& fTimeDelta);
-	void		Mouse_Move();
-	void		Mouse_Fix();
 	void		Get_PlayerPos();
 
 private:
-	_float		m_fSpeed = 10.f;
-	_bool		m_bFix;
-	_bool		m_bCheck;
-
 	_vec3		m_vPlayerPos = { 0.f, 0.f, 0.f };
 
 public:

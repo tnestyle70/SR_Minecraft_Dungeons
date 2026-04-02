@@ -2,12 +2,13 @@
 #include "CJSChunk.h"
 #include "CRenderer.h"
 #include "CLayer.h"
+#include "CJSScoreMgr.h"
+#include "CSoundMgr.h"
 
-const _float CJSChunk::TILE_SIZE = 1.0f;
+const _float CJSChunk::TILE_SIZE = 2.0f;
 
 CJSChunk::CJSChunk(LPDIRECT3DDEVICE9 pGraphicDev)
-	: CGameObject(pGraphicDev)
-	, m_pLayer(nullptr)
+	: CJSBaseChunk(pGraphicDev)
 	, m_pTransformCom(nullptr)
     , m_eChunkType(CHUNK_FULL)
 {
@@ -17,10 +18,11 @@ CJSChunk::~CJSChunk()
 {
 }
 
-HRESULT CJSChunk::Ready_GameObject(_vec3 vPos, CLayer* pLayer, CHUNKTYPE eType)
+HRESULT CJSChunk::Ready_GameObject(_vec3 vPos, CLayer* pLayer, CHUNKTYPE eType, DIRECTION eDir)
 {
 	m_pLayer = pLayer;
     m_eChunkType = eType;
+    m_eDir = eDir;
 
 	if (FAILED(Add_Component()))
 		return E_FAIL;
@@ -30,6 +32,9 @@ HRESULT CJSChunk::Ready_GameObject(_vec3 vPos, CLayer* pLayer, CHUNKTYPE eType)
 
 	if (FAILED(Ready_Tile(vPos)))
 		return E_FAIL;
+
+    if (FAILED(Ready_Emerald(vPos)))
+        return E_FAIL;
 
 	return S_OK;
 }
@@ -57,23 +62,24 @@ HRESULT CJSChunk::Ready_Tile(_vec3 vChunkPos)
         for (_int x = 0; x < TILE_X; ++x)
         {
             _bool bWall = (x == 0 || x == 4);
+            _vec3 vTilePos = Calc_TilePos(vChunkPos, x, z);
 
             if (bWall)
             {
-                // y축 3칸, 아래, 중간, 위
                 for (_int y = 0; y <= 2; ++y)
                 {
-                    _vec3 vTilePos =
+                    if (m_eChunkType == CHUNK_GAP)
                     {
-                        vChunkPos.x + (x - 2) * TILE_SIZE,
-                        vChunkPos.y + y * TILE_SIZE,
-                        vChunkPos.z + z * TILE_SIZE
-                    };
+                        _int iMidZ = TILE_Z / 2;
+                        if (z >= iMidZ - 1 && z <= iMidZ + 1)
+                            continue;
+                    }
 
-                    CJSTile* pTile = CJSTile::Create(m_pGraphicDev, vTilePos, TILE_NORMAL);
-                    if (pTile == nullptr)
-                        return E_FAIL;
+                    _vec3 vWallPos = vTilePos;
+                    vWallPos.y = vChunkPos.y + y * TILE_SIZE;
 
+                    CJSTile* pTile = CJSTile::Create(m_pGraphicDev, vWallPos, TILE_NORMAL);
+                    if (!pTile) return E_FAIL;
                     m_pLayer->Add_GameObject(L"Tile", pTile);
                     m_vecWall.push_back(pTile);
                 }
@@ -81,32 +87,27 @@ HRESULT CJSChunk::Ready_Tile(_vec3 vChunkPos)
             else
             {
                 TILEID eTileID = TILE_NORMAL;
-
                 switch (m_eChunkType)
                 {
                 case CHUNK_LEFT:
-                    if (x != 1)
-                        eTileID = TILE_EMPTY;
+                    if (x != 1) eTileID = TILE_EMPTY;
                     break;
                 case CHUNK_RIGHT:
-                    if (x != 3)
+                    if (x != 3) eTileID = TILE_EMPTY;
+                    break;
+                case CHUNK_GAP:
+                {
+                    _int iMidZ = TILE_Z / 2;
+                    if (z >= iMidZ - 1 && z <= iMidZ + 1)
                         eTileID = TILE_EMPTY;
                     break;
+                }
                 default:
                     break;
                 }
 
-                _vec3 vTilePos =
-                {
-                    vChunkPos.x + (x - 2) * TILE_SIZE,
-                    vChunkPos.y,
-                    vChunkPos.z + z * TILE_SIZE
-                };
-
                 CJSTile* pTile = CJSTile::Create(m_pGraphicDev, vTilePos, eTileID);
-                if (pTile == nullptr)
-                    return E_FAIL;
-
+                if (!pTile) return E_FAIL;
                 m_pLayer->Add_GameObject(L"Tile", pTile);
                 m_vecTile.push_back(pTile);
             }
@@ -115,17 +116,97 @@ HRESULT CJSChunk::Ready_Tile(_vec3 vChunkPos)
     return S_OK;
 }
 
+HRESULT CJSChunk::Ready_Emerald(_vec3 vChunkPos)
+{
+    switch (m_eChunkType)
+    {
+    case CHUNK_FULL:
+        Ready_Emerald_Line(vChunkPos, 2);
+        break;
+
+    case CHUNK_LEFT:
+        //Ready_Emerald_Line(vChunkPos, 1);
+        break;
+
+    case CHUNK_RIGHT:
+        //Ready_Emerald_Line(vChunkPos, 3);
+        break;
+
+    case CHUNK_GAP:
+        Ready_Emerald_Parabola(vChunkPos);
+        break;
+
+    case CHUNK_END:
+        break;
+
+    default:
+        break;
+    }
+
+    return S_OK;
+}
+
+HRESULT CJSChunk::Ready_Emerald_Line(_vec3 vChunkPos, _int iX)
+{
+    for (_int z = 0; z < TILE_Z; z += 3)
+    {
+        _vec3 vPos =
+        {
+            vChunkPos.x + (iX - 2) * TILE_SIZE,
+            vChunkPos.y + 3.0f,
+            vChunkPos.z + z * TILE_SIZE
+        };
+
+        CJSEmerald* pEmerald = CJSEmerald::Create(m_pGraphicDev, vPos);
+
+        if (pEmerald == nullptr)
+            return E_FAIL;
+
+        m_pLayer->Add_GameObject(L"JSEmerald", pEmerald);
+        m_vecEmerald.push_back(pEmerald);
+    }
+
+    return S_OK;
+}
+
+HRESULT CJSChunk::Ready_Emerald_Parabola(_vec3 vChunkPos)
+{
+    _int iMidZ = TILE_Z / 2;
+
+    for (_int z = 0; z < TILE_Z; z += 3)
+    {
+        _float fT = (_float)(z - iMidZ) / (_float)iMidZ;  // -1 ~ +1
+        _float fParabolaY = 4.5f * (1.f - fT * fT);        // 최고점 4.5f
+
+        _vec3 vPos =
+        {
+            vChunkPos.x,           // 가운데 X
+            vChunkPos.y + 3.0f + fParabolaY,
+            vChunkPos.z + z * TILE_SIZE
+        };
+
+        CJSEmerald* pEmerald = CJSEmerald::Create(m_pGraphicDev, vPos);
+
+        if (pEmerald == nullptr)
+            return E_FAIL;
+
+        m_pLayer->Add_GameObject(L"JSEmerald", pEmerald);
+        m_vecEmerald.push_back(pEmerald);
+    }
+
+    return S_OK;
+}
+
 TILEID CJSChunk::Get_TileID(_vec3 vPlayerPos)
 {
     _vec3 vChunkPos;
     m_pTransformCom->Get_Info(INFO_POS, &vChunkPos);
 
-    // X 인덱스 (바닥 타일은 x=1,2,3 → 인덱스 0,1,2)
-    _int iX = (_int)((vPlayerPos.x - (vChunkPos.x - 1.f * TILE_SIZE)) / TILE_SIZE);
-    // Z 인덱스
-    _int iZ = (_int)((vPlayerPos.z - vChunkPos.z) / TILE_SIZE);
+    _float fSnappedX = roundf(vPlayerPos.x / TILE_SIZE) * TILE_SIZE;
 
-    // 범위 체크
+    _int iX = (_int)((fSnappedX - (vChunkPos.x - 1.f * TILE_SIZE)) / TILE_SIZE);
+    _int iZ = (_int)((vPlayerPos.z - vChunkPos.z) / TILE_SIZE);
+        
     if (iX < 0 || iX >= 3 || iZ < 0 || iZ >= TILE_Z)
         return TILE_EMPTY;
 
@@ -135,6 +216,47 @@ TILEID CJSChunk::Get_TileID(_vec3 vPlayerPos)
         return TILE_EMPTY;
 
     return m_vecTile[iIndex]->Get_TileID();
+}
+
+void CJSChunk::Check_Collect(_vec3 vPlayerPos)
+{
+    for (auto it = m_vecEmerald.begin(); it != m_vecEmerald.end();)
+    {
+        if ((*it)->Check_Collect(vPlayerPos))
+        {
+            (*it)->Set_Dead();
+
+            CJSScoreMgr::GetInstance()->Add_Score(1);
+
+            CSoundMgr::GetInstance()->PlayEffect(L"Emerald/sfx_item_emerald-001_soundWave.wav", 0.8f);
+
+            it = m_vecEmerald.erase(it);
+        }
+        else
+            ++it;
+    }
+}
+
+_vec3 CJSChunk::Get_EndPos()
+{
+    _vec3 vPos;
+    m_pTransformCom->Get_Info(INFO_POS, &vPos);
+
+    _float fChunkLength = TILE_SIZE * TILE_Z;
+
+    switch (m_eDir)
+    {
+    case DIR_FORWARD:
+        vPos.z += fChunkLength;
+        break;
+    case DIR_RIGHT:
+        vPos.x += fChunkLength;
+        break;
+    case DIR_LEFT:
+        vPos.x -= fChunkLength;
+        break;
+    }
+    return vPos;
 }
 
 HRESULT CJSChunk::Add_Component()
@@ -152,11 +274,37 @@ HRESULT CJSChunk::Add_Component()
 	return S_OK;
 }
 
-CJSChunk* CJSChunk::Create(LPDIRECT3DDEVICE9 pGraphicDev, _vec3 vPos, CLayer* pLayer, CHUNKTYPE eType)
+_vec3 CJSChunk::Calc_TilePos(_vec3 vChunkPos, _int x, _int z)
+{
+    _vec3 vPos = {};
+    vPos.y = vChunkPos.y;
+
+    switch (m_eDir)
+    {
+    case DIR_FORWARD:
+        vPos.x = vChunkPos.x + (x - 2) * TILE_SIZE;
+        vPos.z = vChunkPos.z + z * TILE_SIZE;
+        break;
+
+    case DIR_RIGHT:
+        vPos.x = vChunkPos.x + z * TILE_SIZE;
+        vPos.z = vChunkPos.z - (x - 2) * TILE_SIZE;
+        break;
+
+    case DIR_LEFT:
+        vPos.x = vChunkPos.x - z * TILE_SIZE;
+        vPos.z = vChunkPos.z + (x - 2) * TILE_SIZE;
+        break;
+    }
+
+    return vPos;
+}
+
+CJSChunk* CJSChunk::Create(LPDIRECT3DDEVICE9 pGraphicDev, _vec3 vPos, CLayer* pLayer, CHUNKTYPE eType, DIRECTION eDir)
 {
 	CJSChunk* pJSChunk = new CJSChunk(pGraphicDev);
 
-	if (FAILED(pJSChunk->Ready_GameObject(vPos, pLayer, eType)))
+	if (FAILED(pJSChunk->Ready_GameObject(vPos, pLayer, eType, eDir)))
 	{
 		Safe_Release(pJSChunk);
 		MSG_BOX("JSChunk Create Failed");
@@ -175,6 +323,10 @@ void CJSChunk::Free()
     for (auto& pWall : m_vecWall)
         pWall->Set_Dead();
     m_vecWall.clear();
+
+    for (auto& pEmerald : m_vecEmerald)
+        pEmerald->Set_Dead();
+    m_vecEmerald.clear();
 
     CGameObject::Free();
 }
