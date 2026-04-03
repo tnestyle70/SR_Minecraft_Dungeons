@@ -121,7 +121,7 @@ _int CCYPlayer::Update_GameObject(const _float& fTimeDelta)
         }
     }
 
-    // ¸¶¿ì½º Å¬¸¯ °ø°Ý
+    // ÁÂÅ¬¸¯ - Ä® °ø°Ý
     if (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
     {
         if (!m_bAtkInput)
@@ -135,8 +135,51 @@ _int CCYPlayer::Update_GameObject(const _float& fTimeDelta)
                 m_fComboTimer = m_fComboWindow;
             }
         }
-    } 
+    }
     else m_bAtkInput = false;
+
+    // ¿ìÅ¬¸¯ - È° ¹ß»ç
+    bool bRClick = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
+    if (bRClick)
+    {
+        m_bCharging = true;
+        m_fCharge += fTimeDelta;
+        if (m_fCharge > m_fMaxCharge)
+            m_fCharge = m_fMaxCharge;
+    }
+    else if (m_bCharging)
+    {
+        // Ä«¸Þ¶ó Look ¹æÇâÀ¸·Î ¹ß»ç
+        _matrix matView = m_pCamera->Get_ViewMatrix();
+        _matrix matCamWorld;
+        D3DXMatrixInverse(&matCamWorld, 0, &matView);
+
+        _vec3 vLook, vEye;
+        memcpy(&vLook, &matCamWorld.m[2][0], sizeof(_vec3));
+        memcpy(&vEye, &matCamWorld.m[3][0], sizeof(_vec3));
+        D3DXVec3Normalize(&vLook, &vLook);
+
+        _vec3 vFirePos = vEye + vLook * 0.5f;
+        CPlayerArrow* pArrow = CPlayerArrow::Create(m_pGraphicDev, vFirePos, vLook, 10.f);
+        if (pArrow)
+            m_vecArrows.push_back(pArrow);
+
+        m_fCharge = 0.f;
+        m_bCharging = false;
+    }
+
+    // È­»ì ¾÷µ¥ÀÌÆ®
+    for (auto& pArrow : m_vecArrows)
+        pArrow->Update_GameObject(fTimeDelta);
+
+    // Á×Àº È­»ì Á¦°Å
+    m_vecArrows.erase(
+        remove_if(m_vecArrows.begin(), m_vecArrows.end(),
+            [](CPlayerArrow* p) {
+                if (p->Is_Dead() && !p->Is_Exploding()) { Safe_Release(p); return true; }
+                return false;
+            }),
+        m_vecArrows.end());
 
     FPS_Gravity(fTimeDelta);
     FPS_BlockCollision();
@@ -258,65 +301,66 @@ void CCYPlayer::Render_GameObject()
     memcpy(&vUp, &matCamWorld.m[1][0], sizeof(_vec3));
     memcpy(&vLook, &matCamWorld.m[2][0], sizeof(_vec3));
     memcpy(&vEye, &matCamWorld.m[3][0], sizeof(_vec3));
-
     D3DXVec3Normalize(&vRight, &vRight);
     D3DXVec3Normalize(&vUp, &vUp);
     D3DXVec3Normalize(&vLook, &vLook);
 
-    // ±íÀÌ¹öÆÛ Å¬¸®¾î
     m_pGraphicDev->Clear(0, nullptr, D3DCLEAR_ZBUFFER, 0, 1.f, 0);
 
-    // Ä«¸Þ¶ó È¸Àü Çà·Ä
     _matrix matCamRot = matCamWorld;
     matCamRot._41 = 0.f; matCamRot._42 = 0.f;
     matCamRot._43 = 0.f; matCamRot._44 = 1.f;
 
-    // ÆÈ 90µµ ¾ÕÀ¸·Î
     _matrix matArmRot;
     D3DXMatrixRotationAxis(&matArmRot, &vRight, D3DXToRadian(-90.f));
 
-    // °ø°Ý ¸ð¼Ç
-    float fAtkX = 0.f;
-    if (m_iComboStep > 0)
-    {
-        float fRatio = min(m_fAtkTime / m_fAtkDuration, 1.f);
-        fAtkX = D3DXToRadian(-60.f * fRatio);
-    }
-    _matrix matAtkRot;
-    D3DXMatrixRotationAxis(&matAtkRot, &vRight, fAtkX);
+    float fRatio = (m_iComboStep > 0) ? min(m_fAtkTime / m_fAtkDuration, 1.f) : 0.f;
+
+    float fHandR = 0.28f + (-0.10f - 0.28f) * fRatio;
+    float fHandU = -0.15f + (-0.25f - (-0.15f)) * fRatio;
+    _vec3 vRHandPos = vEye + vRight * fHandR + vUp * fHandU + vLook * 0.4f;
 
     _matrix matScale, matTrans, matWorld;
 
-    // ===== ¿À¸¥ÆÈ =====
-    _vec3 vRHandPos = vEye + vRight * 0.15f - vUp * 0.1f + vLook * 0.4f;
+    // ===== ¿À¸¥¼Õ =====
     D3DXMatrixScaling(&matScale, 0.05f, 0.15f, 0.05f);
     D3DXMatrixTranslation(&matTrans, vRHandPos.x, vRHandPos.y, vRHandPos.z);
-    matWorld = matScale * matArmRot * matAtkRot * matCamRot * matTrans;
+    matWorld = matScale * matArmRot * matCamRot * matTrans;
     m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
     m_pHandTextureCom->Set_Texture(0);
     m_pHandBufferCom->Render_Buffer();
 
-    // Ä® - °ã°ãÀÌ + matArmRot Á¦°Å·Î ¼¼¿ö¼­ ·»´õ
+    // ===== Ä® =====
     if (m_pSwordBufferCom && m_pSwordTextureCom)
     {
+        _vec3 vLocalRight = { 1.f, 0.f, 0.f };
+        _vec3 vLocalUp = { 0.f, 1.f, 0.f };
+
+        float fSwingX = D3DXToRadian(-30.f + (-90.f - (-30.f)) * fRatio);
+        float fSwingZ = D3DXToRadian(20.f + (-50.f - 20.f) * fRatio);
+
+        _matrix matSwingX, matSwingZ, matSwing;
+        D3DXMatrixRotationAxis(&matSwingX, &vLocalRight, fSwingX);
+        D3DXMatrixRotationAxis(&matSwingZ, &vLocalUp, fSwingZ);
+        matSwing = matSwingX * matSwingZ;
+
+        _matrix matSwordScale, matSwordRotX, matPivot;
+        D3DXMatrixScaling(&matSwordScale, 0.08f, 0.4f, 0.08f);
+        D3DXMatrixRotationAxis(&matSwordRotX, &vLocalRight, D3DXToRadian(90.f));
+        D3DXMatrixTranslation(&matPivot, 0.f, 0.f, 0.3f);
+
         m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
         m_pGraphicDev->SetRenderState(D3DRS_ALPHAREF, 128);
         m_pGraphicDev->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
         m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
         m_pSwordTextureCom->Set_Texture(0);
 
-        _matrix matSwordScale, matSwordRotY;
-        D3DXMatrixScaling(&matSwordScale, 0.08f, 0.4f, 0.08f);
-        D3DXMatrixRotationAxis(&matSwordRotY, &vUp, D3DXToRadian(90.f));
-
-        int iLayerCount = 8;
-        for (int i = 0; i < iLayerCount; ++i)
+        for (int i = 0; i < 8; ++i)
         {
-            float fOffset = (i - iLayerCount * 0.5f) * 0.004f;
-            _vec3 vSwordPos = vRHandPos + vRight * fOffset + vLook * 0.3f + vUp * 0.2f;
+            float fOffset = (i - 4.f) * 0.004f;
+            _vec3 vSwordPos = vRHandPos + vRight * fOffset;
             D3DXMatrixTranslation(&matTrans, vSwordPos.x, vSwordPos.y, vSwordPos.z);
-            // matArmRot Á¦°Å ¡æ Ä®ÀÌ ¼¼¿öÁü
-            matWorld = matSwordScale * matSwordRotY * matAtkRot * matCamRot * matTrans;
+            matWorld = matSwordScale * matSwordRotX * matPivot * matSwing * matCamRot * matTrans;
             m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
             m_pSwordBufferCom->Render_Buffer();
         }
@@ -325,10 +369,11 @@ void CCYPlayer::Render_GameObject()
         m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
     }
 
-    // ===== ¿ÞÆÈ =====
+    // ===== ¿Þ¼Õ + È° =====
+    // ===== ¿Þ¼Õ + È° =====
     if (m_pLeftHandBufferCom)
     {
-        _vec3 vLHandPos = vEye - vRight * 0.15f - vUp * 0.1f + vLook * 0.4f;
+        _vec3 vLHandPos = vEye - vRight * 0.28f - vUp * 0.18f + vLook * 0.4f;
         D3DXMatrixScaling(&matScale, 0.05f, 0.15f, 0.05f);
         D3DXMatrixTranslation(&matTrans, vLHandPos.x, vLHandPos.y, vLHandPos.z);
         matWorld = matScale * matArmRot * matCamRot * matTrans;
@@ -336,26 +381,26 @@ void CCYPlayer::Render_GameObject()
         m_pHandTextureCom->Set_Texture(0);
         m_pLeftHandBufferCom->Render_Buffer();
 
-        // È° - °ã°ãÀÌ ·»´õ
+        // È° ·»´õ¸µ - ¿ø·¡ ¹æ½Ä
         if (m_pBowBufferCom && m_pBowTextureCom)
         {
+            _matrix matBowScale, matBowRotY, matBowRotX;
+            D3DXMatrixScaling(&matBowScale, 0.18f, 0.18f, 0.18f);
+            D3DXMatrixRotationAxis(&matBowRotY, &vUp, D3DXToRadian(90.f));
+            D3DXMatrixRotationAxis(&matBowRotX, &vRight, D3DXToRadian(20.f));
+
             m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
             m_pGraphicDev->SetRenderState(D3DRS_ALPHAREF, 128);
             m_pGraphicDev->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
             m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
             m_pBowTextureCom->Set_Texture(0);
 
-            _matrix matBowScale, matBowRotY;
-            D3DXMatrixScaling(&matBowScale, 0.18f, 0.18f, 0.18f);
-            D3DXMatrixRotationAxis(&matBowRotY, &vUp, D3DXToRadian(90.f));
-
-            int iLayerCount = 8;
-            for (int i = 0; i < iLayerCount; ++i)
+            for (int i = 0; i < 8; ++i)
             {
-                float fOffset = (i - iLayerCount * 0.5f) * 0.004f;
+                float fOffset = (i - 4.f) * 0.004f;
                 _vec3 vBowPos = vLHandPos + vRight * fOffset + vLook * 0.2f;
                 D3DXMatrixTranslation(&matTrans, vBowPos.x, vBowPos.y, vBowPos.z);
-                matWorld = matBowScale * matBowRotY * matCamRot * matTrans;
+                matWorld = matBowScale * matBowRotX * matBowRotY * matCamRot * matTrans;
                 m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
                 m_pBowBufferCom->Render_Buffer();
             }
@@ -365,8 +410,15 @@ void CCYPlayer::Render_GameObject()
         }
     }
 
+    // È­»ì ·»´õ¸µ
+    m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE);
+    for (auto& pArrow : m_vecArrows)
+        pArrow->Render_GameObject();
+    m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
+
     m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 }
+
 CCYPlayer* CCYPlayer::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 {
     CCYPlayer* pPlayer = new CCYPlayer(pGraphicDev);
@@ -381,5 +433,8 @@ CCYPlayer* CCYPlayer::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 
 void CCYPlayer::Free()
 {
+    for (auto& pArrow : m_vecArrows)
+        Safe_Release(pArrow);
+    m_vecArrows.clear();
     CGameObject::Free();
 }

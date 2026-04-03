@@ -12,6 +12,7 @@
 #include "CRedStoneGolem.h"
 #include "CAncientGuardian.h"
 #include "CSoundMgr.h"
+#include "CEnderEye.h"
 
 CPlayer::CPlayer(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -1219,13 +1220,52 @@ void CPlayer::Combat_Input(const _float& fTimeDelta)
 
 			if (!bAimedGuardian)
 			{
-				_vec3 vDir = vPickPos - vPos;
-				vDir.y = 0.f;
-				if (D3DXVec3Length(&vDir) > 0.1f)
+				// EnderEye 피킹 체크
+				bool bAimedEye = false;
+				for (auto* pEye : m_vecEnderEyes)
 				{
-					D3DXVec3Normalize(&vDir, &vDir);
-					m_vBowDir = vDir;
-					m_pTransformCom->m_vAngle.y = D3DXToDegree(atan2f(vDir.x, vDir.z)) + 180.f;
+					if (!pEye || !pEye->Is_Flickering()) continue;
+
+					CTransform* pEyeTrans = dynamic_cast<CTransform*>
+						(pEye->Get_Component(ID_DYNAMIC, L"Com_Transform"));
+					if (!pEyeTrans) continue;
+
+					_vec3 vEyePos;
+					pEyeTrans->Get_Info(INFO_POS, &vEyePos);
+
+					_vec3 vToEye = { vEyePos.x - vPos.x, 0.f, vEyePos.z - vPos.z };
+					_vec3 vToPick = { vPickPos.x - vPos.x, 0.f, vPickPos.z - vPos.z };
+					D3DXVec3Normalize(&vToEye, &vToEye);
+					D3DXVec3Normalize(&vToPick, &vToPick);
+
+					float fDot = D3DXVec3Dot(&vToEye, &vToPick);
+					if (fDot > 0.3f)
+					{
+						_vec3 vDir = vEyePos - vPos;
+						if (D3DXVec3Length(&vDir) > 0.1f)
+						{
+							D3DXVec3Normalize(&vDir, &vDir);
+							m_vBowDir = vDir;
+							_vec3 vDirH = { vDir.x, 0.f, vDir.z };
+							if (D3DXVec3Length(&vDirH) > 0.01f)
+								m_pTransformCom->m_vAngle.y =
+								D3DXToDegree(atan2f(vDirH.x, vDirH.z)) + 180.f;
+							bAimedEye = true;
+							break;
+						}
+					}
+				}
+
+				if (!bAimedEye)
+				{
+					_vec3 vDir = vPickPos - vPos;
+					vDir.y = 0.f;
+					if (D3DXVec3Length(&vDir) > 0.1f)
+					{
+						D3DXVec3Normalize(&vDir, &vDir);
+						m_vBowDir = vDir;
+						m_pTransformCom->m_vAngle.y = D3DXToDegree(atan2f(vDir.x, vDir.z)) + 180.f;
+					}
 				}
 			}
 		}

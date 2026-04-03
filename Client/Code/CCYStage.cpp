@@ -33,15 +33,23 @@ CCYStage::~CCYStage()
 
 HRESULT CCYStage::Ready_Scene()
 {
+    // 폰트 생성
+    D3DXCreateFont(m_pGraphicDev, 40, 0, FW_BOLD, 1, FALSE,
+        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY,
+        DEFAULT_PITCH | FF_DONTCARE, L"Arial", &m_pFont);
+
+    // 몬스터 사망 이벤트 구독
+    CEventBus::GetInstance()->Subscribe(eEventType::MONSTER_DEAD, this,
+        [this](const FGameEvent& event) {
+            Add_Time(5.f);
+        });
+
     if (FAILED(Ready_Light()))
         return E_FAIL;
-
     if (FAILED(Ready_Environment_Layer(L"Environment_Layer")))
         return E_FAIL;
-
     if (FAILED(Ready_GameLogic_Layer(L"GameLogic_Layer")))
         return E_FAIL;
-
     if (FAILED(Ready_UI_Layer(L"UI_Layer")))
         return E_FAIL;
 
@@ -58,6 +66,25 @@ _int CCYStage::Update_Scene(const _float& fTimeDelta)
         return 0;
 
     _int iExit = CScene::Update_Scene(fTimeDelta);
+
+    // 타이머 업데이트
+    if (!m_bGameOver)
+    {
+        m_fTimer -= fTimeDelta;
+        if (m_fTimer <= 0.f)
+        {
+            m_fTimer = 0.f;
+            m_bGameOver = true;
+        }
+    }
+
+    // +5초 표시 타이머
+    if (m_bShowAddTime)
+    {
+        m_fAddTimeShow -= fTimeDelta;
+        if (m_fAddTimeShow <= 0.f)
+            m_bShowAddTime = false;
+    }
 
     CBlockMgr::GetInstance()->Update(fTimeDelta);
     CTriggerBoxMgr::GetInstance()->Update(fTimeDelta);
@@ -130,6 +157,26 @@ void CCYStage::Render_UI()
         CInventoryMgr::GetInstance()->Render();
         return;
     }
+
+    if (!m_pFont) return;
+
+    // 타이머 - 오른쪽 상단
+    TCHAR szTimer[32];
+    wsprintf(szTimer, L"%d", (int)m_fTimer);
+
+    RECT rcTimer = { WINCX - 120, 20, WINCX - 20, 80 };
+    D3DCOLOR color = (m_fTimer <= 3.f) ?
+        D3DCOLOR_ARGB(255, 255, 50, 50) :
+        D3DCOLOR_ARGB(255, 255, 255, 255);
+    m_pFont->DrawText(nullptr, szTimer, -1, &rcTimer, DT_CENTER | DT_VCENTER, color);
+
+    // +5초 표시
+    if (m_bShowAddTime)
+    {
+        RECT rcAdd = { WINCX - 150, 80, WINCX - 20, 130 };
+        m_pFont->DrawText(nullptr, L"+5", -1, &rcAdd,
+            DT_CENTER | DT_VCENTER, D3DCOLOR_ARGB(255, 100, 255, 100));
+    }
 }
 
 HRESULT CCYStage::Ready_Environment_Layer(const _tchar* pLayerTag)
@@ -156,18 +203,14 @@ HRESULT CCYStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
     CLayer* pLayer = CLayer::Create();
     if (!pLayer) return E_FAIL;
 
-    // CCYPlayer 생성
     m_pCYPlayer = CCYPlayer::Create(m_pGraphicDev);
     if (!m_pCYPlayer) return E_FAIL;
 
     if (FAILED(pLayer->Add_GameObject(L"Player", m_pCYPlayer)))
         return E_FAIL;
 
-    // 카메라 시작 위치를 플레이어 시작 위치로 설정
-    // (CCYCamera는 독립적으로 움직이므로 초기 위치만 맞춰줌)
-
-    // 카메라 ↔ 플레이어 연결
     m_pCYPlayer->Set_Camera(m_pCYCamera);
+    
 
     m_mapLayer.insert({ pLayerTag, pLayer });
 
@@ -362,6 +405,14 @@ CCYStage* CCYStage::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 
 void CCYStage::Free()
 {
+    CEventBus::GetInstance()->Unsubscribe(eEventType::MONSTER_DEAD, this);
+
+    if (m_pFont)
+    {
+        m_pFont->Release();
+        m_pFont = nullptr;
+    }
+
     m_vecTorches.clear();
     CScene::Free();
 }

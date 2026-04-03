@@ -51,25 +51,6 @@ _int CCYCamera::Update_GameObject(const _float& fTimeDelta)
 
     // 카메라 이동
     Free_Move(fTimeDelta);
-
-    // 1인칭 모드일 때 플레이어 Y 반영
-    if (m_pCYPlayer && !m_bFreeMode)
-    {
-        Engine::CTransform* pTrans = m_pCYPlayer->Get_Transform();
-        if (pTrans)
-        {
-            _vec3 vPlayerPos;
-            pTrans->Get_Info(INFO_POS, &vPlayerPos);
-
-            // At의 현재 Look 방향 유지
-            _vec3 vLook = m_vAt - m_vEye;
-
-            // 카메라 Y = 플레이어 Y + 눈높이
-            m_vEye.y = vPlayerPos.y + 1.7f;
-            m_vAt = m_vEye + vLook;
-        }
-    }
-
     FPS_MouseRotate();
 
     // 마우스 중앙 고정
@@ -81,6 +62,26 @@ _int CCYCamera::Update_GameObject(const _float& fTimeDelta)
     }
 
     return CCamera::Update_GameObject(fTimeDelta);
+}
+
+void CCYCamera::LateUpdate_GameObject(const _float& fTimeDelta)
+{ 
+    if (m_pCYPlayer && !m_bFreeMode)
+    {
+
+        Engine::CTransform* pTrans = m_pCYPlayer->Get_Transform();
+        if (pTrans)
+        {
+            _vec3 vPlayerPos;
+            pTrans->Get_Info(INFO_POS, &vPlayerPos);
+            _vec3 vLook = m_vAt - m_vEye;
+            m_vEye.y = vPlayerPos.y + 1.7f;
+            m_vAt = m_vEye + vLook;
+            D3DXMatrixLookAtLH(&m_matView, &m_vEye, &m_vAt, &m_vUp);
+            m_pGraphicDev->SetTransform(D3DTS_VIEW, &m_matView);
+        }
+    }
+    CCamera::LateUpdate_GameObject(fTimeDelta);
 }
 
 void CCYCamera::FPS_MouseRotate()

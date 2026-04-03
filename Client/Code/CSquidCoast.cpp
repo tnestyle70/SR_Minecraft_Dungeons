@@ -92,7 +92,8 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 	
 	CJumpingTrapMgr::GetInstance()->Update(fTimeDelta);
 
-	CParticleMgr::GetInstance()->Update(fTimeDelta);
+	CParticleMgr::GetInstance()->Update(fTimeDelta); 
+
 
 	//CCMiniMap::GetInstance()->Update(fTimeDelta);
 
@@ -192,7 +193,9 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 			return -1;
 		}
 		return iExit;
-	}
+	} 
+
+	Update_EnderEyes();
 
 	auto iter = m_mapLayer.find(L"GameLogic_Layer");
 
@@ -260,6 +263,41 @@ void CSquidCoast::Render_UI()
 	}
 }
 
+void CSquidCoast::Update_EnderEyes()
+{
+	if (m_vecEnderEyes.empty() || !m_pPlayer || m_bGuardianSpawned) return;
+
+	// 4개 전부 꺼졌는지 확인
+	int iOffCount = 0;
+	for (auto* pEye : m_vecEnderEyes)
+	{
+		if (!pEye->Is_Flickering())
+			++iOffCount;
+	}
+
+	if (iOffCount >= (int)m_vecEnderEyes.size())
+	{
+		m_bGuardianSpawned = true;
+
+		CLayer* pLayer = m_mapLayer[L"GameLogic_Layer"];
+		if (!pLayer) return;
+
+		CGameObject* pGuardian = CAncientGuardian::Create(
+			m_pGraphicDev, _vec3(42.f, 9.f, 229.f));
+		if (!pGuardian) return;
+
+		CAncientGuardian* pAG = dynamic_cast<CAncientGuardian*>(pGuardian);
+		if (pAG)
+		{
+			m_pPlayer->Set_Guardian(pAG);
+			CDamageMgr::GetInstance()->Set_Guardian(pAG);
+			CMonsterMgr::GetInstance()->AddGuardian(pAG);
+		}
+
+		pLayer->Add_GameObject(L"AncientGuardian", pGuardian);
+	}
+}
+
 HRESULT CSquidCoast::Ready_Environment_Layer(const _tchar* pLayerTag)
 {
 	CLayer* pLayer = CLayer::Create();
@@ -323,7 +361,8 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	if (FAILED(pLayer->Add_GameObject(L"Player", pGameObject)))
 		return E_FAIL;
 
-	CPlayer* pPlayer = dynamic_cast<CPlayer*>(pGameObject);
+	CPlayer* pPlayer = dynamic_cast<CPlayer*>(pGameObject); 
+	m_pPlayer = pPlayer;
 
 	//JumpingTrap
 	CJumpingTrapMgr::GetInstance()->Set_Player(pPlayer);
@@ -456,21 +495,21 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
 
-	//Ancient Guardian
-	pGameObject = CAncientGuardian::Create(m_pGraphicDev, _vec3(42.f, 9.f, 229.f));
-	if (!pGameObject)
-		return E_FAIL;
-
-	CAncientGuardian* pGuardian = dynamic_cast<CAncientGuardian*>(pGameObject);
-	if (pGuardian && pPlayer)
-	{
-		pPlayer->Set_Guardian(pGuardian);
-		CDamageMgr::GetInstance()->Set_Guardian(pGuardian);
-		CMonsterMgr::GetInstance()->AddGuardian(pGuardian);
-	}
-
-	if (FAILED(pLayer->Add_GameObject(L"AncientGuardian", pGameObject)))
-		return E_FAIL;
+	////Ancient Guardian
+	//pGameObject = CAncientGuardian::Create(m_pGraphicDev, _vec3(42.f, 9.f, 229.f));
+	//if (!pGameObject)
+	//	return E_FAIL;
+	//
+	//CAncientGuardian* pGuardian = dynamic_cast<CAncientGuardian*>(pGameObject);
+	//if (pGuardian && pPlayer)
+	//{
+	//	pPlayer->Set_Guardian(pGuardian);
+	//	CDamageMgr::GetInstance()->Set_Guardian(pGuardian);
+	//	CMonsterMgr::GetInstance()->AddGuardian(pGuardian);
+	//}
+	//
+	//if (FAILED(pLayer->Add_GameObject(L"AncientGuardian", pGameObject)))
+	//	return E_FAIL;
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
 
@@ -627,6 +666,17 @@ HRESULT CSquidCoast::Ready_ObjectData(const char* pFileName)
 			break;
 		case OBJECT_ENDEREYE:
 			pObj = CEnderEye::Create(m_pGraphicDev);
+			if (pObj)
+			{
+				CEnderEye* pEye = dynamic_cast<CEnderEye*>(pObj);
+				if (pEye)
+				{
+					pEye->Set_Player(m_pPlayer);
+					pEye->Start_Flicker();
+					m_vecEnderEyes.push_back(pEye); 
+					m_pPlayer->Add_EnderEye(pEye);
+				}
+			}
 			break;
 		case OBJECT_TORCH:
 			pObj = CTorch::Create(m_pGraphicDev);
