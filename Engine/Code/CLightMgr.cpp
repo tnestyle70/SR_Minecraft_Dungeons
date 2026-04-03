@@ -24,6 +24,18 @@ HRESULT CLightMgr::Ready_Light(LPDIRECT3DDEVICE9 pGraphicDev,
     return S_OK;
 }
 
+CLight* CLightMgr::Get_Light(const _uint& iIndex)
+{
+    _uint i = 0;
+    for (auto& pLight : m_LightList)
+    {
+        if (i == iIndex)
+            return pLight;
+        ++i;
+    }
+    return nullptr;
+}
+
 void CLightMgr::Free()
 {
     for_each(m_LightList.begin(), m_LightList.end(), CDeleteObj());

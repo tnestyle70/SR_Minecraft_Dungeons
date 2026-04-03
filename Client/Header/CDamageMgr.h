@@ -1,10 +1,10 @@
 #pragma once
 #include "CBase.h"
 #include "CProtoMgr.h"
+#include "CEnderDragon.h"
 
 class CAncientGuardian;
 class CRedStoneGolem;
-
 
 struct DAMAGE_TEXT
 {
@@ -36,10 +36,16 @@ public:
 
 	void Set_Guardian(CAncientGuardian* pGuardian) { m_pGuardian = pGuardian; }
 	void Set_RedStone(CRedStoneGolem* pGolem) { m_pRedStoneGolem = pGolem; }
+	void Set_EnderDragon(CEnderDragon* pEnderDragon) { m_pEnderDragon = pEnderDragon; }
 
 	void Clear_Boss();
 	void Clear_Guardian();
 	void Clear_RedStone();
+	void Clear_EnderDragon();
+
+public:
+	CEnderDragon* Get_EnderDragon();
+
 private:
 	HRESULT Add_Component();
 
@@ -49,7 +55,8 @@ private:
 
 	CAncientGuardian* m_pGuardian = nullptr;
 	CRedStoneGolem* m_pRedStoneGolem = nullptr;
-
+	CEnderDragon* m_pEnderDragon = nullptr;
+	
 	CTexture* m_pHealthBar = nullptr;
 	CTexture* m_pEmptyHealthBar = nullptr;
 	CRcTex* m_pBufferCom = nullptr;

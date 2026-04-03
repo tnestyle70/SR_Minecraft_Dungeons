@@ -147,7 +147,7 @@ HRESULT CCamp::Ready_Environment_Layer(const _tchar* pLayerTag)
 	if (!pDynamicCam)
 		return E_FAIL;
 
-	pDynamicCam->SetActionCam();
+	//pDynamicCam->SetActionCam();
 
 	if (!pGameObject)
 		return E_FAIL;

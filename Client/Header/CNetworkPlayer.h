@@ -8,6 +8,7 @@
 #include "CPlayer.h"
 #include "CDragon.h"
 #include "CVoidFlame.h"
+#include "CDynamicCamera.h"
 
 class CMonster;
 class CRedStoneGolem;
@@ -40,12 +41,18 @@ private:
 
 public:
 	const vector<CPlayerArrow*>& Get_Arrows() const { return m_vecArrows; }
-
+	const vector<CVoidFlame*>& Get_Flames() const{ return m_vecVoidFlames; }
+	
 	void Set_DragonList(CDragon** ppDragons, int iCount);
+	void Set_Camera(CDynamicCamera* pCam) { m_pDynamicCamera = pCam; }
 	bool Is_Riding() const { return m_bRiding; }
+
+	CCollider* Get_Collider() { return m_pColliderCom; }
+	
 private:
 	void Sync_ToMountedDragon();
 
+	CDynamicCamera* m_pDynamicCamera = nullptr;
 	CDragon* m_pMountedDragon = nullptr;
 	CDragon* m_pDragonList[4] = {};
 	int      m_iDragonCount = 0;
