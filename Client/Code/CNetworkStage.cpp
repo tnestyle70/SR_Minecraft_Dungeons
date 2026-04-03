@@ -24,6 +24,7 @@
 #include "CDragon.h"
 #include "CLightMgr.h"
 #include "CSoundMgr.h"
+#include "CDamageMgr.h"
 
 CNetworkStage::CNetworkStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -296,10 +297,13 @@ void CNetworkStage::Render_Scene()
 		if (pRemote && pRemote->Get_Collider())
 			pRemote->Get_Collider()->Render_Collider();
 	}
+
+	Render_LightPanel();
 }
 
 void CNetworkStage::Render_UI()
-{}
+{
+}
 
 HRESULT CNetworkStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 {
@@ -310,19 +314,24 @@ HRESULT CNetworkStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 
 	CGameObject* pGameObject = nullptr;
 
-	//dynamic camera 
+	//dynamic camera
 
-	_vec3 vEye{ 0.f, 10.f, -10.f };
+	_vec3 vEye{ 0.f, 20.f, -10.f };
 	_vec3 vAt{ 0.f, 0.f, 1.f };
 	_vec3 vUp{ 0.f, 1.f, 0.f };
-
+	
 	m_pDynamicCamera = CDynamicCamera::Create(m_pGraphicDev, &vEye, &vAt, &vUp);
 	pGameObject = m_pDynamicCamera;
 
 	CDynamicCamera* pDynamicCam = dynamic_cast<CDynamicCamera*>(pGameObject);
 	if (!pDynamicCam)
 		return E_FAIL;
-	pDynamicCam->SetActionCam();
+	
+	pDynamicCam->SetActionCam(eActionCamType::GB_STAGE);
+	
+	//카메라 오프셋 설정
+	_vec3 vOffset = { -12.f, 30.f, -12.f };
+	pDynamicCam->SetFollowOffset(vOffset);
 
 	if (!pGameObject)
 		return E_FAIL;
@@ -388,18 +397,6 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 			return E_FAIL;
 	}
 
-	m_pEnderDragon = CEnderDragon::Create(m_pGraphicDev);
-	if (!m_pEnderDragon)
-	{
-		MSG_BOX("Ender Dragon Create Failed");
-		return E_FAIL;
-	}
-	_vec3 vEnderDragonSpawn = { 10.f, 10.f, 10.f };
-	m_pEnderDragon->Set_RootPos(vEnderDragonSpawn);
-
-	if (FAILED(pLayer->Add_GameObject(L"EnderDragon", m_pEnderDragon)))
-		return E_FAIL;
-
 	//Player
 	pGameObject = CNetworkPlayer::Create(m_pGraphicDev);
 
@@ -410,6 +407,22 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	CNetworkPlayer* pPlayer = dynamic_cast<CNetworkPlayer*>(pGameObject);
+
+	m_pEnderDragon = CEnderDragon::Create(m_pGraphicDev);
+	if (!m_pEnderDragon)
+	{
+		MSG_BOX("Ender Dragon Create Failed");
+		return E_FAIL;
+	}
+	_vec3 vEnderDragonSpawn = { 366.f, 10.f, -19.f };
+	m_pEnderDragon->Set_SpawnPos(vEnderDragonSpawn);
+	m_pEnderDragon->Set_Player(pPlayer);
+
+	if (FAILED(pLayer->Add_GameObject(L"EnderDragon", m_pEnderDragon)))
+		return E_FAIL;
+
+	//DamageMgr
+	CDamageMgr::GetInstance()->Set_EnderDragon(m_pEnderDragon);
 
 	//HUD
 	pGameObject = CHUD::Create(m_pGraphicDev);
@@ -457,6 +470,9 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		// 드래곤 리스트 전달 (탑승 인식용)
 		m_pLocalPlayer->Set_DragonList(m_pDragon, 4);
 
+		// 카메라 참조 전달 (탑승 시 카메라 전환용)
+		m_pLocalPlayer->Set_Camera(m_pDynamicCamera);
+
 		// Day 9: 피격 HP 갱신을 위해 네트워크 매니저에 로컬 플레이어 등록
 		CNetworkMgr::GetInstance()->SetLocalPlayer(m_pLocalPlayer);
 	}
@@ -496,14 +512,20 @@ HRESULT CNetworkStage::Ready_UI_Layer(const _tchar* pLayerTag)
 HRESULT CNetworkStage::Ready_Light()
 {
 	D3DLIGHT9   tLightInfo;
+
+
 	ZeroMemory(&tLightInfo, sizeof(D3DLIGHT9));
+
 	tLightInfo.Type = D3DLIGHT_DIRECTIONAL;
-	tLightInfo.Diffuse = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
-	tLightInfo.Specular = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
-	tLightInfo.Ambient = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
-	tLightInfo.Direction = { 1.f, -1.f, 1.f };
+	tLightInfo.Diffuse = D3DXCOLOR(1.0f, 0.95f, 0.85f, 1.f);  // 약간 따뜻한 햇빛
+	tLightInfo.Specular = D3DXCOLOR(1.0f, 1.0f, 0.9f, 1.f);  // 반짝임도 살짝 따뜻하게
+	tLightInfo.Ambient = D3DXCOLOR(0.3f, 0.35f, 0.45f, 1.f);  // 그림자 영역은 푸른 톤
+	tLightInfo.Direction = { 0.5f, -0.7f, 0.5f };                   // 좀 더 위에서 내려오게
+	//tLightInfo.Direction = { 0.7f, -0.9f, 0.f };
+
 	if (FAILED(CLightMgr::GetInstance()->Ready_Light(m_pGraphicDev, &tLightInfo, 0)))
 		return E_FAIL;
+
 	return S_OK;
 }
 
@@ -587,6 +609,26 @@ CNetworkStage* CNetworkStage::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 	}
 
 	return pRedStone;
+}
+
+void CNetworkStage::Render_LightPanel()
+{
+	CLight* pLight = CLightMgr::GetInstance()->Get_Light(0);
+	if (!pLight)
+		return;
+
+	D3DLIGHT9* pInfo = pLight->Get_LightInfo();
+
+	ImGui::Begin("Light Tuning");
+
+	ImGui::ColorEdit4("Diffuse", (float*)&pInfo->Diffuse);
+	ImGui::ColorEdit4("Specular", (float*)&pInfo->Specular);
+	ImGui::ColorEdit4("Ambient", (float*)&pInfo->Ambient);
+	ImGui::DragFloat3("Direction", (float*)&pInfo->Direction, 0.01f, -1.f, 1.f);
+
+	pLight->Apply_Light();
+
+	ImGui::End();
 }
 
 void CNetworkStage::Free()

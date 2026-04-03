@@ -4,7 +4,7 @@
 #include "CManagement.h"
 #include "CDInputMgr.h"
 #include "CMonsterMgr.h"
-#include "CPlayer.h"
+#include "CNetworkPlayer.h"
 #include "CVoidFlame.h"
 #include "CBreathFlame.h"
 #include "CCollider.h"
@@ -13,11 +13,12 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include "CFontMgr.h"
 
 using json = nlohmann::json;
 
 // Patrol waypoints - scaled for Ender Dragon size
-static const _vec3 s_PatrolPoints[] =
+static const _vec3 s_PatrolOffsets[] =
 {
 	_vec3(30.f, 22.f,  30.f),
 	_vec3(-30.f, 24.f,  30.f),
@@ -30,20 +31,6 @@ static const _vec3 s_PatrolPoints[] =
 // ─────────────────────────────────────────────────────────────────────────────
 CEnderDragon::CEnderDragon(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
-	, m_vMoveTarget(0.f, 18.f, 20.f)
-	, m_vVelocity(0.f, 0.f, 0.f)
-	, m_fMoveSpeed(28.f)
-	, m_fWingTimer(0.f)
-	, m_fWingSpeed(3.2f)
-	, m_fWingAmp(D3DX_PI * 0.38f)
-	, m_eState(eEnderDragonState::IDLE)
-	, m_fStateTimer(0.f)
-	, m_iPatrolIndex(0)
-	, m_fTailSwingTimer(0.f)
-	, m_fTailSwingAmp(D3DX_PI * 0.8f)
-	, m_vInputForward(0.f, 0.f, 1.f)
-	, m_vInputRight(1.f, 0.f, 0.f)
-	, m_vPlayerPos(0.f, 0.f, 0.f)
 {
 	ZeroMemory(m_Spine, sizeof(m_Spine));
 	ZeroMemory(m_Neck, sizeof(m_Neck));
@@ -62,20 +49,6 @@ CEnderDragon::CEnderDragon(LPDIRECT3DDEVICE9 pGraphicDev)
 
 CEnderDragon::CEnderDragon(const CEnderDragon& rhs)
 	: CGameObject(rhs)
-	, m_vMoveTarget(rhs.m_vMoveTarget)
-	, m_vVelocity(rhs.m_vVelocity)
-	, m_fMoveSpeed(rhs.m_fMoveSpeed)
-	, m_fWingTimer(rhs.m_fWingTimer)
-	, m_fWingSpeed(rhs.m_fWingSpeed)
-	, m_fWingAmp(rhs.m_fWingAmp)
-	, m_eState(rhs.m_eState)
-	, m_fStateTimer(rhs.m_fStateTimer)
-	, m_iPatrolIndex(rhs.m_iPatrolIndex)
-	, m_fTailSwingTimer(rhs.m_fTailSwingTimer)
-	, m_fTailSwingAmp(rhs.m_fTailSwingAmp)
-	, m_vInputForward(rhs.m_vInputForward)
-	, m_vInputRight(rhs.m_vInputRight)
-	, m_vPlayerPos(rhs.m_vPlayerPos)
 {
 	ZeroMemory(m_Spine, sizeof(m_Spine));
 	ZeroMemory(m_Neck, sizeof(m_Neck));
@@ -104,10 +77,12 @@ HRESULT CEnderDragon::Ready_GameObject()
 
 	for (_int i = 0; i < DRAGON_NECK_COUNT; ++i)
 		m_Neck[i].qRot = DirToQuaternion(m_Neck[i].vDir);
+
 	m_Head.qRot = DirToQuaternion(m_Head.vDir);
 
 	m_pTextureCom = dynamic_cast<CTexture*>(
-		CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_ObsidianPngTexture"));
+		CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_StoneBrickTexture"));
+
 	if (!m_pTextureCom)
 	{
 		MSG_BOX("Dragon Texture Clone Failed");
@@ -147,190 +122,21 @@ HRESULT CEnderDragon::Ready_GameObject()
 	return S_OK;
 }
 
-HRESULT CEnderDragon::Create_BoneBuffer(DRAGON_BONE& bone,
-	_float fW, _float fH, _float fD, const FACE_UV& uv)
-{
-	CUBE cube{};
-	cube.fWidth = fW;
-	cube.fHeight = fH;
-	cube.fDepth = fD;
-	cube.front = cube.back = cube.top = cube.bottom = cube.left = cube.right = uv;
-
-	bone.pBuffer = CCubeBodyTex::Create(m_pGraphicDev, cube);
-	if (!bone.pBuffer) { MSG_BOX("Dragon BoneBuffer Create Failed"); return E_FAIL; }
-	D3DXMatrixIdentity(&bone.matWorld);
-	return S_OK;
-}
-
-HRESULT CEnderDragon::Create_FlexBoneBuffer(DRAGON_BONE& bone, const MESH& mesh)
-{
-	bone.pBuffer = CFlexibleCubeTex::Create(m_pGraphicDev, mesh);
-	if (!bone.pBuffer) { MSG_BOX("Dragon Flexible BoneBuffer Create Failed"); return E_FAIL; }
-	D3DXMatrixIdentity(&bone.matWorld);
-	return S_OK;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Init: Spine chain (9 bones, larger than original 7)
-// ─────────────────────────────────────────────────────────────────────────────
-HRESULT CEnderDragon::Init_SpineChain()
-{
-	// Index 0 = neck end (front), 8 = tail end (back)
-	const _float fW[ENDER_DRAGON_SPINE_COUNT] = { 3.2f, 3.0f, 2.8f, 2.6f, 2.4f, 2.1f, 1.8f, 1.5f, 1.2f };
-	const _float fH[ENDER_DRAGON_SPINE_COUNT] = { 2.4f, 2.2f, 2.0f, 1.9f, 1.8f, 1.6f, 1.4f, 1.2f, 0.9f };
-	const _float fD[ENDER_DRAGON_SPINE_COUNT] = { 2.4f, 2.2f, 2.0f, 1.9f, 1.8f, 1.6f, 1.4f, 1.2f, 0.9f };
-	const _float fBoneLen = 2.0f;
-
-	FACE_UV uv = { 0.f, 0.f, 1.f, 1.f };
-
-	for (int i = 0; i < ENDER_DRAGON_SPINE_COUNT; ++i)
-	{
-		m_Spine[i].vPos = _vec3(0.f, 0.f, -(_float)i * fBoneLen);
-		m_Spine[i].vDir = _vec3(0.f, 0.f, 1.f);
-		m_Spine[i].fBoneLen = fBoneLen;
-		if (FAILED(Create_BoneBuffer(m_Spine[i], fW[i], fH[i], fD[i], uv))) return E_FAIL;
-	}
-	return S_OK;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Init: Neck (5 bones) + Head
-// ─────────────────────────────────────────────────────────────────────────────
-HRESULT CEnderDragon::Init_NeckAndHead()
-{
-	const _float fNeckLen = 1.6f;
-	FACE_UV uv = { 0.f, 0.f, 1.f, 1.f };
-
-	// Neck thickness: tapers from root toward head
-	const _float fNW[ENDER_DRAGON_NECK_COUNT] = { 1.4f, 1.2f, 1.0f, 0.85f, 0.7f };
-	const _float fNH[ENDER_DRAGON_NECK_COUNT] = { 1.3f, 1.1f, 0.95f, 0.8f, 0.65f };
-
-	for (int i = 0; i < ENDER_DRAGON_NECK_COUNT; ++i)
-	{
-		_vec3 vBase = m_Spine[0].vPos;
-		m_Neck[i].vPos = _vec3(
-			vBase.x,
-			vBase.y + (_float)(i + 1) * 0.5f,
-			vBase.z + (_float)(i + 1) * fNeckLen);
-		m_Neck[i].vDir = _vec3(0.f, 0.f, 1.f);
-		m_Neck[i].fBoneLen = fNeckLen;
-		if (FAILED(Create_BoneBuffer(m_Neck[i], fNW[i], fNH[i], 1.4f, uv))) return E_FAIL;
-	}
-
-	// Head - attached at neck end
-	_vec3 vNeckEnd = m_Neck[ENDER_DRAGON_NECK_COUNT - 1].vPos;
-	m_Head.vPos = _vec3(vNeckEnd.x, vNeckEnd.y + 0.5f, vNeckEnd.z + fNeckLen);
-	m_Head.vDir = _vec3(0.f, 0.f, 1.f);
-	m_Head.fBoneLen = 2.4f;
-	if (FAILED(Create_BoneBuffer(m_Head, 2.4f, 1.8f, 2.6f, uv))) return E_FAIL;
-
-	return S_OK;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Init: Tail chain (8 bones)
-// ─────────────────────────────────────────────────────────────────────────────
-HRESULT CEnderDragon::Init_TailChain()
-{
-	_vec3 vBase = m_Spine[ENDER_DRAGON_SPINE_COUNT - 1].vPos;
-	const _float fTailLen = 1.4f;
-	FACE_UV uv = { 0.f, 0.f, 1.f, 1.f };
-
-	for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
-	{
-		_float fScale = 1.f - (_float)i * 0.10f;
-		m_Tail[i].vPos = _vec3(vBase.x, vBase.y, vBase.z - (_float)(i + 1) * fTailLen);
-		m_Tail[i].vDir = _vec3(0.f, 0.f, -1.f);
-		m_Tail[i].fBoneLen = fTailLen;
-		if (FAILED(Create_BoneBuffer(m_Tail[i],
-			fScale * 1.4f, fScale * 1.4f, fScale * 1.4f, uv))) return E_FAIL;
-	}
-	return S_OK;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Init: Wings (6 segments, blade taper)
-// ─────────────────────────────────────────────────────────────────────────────
-HRESULT CEnderDragon::Init_WingChains()
-{
-	_vec3 vWingRoot = m_Spine[2].vPos;
-	const _float fWingLen = 3.0f;
-	const _float hd = fWingLen * 0.5f; // half local Z depth
-	FACE_UV uv = { 0.f, 0.f, 1.f, 1.f };
-
-	// fwd < 0 : +X blade tip (upward edge)
-	// bkd     : back edge (gentle taper)
-	// hh      : half thickness
-	struct BladeFace { float fwd, bkd, hh; };
-
-	// outer[i] = inner[i+1] -> ensures seam continuity between segments
-	const BladeFace inner[ENDER_DRAGON_WING_COUNT] = {
-		{ -5.6f, 0.80f, 0.18f },  // [0] root (widest)
-		{ -4.8f, 0.68f, 0.15f },  // [1]
-		{ -4.0f, 0.56f, 0.12f },  // [2]
-		{ -3.0f, 0.42f, 0.09f },  // [3]
-		{ -2.0f, 0.28f, 0.06f },  // [4]
-		{ -1.0f, 0.16f, 0.03f },  // [5]
-	};
-	const BladeFace outer[ENDER_DRAGON_WING_COUNT] = {
-		{ -4.8f, 0.68f, 0.15f },  // outer[0] = inner[1] ✓
-		{ -4.0f, 0.56f, 0.12f },  // outer[1] = inner[2] ✓
-		{ -3.0f, 0.42f, 0.09f },  // outer[2] = inner[3] ✓
-		{ -2.0f, 0.28f, 0.06f },  // outer[3] = inner[4] ✓
-		{ -1.0f, 0.16f, 0.03f },  // outer[4] = inner[5] ✓
-		{ -0.05f, 0.06f, 0.01f }, // outer[5] = blade tip
-	};
-
-	for (_int i = 0; i < ENDER_DRAGON_WING_COUNT; ++i)
-	{
-		_float fOfs = (_float)(i + 1) * fWingLen;
-		_float fZFwdR = (_float)i * (-0.5f); // right wing: -Z toward tip
-		_float fZFwdL = (_float)i * (+0.5f); // left wing: opposite direction
-
-		m_WingL[i].vPos = _vec3(vWingRoot.x - fOfs, vWingRoot.y, vWingRoot.z + fZFwdL);
-		m_WingL[i].vDir = _vec3(-1.f, 0.f, 0.f);
-		m_WingL[i].fBoneLen = fWingLen;
-
-		m_WingR[i].vPos = _vec3(vWingRoot.x + fOfs, vWingRoot.y, vWingRoot.z + fZFwdR);
-		m_WingR[i].vDir = _vec3(1.f, 0.f, 0.f);
-		m_WingR[i].fBoneLen = fWingLen;
-
-		// Corner indices:
-		// [0..3] tip side (Z=+hd)   [4..7] body side (Z=-hd)
-		MESH mesh{};
-		mesh.front = mesh.back = mesh.top = mesh.bottom = mesh.right = mesh.left = uv;
-
-		const BladeFace& o = outer[i]; // tip side (narrow)
-		const BladeFace& n = inner[i]; // body side (wide)
-
-		mesh.corners[0] = { -o.fwd, +o.hh, +hd };
-		mesh.corners[1] = { +o.bkd, +o.hh, +hd };
-		mesh.corners[2] = { +o.bkd, -o.hh, +hd };
-		mesh.corners[3] = { -o.fwd, -o.hh, +hd };
-		mesh.corners[4] = { +n.bkd, +n.hh, -hd };
-		mesh.corners[5] = { -n.fwd, +n.hh, -hd };
-		mesh.corners[6] = { -n.fwd, -n.hh, -hd };
-		mesh.corners[7] = { +n.bkd, -n.hh, -hd };
-
-		// Left wing: X mirror + restore CCW winding
-		MESH meshL = mesh;
-		for (auto& c : meshL.corners) c.x = -c.x;
-		std::swap(meshL.corners[0], meshL.corners[1]);
-		std::swap(meshL.corners[2], meshL.corners[3]);
-		std::swap(meshL.corners[4], meshL.corners[5]);
-		std::swap(meshL.corners[6], meshL.corners[7]);
-
-		if (FAILED(Create_FlexBoneBuffer(m_WingL[i], meshL))) return E_FAIL;
-		if (FAILED(Create_FlexBoneBuffer(m_WingR[i], mesh)))  return E_FAIL;
-	}
-	return S_OK;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Update
 // ─────────────────────────────────────────────────────────────────────────────
 _int CEnderDragon::Update_GameObject(const _float& fTimeDelta)
 {
+	//죽었으면 Dissolve 이후 소멸
+	if (m_bDead)
+	{
+		//Dissolve();
+		return -1; 
+	}
+
+	//데미지 체크
+	Check_Hit();
+	
 	// Clamp fTimeDelta: prevent first-frame spike during scene load
 	const _float dt = min(fTimeDelta, 0.05f);
 
@@ -495,11 +301,22 @@ void CEnderDragon::Render_GameObject()
 
 	// ImGui debug panel
 	Render_DebugPanel();
+
+	//Boss Name, HealthBar Rendering
+	if (m_eState != eEnderDragonState::IDLE)
+	{
+		_vec2 vPos{ 500.f, 10.f };
+		CFontMgr::GetInstance()->Render_Font(
+			L"Font_Minecraft", L"Ender Dragon", &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+	}
 }
 
-void CEnderDragon::Set_RootPos(const _vec3 vPos)
+void CEnderDragon::Set_SpawnPos(const _vec3 vPos)
 {
-
+	m_vSpawnPos = vPos;
+	m_Spine[0].vPos = vPos;
+	m_vMoveTarget = vPos;
+	m_vVelocity = _vec3(0.f, 0.f, 0.f);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -651,11 +468,13 @@ void CEnderDragon::Update_IDLE(const _float& fTimeDelta)
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_Attack(const _float& fTimeDelta)
 {
-	CComponent* pCom = CManagement::GetInstance()->Get_Component(
-		ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
-	if (!pCom) return;
+	if (m_fDisEngageRange < DistToPlayer())
+	{
+		Transition_State(eEnderDragonState::IDLE);
+		return;
+	}
 
-	CTransform* pTransform = dynamic_cast<CTransform*>(pCom);
+	CTransform* pTransform = m_pPlayer->Get_Transform();
 	if (pTransform) pTransform->Get_Info(INFO_POS, &m_vPlayerPos);
 
 	m_vMoveTarget = m_vPlayerPos + _vec3(0.f, 4.f, 0.f);
@@ -681,6 +500,11 @@ void CEnderDragon::Update_Attack(const _float& fTimeDelta)
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_BREATH(const _float& fTimeDelta)
 {
+	if (m_fDisEngageRange < DistToPlayer())
+	{
+		Transition_State(eEnderDragonState::IDLE);
+		return;
+	}
 	// Update player position
 	CComponent* pCom = CManagement::GetInstance()->Get_Component(
 		ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
@@ -695,7 +519,7 @@ void CEnderDragon::Update_BREATH(const _float& fTimeDelta)
 
 	// CVoidFlame spawn (0.15s interval)
 	m_fBreathTimer += fTimeDelta;
-	if (m_fBreathTimer >= 0.15f)
+	if (m_fBreathTimer >= 1.5f)
 	{
 		m_fBreathTimer = 0.f;
 		_vec3 vDir = m_vPlayerPos - m_Head.vPos;
@@ -703,7 +527,7 @@ void CEnderDragon::Update_BREATH(const _float& fTimeDelta)
 		if (fLen > 0.01f)
 		{
 			D3DXVec3Normalize(&vDir, &vDir);
-			float fDamage = m_fBreathDmgPerSec * 0.15f;
+			float fDamage = m_fBreathDmgPerSec * 1.5f;
 			CVoidFlame* pFlame = CVoidFlame::Create(m_pGraphicDev, m_Head.vPos, vDir, fDamage);
 			if (pFlame)
 				m_vecBreathFlames.push_back(pFlame);
@@ -718,6 +542,11 @@ void CEnderDragon::Update_BREATH(const _float& fTimeDelta)
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_CIRCLE_DIVE(const _float& fTimeDelta)
 {
+	if (m_fDisEngageRange < DistToPlayer())
+	{
+		Transition_State(eEnderDragonState::IDLE);
+		return;
+	}
 	// Update player position
 	CComponent* pCom = CManagement::GetInstance()->Get_Component(
 		ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
@@ -814,13 +643,12 @@ void CEnderDragon::Update_CIRCLE_DIVE(const _float& fTimeDelta)
 void CEnderDragon::Update_TailAttack(const _float& fTimeDelta)
 {
 	// Update player position
-	CComponent* pCom = CManagement::GetInstance()->Get_Component(
-		ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
-	if (pCom)
-	{
-		CTransform* pTrans = dynamic_cast<CTransform*>(pCom);
-		if (pTrans) pTrans->Get_Info(INFO_POS, &m_vPlayerPos);
-	}
+	if (!m_pPlayer)
+		return;
+	CCollider* pCollider = m_pPlayer->Get_Collider();
+	CTransform* pTransform = m_pPlayer->Get_Transform();
+	
+	pTransform->Get_Info(INFO_POS, &m_vPlayerPos);
 
 	m_fTailSwingTimer += fTimeDelta;
 
@@ -840,42 +668,29 @@ void CEnderDragon::Update_TailAttack(const _float& fTimeDelta)
 		m_Flight.vAccumForce += vDir * fSteerMag;
 	}
 
-	// Tail swing positioning done in Apply_TailSwingPostChain (after Solve_FollowLeader)
+	 //── Tail hit detection (colliders updated after Apply_TailSwingPostChain) ──
+	AABB tPlayerAABB = pCollider->Get_AABB();
 
-	// ── Tail hit detection (colliders updated after Apply_TailSwingPostChain) ──
-	//if (!m_bTailHitApplied)
-	//{
-	//	CPlayer* pPlayer = CMonsterMgr::GetInstance()->Get_Player();
-	//	if (pPlayer)
-	//	{
-	//		CCollider* pPlayerCol = dynamic_cast<CCollider*>(
-	//			pPlayer->Get_Component(ID_STATIC, L"Com_Collider"));
-	//		if (pPlayerCol)
-	//		{
-	//			AABB tPlayerAABB = pPlayerCol->Get_AABB();
-	//			for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
-	//			{
-	//				if (!m_pTailCollider[i]) continue;
-	//				if (m_pTailCollider[i]->IsColliding(tPlayerAABB))
-	//				{
-	//					pPlayer->Hit(12.f); // triggers knockback
-	//					m_bTailHitApplied = true;
+	for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
+	{
+		if (!m_pTailCollider[i]) continue;
+		if (m_pTailCollider[i]->IsColliding(tPlayerAABB))
+		{
+			m_pPlayer->Hit(12.f); // triggers knockback
+			m_bTailHitApplied = true;
 
-	//					// Screen effects
-	//					CScreenFX* pFX = CScreenFX::GetInstance();
-	//					if (pFX)
-	//					{
-	//						pFX->Trigger_GlassBreak(1.0f, 0.4f);
-	//						pFX->Trigger_Noise(0.8f, 0.5f);
-	//						pFX->Trigger_Hit(1.0f);
-	//					}
-	//					break;
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
-
+			// Screen effects
+			CScreenFX* pFX = CScreenFX::GetInstance();
+			if (pFX)
+			{
+				pFX->Trigger_GlassBreak(1.0f, 0.4f);
+				pFX->Trigger_Noise(0.8f, 0.5f);
+				pFX->Trigger_Hit(1.0f);
+			}
+			break;
+		}
+	}
+	
 	// ── Time expired -> return to CIRCLE ──
 	if (m_fStateTimer >= m_fTailAttackDuration)
 	{
@@ -1336,6 +1151,95 @@ void CEnderDragon::Force_RootPos(const _vec3& vPos)
 	m_vVelocity = _vec3(0.f, 0.f, 0.f);
 }
 
+void CEnderDragon::Take_Damage(int iDamage)
+{
+	m_iHP -= iDamage; 
+
+	if (m_iHP <= 0)
+	{
+		m_bDead = true;
+		m_iHP = 0;
+	}
+}
+
+void CEnderDragon::Check_Hit()
+{
+	if (!m_pPlayer)
+		return;
+
+	for (auto& pArrow : m_pPlayer->Get_Arrows())
+	{
+		if (pArrow->Is_Dead())
+			continue;
+
+		CCollider* pArrowCollider = dynamic_cast<CCollider*>(
+			pArrow->Get_Component(ID_STATIC, L"Com_Collider"));
+
+		if (!pArrowCollider)
+			continue;
+
+		for (int i = 0; i < (int)ENDER_DRAGON_SPINE_COUNT; ++i)
+		{
+			if (m_pSpineCollider[i]->IsColliding(pArrowCollider->Get_AABB()))
+			{
+				Take_Damage(5.f);
+			}
+		}
+
+		for (int i = 0; i < (int)ENDER_DRAGON_TAIL_COUNT; ++i)
+		{
+			if (m_pTailCollider[i]->IsColliding(pArrowCollider->Get_AABB()))
+			{
+				Take_Damage(5.f);
+			}
+		}
+
+		for (int i = 0; i < (int)ENDER_DRAGON_WING_COUNT; ++i)
+		{
+			if (m_pWingLCollider[i]->IsColliding(pArrowCollider->Get_AABB()))
+			{
+				Take_Damage(5.f);
+			}
+		}		
+	}
+
+	for (auto& pArrow : m_pPlayer->Get_Flames())
+	{
+		if (pArrow->Is_Dead())
+			continue;
+
+		CCollider* pArrowCollider = dynamic_cast<CCollider*>(
+			pArrow->Get_Component(ID_STATIC, L"Com_Collider"));
+
+		if (!pArrowCollider)
+			continue;
+
+		for (int i = 0; i < (int)ENDER_DRAGON_SPINE_COUNT; ++i)
+		{
+			if (m_pSpineCollider[i]->IsColliding(pArrowCollider->Get_AABB()))
+			{
+				Take_Damage(5.f);
+			}
+		}
+
+		for (int i = 0; i < (int)ENDER_DRAGON_TAIL_COUNT; ++i)
+		{
+			if (m_pTailCollider[i]->IsColliding(pArrowCollider->Get_AABB()))
+			{
+				Take_Damage(5.f);
+			}
+		}
+
+		for (int i = 0; i < (int)ENDER_DRAGON_WING_COUNT; ++i)
+		{
+			if (m_pWingLCollider[i]->IsColliding(pArrowCollider->Get_AABB()))
+			{
+				Take_Damage(5.f);
+			}
+		}
+	}
+}
+
 void CEnderDragon::Handle_Input(const _float& fTimeDelta)
 {
 	// F5 -> JSON runtime reload
@@ -1416,15 +1320,9 @@ void CEnderDragon::Handle_Input(const _float& fTimeDelta)
 
 _float CEnderDragon::DistToPlayer() const
 {
-	CComponent* pComp = CManagement::GetInstance()->Get_Component(
-		ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
-	if (!pComp) return FLT_MAX;
-
-	CTransform* pTrans = dynamic_cast<CTransform*>(pComp);
-	if (!pTrans) return FLT_MAX;
-
+	CTransform* pTransform = m_pPlayer->Get_Transform();
 	_vec3 vPlayerPos;
-	pTrans->Get_Info(INFO_POS, &vPlayerPos);
+	pTransform->Get_Info(INFO_POS, &vPlayerPos);
 	return D3DXVec3Length(&(vPlayerPos - m_Spine[0].vPos));
 }
 
@@ -1731,6 +1629,186 @@ void CEnderDragon::Check_DragonCollision(CEnderDragon* pOther)
 		}
 	}
 }
+
+HRESULT CEnderDragon::Create_BoneBuffer(DRAGON_BONE& bone,
+	_float fW, _float fH, _float fD, const FACE_UV& uv)
+{
+	CUBE cube{};
+	cube.fWidth = fW;
+	cube.fHeight = fH;
+	cube.fDepth = fD;
+	cube.front = cube.back = cube.top = cube.bottom = cube.left = cube.right = uv;
+
+	bone.pBuffer = CCubeBodyTex::Create(m_pGraphicDev, cube);
+	if (!bone.pBuffer) { MSG_BOX("Dragon BoneBuffer Create Failed"); return E_FAIL; }
+	D3DXMatrixIdentity(&bone.matWorld);
+	return S_OK;
+}
+
+HRESULT CEnderDragon::Create_FlexBoneBuffer(DRAGON_BONE& bone, const MESH& mesh)
+{
+	bone.pBuffer = CFlexibleCubeTex::Create(m_pGraphicDev, mesh);
+	if (!bone.pBuffer) { MSG_BOX("Dragon Flexible BoneBuffer Create Failed"); return E_FAIL; }
+	D3DXMatrixIdentity(&bone.matWorld);
+	return S_OK;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Init: Spine chain (9 bones, larger than original 7)
+// ─────────────────────────────────────────────────────────────────────────────
+HRESULT CEnderDragon::Init_SpineChain()
+{
+	// Index 0 = neck end (front), 8 = tail end (back)
+	const _float fW[ENDER_DRAGON_SPINE_COUNT] = { 3.2f, 3.0f, 2.8f, 2.6f, 2.4f, 2.1f, 1.8f, 1.5f, 1.2f };
+	const _float fH[ENDER_DRAGON_SPINE_COUNT] = { 2.4f, 2.2f, 2.0f, 1.9f, 1.8f, 1.6f, 1.4f, 1.2f, 0.9f };
+	const _float fD[ENDER_DRAGON_SPINE_COUNT] = { 2.4f, 2.2f, 2.0f, 1.9f, 1.8f, 1.6f, 1.4f, 1.2f, 0.9f };
+	const _float fBoneLen = 2.0f;
+
+	FACE_UV uv = { 0.f, 0.f, 1.f, 1.f };
+
+	for (int i = 0; i < ENDER_DRAGON_SPINE_COUNT; ++i)
+	{
+		m_Spine[i].vPos = _vec3(0.f, 0.f, -(_float)i * fBoneLen);
+		m_Spine[i].vDir = _vec3(0.f, 0.f, 1.f);
+		m_Spine[i].fBoneLen = fBoneLen;
+		if (FAILED(Create_BoneBuffer(m_Spine[i], fW[i], fH[i], fD[i], uv))) return E_FAIL;
+	}
+	return S_OK;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Init: Neck (5 bones) + Head
+// ─────────────────────────────────────────────────────────────────────────────
+HRESULT CEnderDragon::Init_NeckAndHead()
+{
+	const _float fNeckLen = 1.6f;
+	FACE_UV uv = { 0.f, 0.f, 1.f, 1.f };
+
+	// Neck thickness: tapers from root toward head
+	const _float fNW[ENDER_DRAGON_NECK_COUNT] = { 1.4f, 1.2f, 1.0f, 0.85f, 0.7f };
+	const _float fNH[ENDER_DRAGON_NECK_COUNT] = { 1.3f, 1.1f, 0.95f, 0.8f, 0.65f };
+
+	for (int i = 0; i < ENDER_DRAGON_NECK_COUNT; ++i)
+	{
+		_vec3 vBase = m_Spine[0].vPos;
+		m_Neck[i].vPos = _vec3(
+			vBase.x,
+			vBase.y + (_float)(i + 1) * 0.5f,
+			vBase.z + (_float)(i + 1) * fNeckLen);
+		m_Neck[i].vDir = _vec3(0.f, 0.f, 1.f);
+		m_Neck[i].fBoneLen = fNeckLen;
+		if (FAILED(Create_BoneBuffer(m_Neck[i], fNW[i], fNH[i], 1.4f, uv))) return E_FAIL;
+	}
+
+	// Head - attached at neck end
+	_vec3 vNeckEnd = m_Neck[ENDER_DRAGON_NECK_COUNT - 1].vPos;
+	m_Head.vPos = _vec3(vNeckEnd.x, vNeckEnd.y + 0.5f, vNeckEnd.z + fNeckLen);
+	m_Head.vDir = _vec3(0.f, 0.f, 1.f);
+	m_Head.fBoneLen = 2.4f;
+	if (FAILED(Create_BoneBuffer(m_Head, 2.4f, 1.8f, 2.6f, uv))) return E_FAIL;
+
+	return S_OK;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Init: Tail chain (8 bones)
+// ─────────────────────────────────────────────────────────────────────────────
+HRESULT CEnderDragon::Init_TailChain()
+{
+	_vec3 vBase = m_Spine[ENDER_DRAGON_SPINE_COUNT - 1].vPos;
+	const _float fTailLen = 1.4f;
+	FACE_UV uv = { 0.f, 0.f, 1.f, 1.f };
+
+	for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
+	{
+		_float fScale = 1.f - (_float)i * 0.10f;
+		m_Tail[i].vPos = _vec3(vBase.x, vBase.y, vBase.z - (_float)(i + 1) * fTailLen);
+		m_Tail[i].vDir = _vec3(0.f, 0.f, -1.f);
+		m_Tail[i].fBoneLen = fTailLen;
+		if (FAILED(Create_BoneBuffer(m_Tail[i],
+			fScale * 1.4f, fScale * 1.4f, fScale * 1.4f, uv))) return E_FAIL;
+	}
+	return S_OK;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Init: Wings (6 segments, blade taper)
+// ─────────────────────────────────────────────────────────────────────────────
+HRESULT CEnderDragon::Init_WingChains()
+{
+	_vec3 vWingRoot = m_Spine[2].vPos;
+	const _float fWingLen = 3.0f;
+	const _float hd = fWingLen * 0.5f; // half local Z depth
+	FACE_UV uv = { 0.f, 0.f, 1.f, 1.f };
+
+	// fwd < 0 : +X blade tip (upward edge)
+	// bkd     : back edge (gentle taper)
+	// hh      : half thickness
+	struct BladeFace { float fwd, bkd, hh; };
+
+	// outer[i] = inner[i+1] -> ensures seam continuity between segments
+	const BladeFace inner[ENDER_DRAGON_WING_COUNT] = {
+		{ -5.6f, 0.80f, 0.18f },  // [0] root (widest)
+		{ -4.8f, 0.68f, 0.15f },  // [1]
+		{ -4.0f, 0.56f, 0.12f },  // [2]
+		{ -3.0f, 0.42f, 0.09f },  // [3]
+		{ -2.0f, 0.28f, 0.06f },  // [4]
+		{ -1.0f, 0.16f, 0.03f },  // [5]
+	};
+	const BladeFace outer[ENDER_DRAGON_WING_COUNT] = {
+		{ -4.8f, 0.68f, 0.15f },  // outer[0] = inner[1] ✓
+		{ -4.0f, 0.56f, 0.12f },  // outer[1] = inner[2] ✓
+		{ -3.0f, 0.42f, 0.09f },  // outer[2] = inner[3] ✓
+		{ -2.0f, 0.28f, 0.06f },  // outer[3] = inner[4] ✓
+		{ -1.0f, 0.16f, 0.03f },  // outer[4] = inner[5] ✓
+		{ -0.05f, 0.06f, 0.01f }, // outer[5] = blade tip
+	};
+
+	for (_int i = 0; i < ENDER_DRAGON_WING_COUNT; ++i)
+	{
+		_float fOfs = (_float)(i + 1) * fWingLen;
+		_float fZFwdR = (_float)i * (-0.5f); // right wing: -Z toward tip
+		_float fZFwdL = (_float)i * (+0.5f); // left wing: opposite direction
+
+		m_WingL[i].vPos = _vec3(vWingRoot.x - fOfs, vWingRoot.y, vWingRoot.z + fZFwdL);
+		m_WingL[i].vDir = _vec3(-1.f, 0.f, 0.f);
+		m_WingL[i].fBoneLen = fWingLen;
+
+		m_WingR[i].vPos = _vec3(vWingRoot.x + fOfs, vWingRoot.y, vWingRoot.z + fZFwdR);
+		m_WingR[i].vDir = _vec3(1.f, 0.f, 0.f);
+		m_WingR[i].fBoneLen = fWingLen;
+
+		// Corner indices:
+		// [0..3] tip side (Z=+hd)   [4..7] body side (Z=-hd)
+		MESH mesh{};
+		mesh.front = mesh.back = mesh.top = mesh.bottom = mesh.right = mesh.left = uv;
+
+		const BladeFace& o = outer[i]; // tip side (narrow)
+		const BladeFace& n = inner[i]; // body side (wide)
+
+		mesh.corners[0] = { -o.fwd, +o.hh, +hd };
+		mesh.corners[1] = { +o.bkd, +o.hh, +hd };
+		mesh.corners[2] = { +o.bkd, -o.hh, +hd };
+		mesh.corners[3] = { -o.fwd, -o.hh, +hd };
+		mesh.corners[4] = { +n.bkd, +n.hh, -hd };
+		mesh.corners[5] = { -n.fwd, +n.hh, -hd };
+		mesh.corners[6] = { -n.fwd, -n.hh, -hd };
+		mesh.corners[7] = { +n.bkd, -n.hh, -hd };
+
+		// Left wing: X mirror + restore CCW winding
+		MESH meshL = mesh;
+		for (auto& c : meshL.corners) c.x = -c.x;
+		std::swap(meshL.corners[0], meshL.corners[1]);
+		std::swap(meshL.corners[2], meshL.corners[3]);
+		std::swap(meshL.corners[4], meshL.corners[5]);
+		std::swap(meshL.corners[6], meshL.corners[7]);
+
+		if (FAILED(Create_FlexBoneBuffer(m_WingL[i], meshL))) return E_FAIL;
+		if (FAILED(Create_FlexBoneBuffer(m_WingR[i], mesh)))  return E_FAIL;
+	}
+	return S_OK;
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ImGui debug panel

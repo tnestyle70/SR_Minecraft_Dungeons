@@ -281,7 +281,7 @@ HRESULT CSquidCoast::Ready_Environment_Layer(const _tchar* pLayerTag)
 	if (!pDynamicCam)
 		return E_FAIL;
 
-	//pDynamicCam->SetActionCam();
+	pDynamicCam->SetActionCam(eActionCamType::SQUID_COAST);
 
 	if (!pGameObject)
 		return E_FAIL;

@@ -35,7 +35,7 @@ _int CGameObject::Update_GameObject(const _float& fTimeDelta)
 {
     for (auto& pComponent : m_mapComponent[ID_DYNAMIC])
         pComponent.second->Update_Component(fTimeDelta);
-
+    
     return 0;
 }
 

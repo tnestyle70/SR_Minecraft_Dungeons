@@ -21,7 +21,6 @@ constexpr int DRAGON_NECK_COUNT = 3; //목
 constexpr int DRAGON_TAIL_COUNT = 6; //꼬리
 constexpr int DRAGON_WING_COUNT = 4; //날개 한 쪽 세그먼트
 
-
 enum class eDragonState
 {
 	IDLE, //순찰, 대기
@@ -43,11 +42,13 @@ public:
 	CDragon(LPDIRECT3DDEVICE9 pGraphicDev);
 	CDragon(const CDragon& rhs);
 	virtual ~CDragon();
+
 public:
 	virtual HRESULT Ready_GameObject() override;
 	virtual _int Update_GameObject(const _float& fTimeDelta)override;
 	virtual void LateUpdate_GameObject(const _float& fTimeDelta)override;
 	virtual void Render_GameObject();
+
 public:
 	//드래곤 제어 Application Programming Interface
 	void Set_RootPos(const _vec3 vPos);
@@ -70,6 +71,7 @@ public:
 	
 protected:
 	bool m_bBreathFiring = false;
+
 private:
 	bool m_bRidden = false;
 	bool m_bNetworkControlled = false;
@@ -122,6 +124,7 @@ private:
 	void Render_Chain(DRAGON_BONE* pChain, _int iCount);
 	
 	_float DistToPlayer() const;
+
 private:
 	CTexture* m_pTextureCom = nullptr;
 
@@ -154,12 +157,14 @@ private:
 	_vec3 m_vInputForward;
 	_vec3 m_vInputRight;
 	_vec3 m_vPlayerPos;
+
 private:
 	static constexpr _float m_fAttackRange = 20.f;
 	static constexpr _float m_fAttackDuration = 6.f;
 	static constexpr _float m_fTailAttackDuration = 3.f;
 	static constexpr _float m_fTailHPRatio = 0.5f;
 	static constexpr _int m_iPatrolCount = 4;
+
 public:
 	static CDragon* Create(LPDIRECT3DDEVICE9 pGraphicDev);
 	virtual void Free();

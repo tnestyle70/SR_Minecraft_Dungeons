@@ -36,7 +36,7 @@ HRESULT CDynamicCamera::Ready_GameObject(const _vec3* pEye,
     if (FAILED(CCamera::Ready_GameObject()))
         return E_FAIL;
 
-    m_fSpeed = 100.f;
+    m_fSpeed = 50.f;
 
     return S_OK;
 }
@@ -44,6 +44,9 @@ HRESULT CDynamicCamera::Ready_GameObject(const _vec3* pEye,
 _int CDynamicCamera::Update_GameObject(const _float& fTimeDelta)
 {
     _int iExit = CCamera::Update_GameObject(fTimeDelta);
+
+    // 드래곤 카메라 전환은 CNetworkPlayer에서 Set_DragonCam() 호출로 제어
+    // (G키 직접 감지 제거 — CNetworkPlayer의 G키 탑승/하차 로직과 충돌 방지)
 
     // F2 토글
     if (GetAsyncKeyState(VK_F2) & 0x8000)
@@ -68,7 +71,15 @@ _int CDynamicCamera::Update_GameObject(const _float& fTimeDelta)
     {
         _vec3 vPlayerPos;
         m_pTargetTransform->Get_Info(INFO_POS, &vPlayerPos);
-        m_vEye = vPlayerPos + m_vFollowOffset;
+
+        if (m_bDragonCam)
+            m_fCamBlend = min(1.f, m_fCamBlend + fTimeDelta * 2.f);
+        else
+            m_fCamBlend = max(0.f, m_fCamBlend - fTimeDelta * 2.f);
+        _vec3 vOffset;
+        D3DXVec3Lerp(&vOffset, &m_vFollowOffset, &m_vDragonOffset, m_fCamBlend);
+
+        m_vEye = vPlayerPos + vOffset;
         m_vAt = vPlayerPos + _vec3(0.f, 1.5f, 0.f);
     }
     else
@@ -109,24 +120,34 @@ _int CDynamicCamera::Update_ActionCam(const _float& fTimeDelta)
         //Move to Next Way Point
         m_wpTarget = m_deqWayPoints.front();
         m_deqWayPoints.pop_front();
-        return 0;
+        //new target의 방향으로 재계산
+        vDir = m_wpTarget.vEye - m_vEye;
+        fDist = D3DXVec3Length(&vDir);
     }
-    else
+    if (fDist > 0.1f)
     {
+        //Eye 업데이트
         D3DXVec3Normalize(&vDir, &vDir);
         m_vEye += vDir * fTimeDelta * m_fSpeed;
     }
+    D3DXVec3Lerp(&m_vAt, &m_vAt, &m_wpTarget.vAt, fTimeDelta * 1.f);
 
     return 0;
 }
 
-void CDynamicCamera::SetActionCam()
+void CDynamicCamera::SetActionCam(eActionCamType eType)
 {
-    //Setting Way Points
-    m_deqWayPoints.push_back({ { 10.f, 10.f, 5.f },{ m_vUp.x, m_vUp.y, m_vUp.z }, 5.f });
-    m_deqWayPoints.push_back({ { 20.f, 10.f, 5.f }, { m_vUp.x, m_vUp.y, m_vUp.z }, 5.f });
-    m_deqWayPoints.push_back({ { 50.f, 10.f, 5.f }, { m_vUp.x, m_vUp.y, m_vUp.z }, 5.f });
-    m_deqWayPoints.push_back({ { m_vEye.x, m_vEye.y , m_vEye.z }, { m_vUp.x, m_vUp.y, m_vUp.z }, 5.f });
+    switch (eType)
+    {
+    case eActionCamType::SQUID_COAST:
+        Set_SquidCoastActionCam();
+        break;
+    case eActionCamType::GB_STAGE:
+        Set_GBStageActionCam();
+        break;
+    default:
+        break;
+    }
 
     //액션캠 시작, 끝 위치 설정 - 스테이지 기본 세팅대로, 웨이 포인트들 지정해주고 웨이 포인트 끝나면 캠 종료
     //m_wpStart = { m_vEye, m_vUp, 0.f };
@@ -139,6 +160,68 @@ void CDynamicCamera::SetActionCam()
     return;
 }
 
+void CDynamicCamera::Set_SquidCoastActionCam()
+{
+    //eye 위치 처음 cam 위치로 설정, follow offset에서 -12의 값으로 오프셋을 설정해주고 있는 상태
+    m_vEye = _vec3(-48.f, 1.f, -163.f) + m_vFollowOffset;
+    m_vAt = { -25.f, 1.f, -114 };
+    
+    //Setting Way Points
+    _vec3 vWaysPoints[] = {
+        {-25, 20.f , -114}, //주민
+        {-45, 20.f, -62}, //몬스터 웨이포인트1
+        {40, 20.f, 44}, //몬스터 웨이포인트2
+        {44, 20.f, 94}, //다리 위 
+        {94, -10.f, 86}, //아래 마을 1
+        {94, -10.f, 55}, //아래 마을 2
+        {44, 20.f, 94}, //다리 위
+        {-28, 20.f, 84}, //스켈레톤 1 
+        {-30, 20.f, 107}, //스켈레톤 2 - 돌아가는 분기점
+        {44, 20.f, 94}, //다리 위
+        {44, 20.f, 200}, //가디언 
+        {41, 40.f, 260}, //레드스톤 1 
+        {18, 40.f, 293}, //레드스톤 2
+        {60, 40.f, 302}, //레드스톤 3
+        {41, 40.f, 260}, //레드스톤 4
+
+        //복귀
+        {44, 20.f, 94}, //다리 위
+        {40, 20.f, 44}, //몬스터 웨이포인트2
+        {-45, 20.f, -62}, //몬스터 웨이포인트1
+    };
+    
+    for (int i = 0; i < 16; ++i)
+    {
+        m_deqWayPoints.push_back({ vWaysPoints[i], vWaysPoints[i + 1] ,{m_vUp.x, m_vUp.y + 10.f, m_vUp.z}, 5.f });
+    }
+    
+    m_deqWayPoints.push_back({ { m_vEye.x, m_vEye.y , m_vEye.z }, {m_vAt.x, m_vAt.y, m_vAt.z} ,{m_vUp.x, m_vUp.y, m_vUp.z}, 5.f });
+}
+
+void CDynamicCamera::Set_GBStageActionCam()
+{
+    //eye 위치 처음 cam 위치로 설정, follow offset에서 -12의 값으로 오프셋을 설정해주고 있는 상태
+    m_vEye = _vec3(0.f, 10.f, 0.f) + m_vFollowOffset;
+    m_vAt = { 132.f, 30.f, 156.f }; //첫번째 웨이 포인트
+
+    m_fSpeed = 100.f;
+    
+    //Setting Way Points
+    _vec3 vWaysPoints[] = {
+        {132, 30.f, 156}, //웨이 포인트 1
+        {328, 40.f, 203}, //웨이포인트 2
+        {366, 10.f, -19}, //웨이 포인트 3
+        {260, 30.f, -195}, //웨이포인트 4
+        {0, 30.f, 0}, //웨이포인트 5
+    };
+    
+    for (int i = 0; i < 4; ++i)
+    {
+        m_deqWayPoints.push_back({ vWaysPoints[i], vWaysPoints[i + 1] ,{m_vUp.x, m_vUp.y + 10.f, m_vUp.z}, 5.f });
+    }
+    
+    m_deqWayPoints.push_back({ { m_vEye.x, m_vEye.y , m_vEye.z }, {m_vAt.x, m_vAt.y, m_vAt.z} ,{m_vUp.x, m_vUp.y, m_vUp.z}, 5.f });
+}
 
 void CDynamicCamera::Key_Input(const _float& fTimeDelta)
 {

@@ -118,7 +118,7 @@ HRESULT CRedStone::Ready_Environment_Layer(const _tchar* pLayerTag)
 	CDynamicCamera* pDynamicCam = dynamic_cast<CDynamicCamera*>(pGameObject);
 	if (!pDynamicCam)
 		return E_FAIL;
-	pDynamicCam->SetActionCam();
+	//pDynamicCam->SetActionCam();
 
 	if (!pGameObject)
 		return E_FAIL;

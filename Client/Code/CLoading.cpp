@@ -109,7 +109,7 @@ _uint CLoading::Loading_SquidCoast()
         return E_FAIL;
     //Ocean Diffuse
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_OceanTexture",
-        Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/ocean_diffuse.png"))))
+        Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/white_hint_blue_4.png"))))
         return E_FAIL;
     //Ocean Normal
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_OceanNormalTexture",
@@ -375,6 +375,10 @@ _uint CLoading::Loading_SquidCoast()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RockTexture",
         CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/RockTexture.dds"))))
         return E_FAIL;
+    //돌
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StoneBrickTexture",
+        CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/StoneBrickTexture.dds"))))
+        return E_FAIL;
     //bedrock
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_BedrockTexture",
         CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/BedrockTexture.dds"))))
@@ -387,9 +391,13 @@ _uint CLoading::Loading_SquidCoast()
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ObsidianPngTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/obsidian.png"))))
         return E_FAIL;
-    //stonebrick
-    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StoneBrickTexture",
-        CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/blocks/StoneBrickTexture.dds"))))
+    //stonebrick png 
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StonePngTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/stone_andesite_smooth.png"))))
+        return E_FAIL;
+    //redstone png 
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedstonePngTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/Redstone_Block_Texture.png"))))
         return E_FAIL;
     //oak
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_OakTexture",

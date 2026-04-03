@@ -54,7 +54,12 @@ HRESULT COcean::Ready_GameObject()
     case WAVE_SINE_ID:     Init_SineWaves();     break;
     case WAVE_GERSTNER_ID: Init_GerstnerWaves(); break;
     }
-
+    
+    //파도 생성 위치 설정
+    _vec3 vPos;
+    vPos = { 200.f, -3.f, 0.f };
+    m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
+    
     return S_OK;
 }
 
@@ -94,6 +99,7 @@ void COcean::LateUpdate_GameObject(const _float& fTimeDelta)
 void COcean::Render_GameObject()
 {
     m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
+    m_pGraphicDev->SetRenderState(D3DRS_SPECULARENABLE, TRUE);
     m_pGraphicDev->SetTransform(D3DTS_WORLD, m_pTransformCom->Get_World());
 
     if (m_pTextureCom)
@@ -104,6 +110,7 @@ void COcean::Render_GameObject()
 
     m_pBufferCom->Render_Buffer();
     m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE);
+    m_pGraphicDev->SetRenderState(D3DRS_SPECULARENABLE, FALSE);
 }
 
 HRESULT COcean::Add_Component()
@@ -134,10 +141,10 @@ HRESULT COcean::Set_Material()
 {
     D3DMATERIAL9 mtrl;
     ZeroMemory(&mtrl, sizeof(D3DMATERIAL9));
-    mtrl.Diffuse = D3DXCOLOR(0.05f, 0.25f, 0.45f, 0.85f);
-    mtrl.Specular = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
-    mtrl.Ambient = D3DXCOLOR(0.02f, 0.08f, 0.15f, 1.f);
-    mtrl.Power = 64.f;
+    mtrl.Diffuse = D3DXCOLOR(0.12f, 0.40f, 0.60f, 0.85f);
+    mtrl.Specular = D3DXCOLOR(0.3f, 0.3f, 0.3f, 1.f);
+    mtrl.Ambient = D3DXCOLOR(0.06f, 0.18f, 0.28f, 1.f);   // Diffuse와 같은 비율
+    mtrl.Power = 40.f;   // 넓고 부드러운 하이라이트
     m_pGraphicDev->SetMaterial(&mtrl);
     return S_OK;
 }

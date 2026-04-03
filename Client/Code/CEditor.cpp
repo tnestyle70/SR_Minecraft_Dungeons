@@ -9,6 +9,7 @@
 #include "CNormalCubeTex.h"
 #include "CBlockPlacer.h"
 #include "CRenderer.h"
+#include "COcean.h"
 
 CEditor::CEditor(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev), m_bEditorMode(false)
@@ -155,6 +156,7 @@ HRESULT CEditor::Ready_Environment_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	CGameObject* pGameObject = nullptr;
+
 	//카메라
 	_vec3 vEye{ 0.f, 10.f, -10.f };
 	_vec3 vAt{ 0.f, 0.f, 0.f };
@@ -166,6 +168,7 @@ HRESULT CEditor::Ready_Environment_Layer(const _tchar* pLayerTag)
 
 	if (FAILED(pLayer->Add_GameObject(L"DynamicCamera", pGameObject)))
 		return E_FAIL;
+
 	//드래곤
 	m_pDragon = CDragon::Create(m_pGraphicDev);
 	if (!m_pDragon)
@@ -175,6 +178,21 @@ HRESULT CEditor::Ready_Environment_Layer(const _tchar* pLayerTag)
 	}
 	pLayer->Add_GameObject(L"Dragon", m_pDragon);
 	m_pDragon->Set_MoveTarget(_vec3(0.f, 20.f, 0.f));
+
+	// Ocean — 격자/타입만 지정, 나머지는 OCEAN_DESC 기본 멤버 초기화값 사용
+	//OCEAN_DESC oceanDesc{};
+	//oceanDesc.dwVtxCntX = 128;
+	//oceanDesc.dwVtxCntZ = 128;
+	//oceanDesc.eType = static_cast<WAVE_TYPE>(2); // Gerstner
+
+	//pGameObject = COcean::Create(m_pGraphicDev, oceanDesc);
+	////pGameObject = m_pOcean;
+
+	//if (!pGameObject)
+	//	return E_FAIL;
+
+	//if (FAILED(pLayer->Add_GameObject(L"Ocean", pGameObject)))
+	//	return E_FAIL;
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
 
@@ -1720,6 +1738,15 @@ HRESULT CEditor::Ready_ProtoType()
 	//	return E_FAIL;
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_NormalCubeTex",
 		Engine::CNormalCubeTex::Create(m_pGraphicDev, 1.f, 1.f, 1.f))))
+		return E_FAIL;
+
+	//stonebrick png 
+	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_StonePngTexture",
+		CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/stone_andesite_smooth.png"))))
+		return E_FAIL;
+	//redstone png 
+	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedstonePngTexture",
+		CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/blocks/Redstone_Block_Texture.png"))))
 		return E_FAIL;
   
 	if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_RedStoneGolemBodyTex", Engine::CRedStoneGolemBodyTex::Create(m_pGraphicDev))))

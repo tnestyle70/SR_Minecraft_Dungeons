@@ -91,6 +91,16 @@ void CDamageMgr::Render_BossHP()
 			m_pRedStoneGolem->Get_MaxHP(),
 			bIdle, bDead);
 	}
+
+	if (m_pEnderDragon)
+	{
+		bool bIdle = (m_pEnderDragon->Get_State() == eEnderDragonState::IDLE);
+		bool bDead = (m_pEnderDragon->Get_HP() <= 0);
+		Render_SingleBossHP(
+			m_pEnderDragon->Get_HP(),
+			m_pEnderDragon->Get_MaxHP(),
+			bIdle, bDead);
+	}
 }
 
 void CDamageMgr::Render_SingleBossHP(float fHP, float fMaxHP, bool bIdle, bool bDead)
@@ -184,6 +194,19 @@ void CDamageMgr::Clear_Guardian()
 void CDamageMgr::Clear_RedStone()
 {
 	m_pRedStoneGolem = nullptr;
+}
+
+void CDamageMgr::Clear_EnderDragon()
+{
+	m_pEnderDragon = nullptr;
+}
+
+CEnderDragon* CDamageMgr::Get_EnderDragon()
+{
+	if (m_pEnderDragon)
+		return m_pEnderDragon;
+	else
+		return nullptr;
 }
 
 HRESULT CDamageMgr::Add_Component()

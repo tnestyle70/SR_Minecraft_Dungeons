@@ -23,6 +23,7 @@ private:
 	HRESULT Ready_UI_Layer(const _tchar* pLayerTag);
 	HRESULT Ready_Light();
 	HRESULT Ready_StageData(const _tchar* szPath);
+	void Render_LightPanel();
 public:
 	static CNetworkStage* Create(LPDIRECT3DDEVICE9 pGraphicDev);
 private:

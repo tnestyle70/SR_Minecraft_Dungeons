@@ -14,6 +14,8 @@
 #include "CAncientGuardian.h"
 #include "CCursorMgr.h"
 #include <cstdio>
+#include "CEnderDragon.h"
+#include "CDamageMgr.h"
 
 CNetworkPlayer::CNetworkPlayer(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -608,6 +610,9 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 				m_bRiding = true;
 				m_fVelocityY = 0.f;
 				m_bOnGround = false;
+				//드래곤 시점으로 카메라 전환
+				if (m_pDynamicCamera) 
+					m_pDynamicCamera->Set_DragonCam(true);
 				// #region agent log
 				{
 					FILE* fp = nullptr;
@@ -625,6 +630,7 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 			if (m_pMountedDragon) m_pMountedDragon->Set_Ridden(false);
 			m_pMountedDragon = nullptr;
 			m_bRiding = false;
+			if (m_pDynamicCamera) m_pDynamicCamera->Set_DragonCam(false);
 			// #region agent log
 			{
 				FILE* fp = nullptr;
@@ -880,47 +886,49 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 		}
 
 		// 보스 피킹
-		//if (!bMonsterPicked && m_pTargetBoss)
-		//{
-		//	CCollider* pCol = dynamic_cast<CCollider*>(
-		//		m_pTargetBoss->Get_Component(ID_STATIC, L"Com_Collider"));
+		CEnderDragon* pEnderDragon = CDamageMgr::GetInstance()->Get_EnderDragon();
+		if (pEnderDragon)
+		{
+			CCollider** pSpineColliders = pEnderDragon->Get_SpineCollider();
+			
+			for (int i = 0; i < (int)ENDER_DRAGON_SPINE_COUNT; ++i)
+			{
+				if (!pSpineColliders[i])
+					continue;
 
-		//	if (pCol)
-		//	{
-		//		AABB tAABB = pCol->Get_AABB();
-		//		_vec3 vBossCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
+				AABB tAABB = pSpineColliders[i]->Get_AABB();
+				_vec3 vCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
 
-		//		_vec3 vPickDiff = vPickPos - vBossCenter;
-		//		vPickDiff.y = 0.f;
+				_vec3 vPickDiff = vPickPos - vCenter;
+				vPickDiff.y = 0.f;
 
-		//		if (D3DXVec3Length(&vPickDiff) < 3.f)
-		//		{
-		//			_vec3 vPlayerDiff = vBossCenter - vPos;
-		//			vPlayerDiff.y = 0.f;
-		//			bool bInRange = D3DXVec3Length(&vPlayerDiff) < 3.f;
+				if (D3DXVec3Length(&vPickDiff) < 3.f)
+				{
+					_vec3 vPlayerDiff = vCenter - vPos;
+					vPlayerDiff.y = 0.f;
+					bool bInRange = D3DXVec3Length(&vPlayerDiff) < 3.f;
 
-		//			if (bInRange && (m_iComboStep == 0 ||
-		//				(m_fAtkTime >= m_fAtkDuration && m_fComboTimer > 0.f)))
-		//			{
-		//				// 바로 공격
-		//				m_iComboStep = (m_iComboStep % 3) + 1;
-		//				m_fAtkTime = 0.f;
-		//				m_fComboTimer = m_fComboWindow;
-		//				m_bHasTarget = false;
-		//			}
-		//			else
-		//			{
-		//				// 이동
-		//				m_vTargetPos = vBossCenter;
-		//				m_vTargetPos.y = 0.f;
-		//				m_bHasTarget = true;
-		//				m_pTargetMonster = nullptr;
-		//			}
-		//			bMonsterPicked = true;
-		//		}
-		//	}
-		//}
-	
+					if (bInRange && (m_iComboStep == 0 ||
+						(m_fAtkTime >= m_fAtkDuration && m_fComboTimer > 0.f)))
+					{
+						// 바로 공격
+						m_iComboStep = (m_iComboStep % 3) + 1;
+						m_fAtkTime = 0.f;
+						m_fComboTimer = m_fComboWindow;
+						m_bHasTarget = false;
+					}
+					else
+					{
+						// 이동
+						m_vTargetPos = vCenter;
+						m_vTargetPos.y = 0.f;
+						m_bHasTarget = true;
+						m_pTargetMonster = nullptr;
+					}
+					bMonsterPicked = true;
+				}
+			}
+		}
 
 		// 4. 일반 이동
 		if (!bMonsterPicked)

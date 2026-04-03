@@ -3,6 +3,7 @@
 #include "CCollider.h"
 #include <vector>
 #include <string>
+#include "CNetworkPlayer.h"
 
 // Bone count constants per dragon part
 constexpr int ENDER_DRAGON_SPINE_COUNT = 9; // body spine
@@ -59,7 +60,8 @@ public:
 	virtual void Render_GameObject();
 public:
 	// Dragon control API
-	void Set_RootPos(const _vec3 vPos);
+	void Set_SpawnPos(const _vec3 vPos);
+
 	void Set_MoveTarget(const _vec3& vTarget) { m_vMoveTarget = vTarget; }
 	_vec3 Get_HeadPos() const { return m_Head.vPos; }
 	_vec3 Get_SpineRoot() const { return m_Spine[0].vPos; }
@@ -83,7 +85,27 @@ public:
 	void  Add_Impulse(const _vec3& vImpulse) { m_vVelocity += vImpulse; }
 	_float Get_Mass() const { return m_Flight.fMass; }
 
+	void Set_Player(CNetworkPlayer* pPlayer) { m_pPlayer = pPlayer; }
+	
+	int Get_HP() { return m_iHP; };
+	int Get_MaxHP() { return m_iMaxHP; };
+	
+	void Take_Damage(int iDamage);
+	
+	bool Is_Dead() { return m_bDead; }
+
+	CCollider** Get_SpineCollider() { return m_pSpineCollider; }
+
 private:
+	void Check_Hit();
+
+private:
+	CNetworkPlayer* m_pPlayer = nullptr;
+
+	int m_iHP = 100;
+	int m_iMaxHP = 100;
+	bool m_bDead = false;
+	
 	bool m_bRidden = false;
 	bool m_bNetworkControlled = false;
 
@@ -163,6 +185,7 @@ private:
 	void Update_Banking(const _float& fTimeDelta);
 
 	_float DistToPlayer() const;
+
 private:
 	CTexture* m_pTextureCom = nullptr;
 
@@ -175,14 +198,14 @@ private:
 	DRAGON_BONE m_WingR[ENDER_DRAGON_WING_COUNT];
 
 	// Movement
-	_vec3 m_vMoveTarget;   // target position
-	_vec3 m_vVelocity;     // root velocity (lerp acceleration)
-	_float m_fMoveSpeed;   // max move speed
+	_vec3 m_vMoveTarget = { 0.f, 0.f, 0.f };   // target position
+	_vec3 m_vVelocity = { 0.f, 0.f, 0.f };     // root velocity (lerp acceleration)
+	_float m_fMoveSpeed = 28.f;                  // max move speed
 
 	// Wing flapping
-	_float m_fWingTimer;   // accumulated time
-	_float m_fWingSpeed;   // flap frequency (rad/sec)
-	_float m_fWingAmp;     // max flap angle (rad)
+	_float m_fWingTimer = 0.f;                   // accumulated time
+	_float m_fWingSpeed = 3.2f;                  // flap frequency (rad/sec)
+	_float m_fWingAmp = D3DX_PI * 0.38f;        // max flap angle (rad)
 
 	// Dynamics
 	DragonFlight m_Flight; // flight dynamics parameters
@@ -197,14 +220,16 @@ private:
 
 	// Tail attack
 	_float m_fTailSwingTimer = 0.f;
-	_float m_fTailSwingAmp = 0.f;
+	_float m_fTailSwingAmp = D3DX_PI * 0.8f;
 
 	// IDLE: curled idle + player detection
-	_float m_fDetectRange     = 35.f;   // player detection range
+	_float m_fDetectRange     = 100.f;   // player detection range
+	//IDLE 복귀, 전투 해제 반경
+	_float m_fDisEngageRange = 150.f;
 	_float m_fDetectTimer     = 0.f;    // time spent within detection range
-	_float m_fDetectThreshold = 2.0f;   // required dwell time for CIRCLE transition
+	_float m_fDetectThreshold = 0.0f;   // required dwell time for CIRCLE transition
 	_float m_fIdleCurlBlend   = 0.f;    // curl blend (0=spread, 1=fully curled)
-
+	
 	// CIRCLE: orbit + VoidFlame/Beam alternating attack
 	_float m_fCircleAttackTimer  = 0.f;   // current attack phase timer
 	_float m_fVoidFlameDuration  = 3.0f;  // VoidFlame phase duration
@@ -217,13 +242,16 @@ private:
 
 	// Input
 	_bool  m_bManualControl = false;
-	_vec3  m_vInputForward;
-	_vec3  m_vInputRight;
-	_vec3  m_vPlayerPos;
+	_vec3  m_vInputForward = { 0.f, 0.f, 1.f };
+	_vec3  m_vInputRight = { 1.f, 0.f, 0.f };
+	_vec3  m_vPlayerPos = { 0.f, 0.f, 0.f };
 
 	// HP
 	_float m_fHP    = 100.f;
 	_float m_fMaxHP = 100.f;
+
+	//처음 스폰 위치
+	_vec3 m_vSpawnPos = {};
 
 	// BREATH state parameters (overwritten after JSON load)
 	_float m_fBreathTimer       = 0.f;   // time until next CVoidFlame spawn
@@ -265,6 +293,7 @@ private:
 	static constexpr _float m_fTailAttackDuration = 3.f;
 	static constexpr _float m_fTailHPRatio = 0.5f;
 	static constexpr _int m_iPatrolCount = 4;
+
 public:
 	static CEnderDragon* Create(LPDIRECT3DDEVICE9 pGraphicDev);
 	virtual void Free();
