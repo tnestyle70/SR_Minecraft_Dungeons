@@ -31,6 +31,36 @@ HRESULT CTJPlayer::Ready_GameObject()
     if (nullptr == m_pBladeTextureCom)
         return E_FAIL;
 
+    // 번개 버퍼
+    m_pThunderBufferCom = dynamic_cast<Engine::CRcTex*>
+        (CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_RcTex"));
+    if (nullptr == m_pThunderBufferCom)
+        return E_FAIL;
+
+    // 번개 텍스처
+    m_pLightningTextureCom = dynamic_cast<Engine::CTexture*>
+        (CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_LightningTexture"));
+    if (nullptr == m_pLightningTextureCom)
+        return E_FAIL;
+
+    // 스파크 텍스처
+    m_pSparkTextureCom = dynamic_cast<Engine::CTexture*>
+        (CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_SparkTexture"));
+    if (nullptr == m_pSparkTextureCom)
+        return E_FAIL;
+
+    // 화염 버퍼
+    m_pFireBufferCom = dynamic_cast<Engine::CRcTex*>
+        (CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_RcTex"));
+    if (nullptr == m_pFireBufferCom)
+        return E_FAIL;
+
+    // 화염 텍스처
+    m_pFireTextureCom = dynamic_cast<Engine::CTexture*>
+        (CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_FireTrailEffectTexture"));
+    if (nullptr == m_pFireTextureCom)
+        return E_FAIL;
+
     return S_OK;
 }
 
@@ -85,6 +115,112 @@ _int CTJPlayer::Update_GameObject(const _float& fTimeDelta)
         float fMax = Get_MaxHp();
         Set_Hp(min(fHp + m_fRegenAmount, fMax));
     }
+
+    // 번개
+    if (m_bLightning)
+    {
+        m_fLightningTimer += fTimeDelta;
+        if (m_fLightningTimer >= m_fLightningInterval)
+        {
+            m_fLightningTimer = 0.f;
+
+            // 몬스터 목록 받아오기
+            vector<CMonster*> vecActive;
+            for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
+                for (auto& pMonster : pair.second.vecMonsters)
+                    if (pMonster->IsActive())
+                        vecActive.push_back(pMonster);
+
+            if (!vecActive.empty())
+            {
+                CMonster* pTarget = vecActive[rand() % vecActive.size()];
+                CCollider* pCol = pTarget->Get_Collider();
+                if (pCol)
+                {
+                    AABB tAABB = pCol->Get_AABB();
+                    m_vThunderPos = (tAABB.vMin + tAABB.vMax) * 0.5f;
+                    pTarget->Take_Damage(30);
+                    m_bThunderEffect = true;
+                    m_fThunderEffectTimer = 0.f;
+                    CSoundMgr::GetInstance()->PlayEffect(L"Player/ThunderSound.wav", 1.f);
+                }
+            }
+        }
+    }
+
+    //번개 이펙트
+    if (m_bThunderEffect)
+    {
+        m_fThunderEffectTimer += fTimeDelta;
+        m_fFrameTimer += fTimeDelta;
+
+        if (m_fFrameTimer >= m_fFrameInterval)
+        {
+            m_fFrameTimer = 0.f;
+            m_iLightningFrame++;
+            m_iSparkFrame++;
+        }
+
+        if (m_fThunderEffectTimer >= m_fThunderEffectDuration)
+        {
+            m_bThunderEffect = false;
+            m_fThunderEffectTimer = 0.f;
+            m_iLightningFrame = 0;
+            m_iSparkFrame = 0;
+            m_fFrameTimer = 0.f;
+        }
+    }
+
+    // 화염 장판
+    if (m_bFireTrail && m_bMoving)
+    {
+        m_fFireSpawnTimer += fTimeDelta;
+        if (m_fFireSpawnTimer >= m_fFireSpawnInterval)
+        {
+            m_fFireSpawnTimer = 0.f;
+            _vec3 vPos;
+            Get_Transform()->Get_Info(INFO_POS, &vPos);
+            vPos.y += 0.1f;
+            TJFireTrail tFire;
+            tFire.vPos = vPos;
+            m_vecFireTrails.push_back(tFire);
+        }
+    }
+
+    // 화염 업데이트
+    for (auto& tFire : m_vecFireTrails)
+    {
+        tFire.fLifeTime -= fTimeDelta;
+        tFire.fDmgTimer += fTimeDelta;
+
+        if (tFire.fDmgTimer >= 0.5f)
+        {
+            tFire.fDmgTimer = 0.f;
+            for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
+            {
+                for (auto& pMonster : pair.second.vecMonsters)
+                {
+                    if (!pMonster->IsActive())
+                        continue;
+                    CCollider* pCol = pMonster->Get_Collider();
+                    if (!pCol)
+                        continue;
+                    AABB tAABB = pCol->Get_AABB();
+                    _vec3 vCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
+                    _vec3 vDiff = vCenter - tFire.vPos;
+                    vDiff.y = 0.f;
+                    if (D3DXVec3Length(&vDiff) < 2.f)
+                        pMonster->Take_Damage((int)m_fFireDamage);
+                }
+            }
+        }
+    }
+
+    //화염 제거
+    m_vecFireTrails.erase(
+        remove_if(m_vecFireTrails.begin(), m_vecFireTrails.end(),
+            [](const TJFireTrail& t) { return t.fLifeTime <= 0.f; }),
+        m_vecFireTrails.end());
 
     // 회전 칼날
     if (m_bBladeOrbit)
@@ -179,7 +315,7 @@ void CTJPlayer::Render_GameObject()
             D3DXMatrixRotationY(&matRot, fAngle + D3DX_PI);
             D3DXMatrixRotationX(&matRotX, D3DX_PI * 0.5f);
             D3DXMatrixTranslation(&matTrans, vBladePos.x, vBladePos.y, vBladePos.z);
-            matWorld = matScale  * matRotX * matRot * matTrans;
+            matWorld = matScale * matRotX * matRot * matTrans;
 
             m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
             m_pGraphicDev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
@@ -191,6 +327,101 @@ void CTJPlayer::Render_GameObject()
         m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
         m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
     }
+
+    // 번개 이펙트
+    if (m_bThunderEffect && m_pThunderBufferCom && m_pLightningTextureCom && m_pSparkTextureCom)
+    {
+        m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+        m_pGraphicDev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+        m_pGraphicDev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+        m_pGraphicDev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+        m_pGraphicDev->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+        m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+        m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+
+        // UV 변환으로 프레임 자르기
+        m_pGraphicDev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+
+        // 번개 — 5프레임, 가로 스프라이트
+        {
+            int iFrame = min(m_iLightningFrame, 4);
+            _matrix matUV;
+            D3DXMatrixIdentity(&matUV);
+            matUV._11 = 1.f / 5.f;         // U 스케일
+            matUV._31 = iFrame * (1.f / 5.f); // U 오프셋
+
+            m_pGraphicDev->SetTransform(D3DTS_TEXTURE0, &matUV);
+
+            _matrix matScale, matTrans, matWorld;
+            D3DXMatrixScaling(&matScale, 3.f, 10.f, 1.f);
+            D3DXMatrixTranslation(&matTrans, m_vThunderPos.x, m_vThunderPos.y + 5.f, m_vThunderPos.z);
+            matWorld = matScale * matTrans;
+            m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+            m_pLightningTextureCom->Set_Texture(0);
+            m_pThunderBufferCom->Render_Buffer();
+        }
+
+        // 스파크 — 4프레임
+        {
+            int iFrame = min(m_iSparkFrame, 3);
+            _matrix matUV;
+            D3DXMatrixIdentity(&matUV);
+            matUV._11 = 1.f / 4.f;
+            matUV._31 = iFrame * (1.f / 4.f);
+
+            m_pGraphicDev->SetTransform(D3DTS_TEXTURE0, &matUV);
+
+            _matrix matView;
+            m_pGraphicDev->GetTransform(D3DTS_VIEW, &matView);
+            matView._41 = matView._42 = matView._43 = 0.f;
+            D3DXMatrixInverse(&matView, NULL, &matView);
+
+            _matrix matScale, matTrans, matWorld;
+            D3DXMatrixScaling(&matScale, 3.f, 3.f, 3.f);
+            D3DXMatrixTranslation(&matTrans, m_vThunderPos.x, m_vThunderPos.y, m_vThunderPos.z);
+            matWorld = matScale * matView * matTrans;
+            m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+            m_pSparkTextureCom->Set_Texture(0);
+            m_pThunderBufferCom->Render_Buffer();
+        }
+
+        // 복원
+        m_pGraphicDev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+        m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+    }
+
+    // 화염 장판 렌더링
+    if (!m_vecFireTrails.empty() && m_pFireBufferCom && m_pFireTextureCom)
+    {
+        m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+        m_pGraphicDev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+        m_pGraphicDev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+        m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+        m_pGraphicDev->SetRenderState(D3DRS_ALPHAREF, 0x10);
+        m_pGraphicDev->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
+        m_pGraphicDev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+        m_pGraphicDev->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+        m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+        m_pGraphicDev->SetRenderState(D3DRS_ZENABLE, FALSE);
+
+        m_pFireTextureCom->Set_Texture(0);
+
+        for (auto& tFire : m_vecFireTrails)
+        {
+            _matrix matScale, matRotX, matTrans, matWorld;
+            D3DXMatrixScaling(&matScale, 3.f, 3.f, 3.f);
+            D3DXMatrixRotationX(&matRotX, D3DX_PI * 0.5f);
+            D3DXMatrixTranslation(&matTrans, tFire.vPos.x, tFire.vPos.y + 0.05f, tFire.vPos.z);
+            matWorld = matScale * matRotX * matTrans;
+            m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+            m_pFireBufferCom->Render_Buffer();
+        }
+
+        m_pGraphicDev->SetRenderState(D3DRS_ZENABLE, TRUE);
+        m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+        m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+        m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+    }
 }
 
 void CTJPlayer::Add_Exp(int iExp)
@@ -200,7 +431,7 @@ void CTJPlayer::Add_Exp(int iExp)
     {
         m_iExp -= m_iMaxExp;
         m_iLevel++;
-        m_iMaxExp = (int)(m_iMaxExp * 2.f);
+        m_iMaxExp = (int)(m_iMaxExp * 1.2f);
         m_bLevelUp = true;
     }
 }
@@ -240,6 +471,8 @@ void CTJPlayer::Apply_Ability(ETJAbility eAbility)
 
     case ETJAbility::FIRE_TRAIL:
         m_bFireTrail = true;
+        if (iLevel == 2) m_fFireDamage = 7.f;
+        if (iLevel == 3) m_fFireDamage = 10.f;
         break;
 
     case ETJAbility::BLADE_ORBIT:
