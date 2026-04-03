@@ -40,6 +40,9 @@ void CJSTile::LateUpdate_GameObject(const _float& fTimeDelta)
 {
 	CGameObject::LateUpdate_GameObject(fTimeDelta);
 
+	if (m_bDead)
+		return;
+
 	if (m_eTileID == TILE_EMPTY)
 		return;
 

@@ -23,9 +23,12 @@ public:
 
 private:
 	void		Get_PlayerPos();
+	void		Get_PlayerLook();
 
 private:
 	_vec3		m_vPlayerPos = { 0.f, 0.f, 0.f };
+	_vec3		m_vPlayerLook =  { 0.f, 0.f, 1.f };
+	_vec3		m_vCamLook = { 0.f, 0.f, -1.f };
 
 public:
 	static CJSCamera* Create(LPDIRECT3DDEVICE9 pGraphicDev,

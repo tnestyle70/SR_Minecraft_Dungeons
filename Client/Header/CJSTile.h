@@ -17,6 +17,7 @@ public:
 public:
     virtual bool Is_Dead() override { return m_bDead; }
     void Set_Dead() { m_bDead = true; }
+    void Get_Position(_vec3& vPos) { m_pTransformCom->Get_Info(INFO_POS, &vPos); }
 
 private:
     HRESULT Add_Component();

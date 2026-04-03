@@ -18,6 +18,7 @@ public:
     virtual _vec3   Get_EndPos() PURE;
     virtual bool    Is_Dead() override { return m_bDead; }
     void            Set_Dead() { m_bDead = true; }
+    DIRECTION       Get_Dir() { return m_eDir; }
 
 protected:
     CTransform* m_pTransformCom = nullptr;

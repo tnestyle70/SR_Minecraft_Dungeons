@@ -53,12 +53,17 @@ void CJSCamera::LateUpdate_GameObject(const _float& fTimeDelta)
     CCamera::LateUpdate_GameObject(fTimeDelta);
     
     Get_PlayerPos();
+    Get_PlayerLook();
 
-    m_vEye.x = m_vPlayerPos.x + 0.f;
-    m_vEye.z = m_vPlayerPos.z - 8.f;
+    _vec3 vTargetLook = -m_vPlayerLook;
+    m_vCamLook.x += (vTargetLook.x - m_vCamLook.x) * 5.f * fTimeDelta;
+    m_vCamLook.z += (vTargetLook.z - m_vCamLook.z) * 5.f * fTimeDelta;
+
+    m_vEye.x = m_vPlayerPos.x + m_vCamLook.x * 15.f;
+    m_vEye.z = m_vPlayerPos.z + m_vCamLook.z * 13.f;
 
     m_vAt.x = m_vPlayerPos.x;
-    m_vAt.z = m_vPlayerPos.z + 8.f;
+    m_vAt.z = m_vPlayerPos.z;
 }
 
 void CJSCamera::Get_PlayerPos()
@@ -69,6 +74,16 @@ void CJSCamera::Get_PlayerPos()
         return;
 
     pPlayerTrans->Get_Info(INFO_POS, &m_vPlayerPos);
+}
+
+void CJSCamera::Get_PlayerLook()
+{
+    CTransform* pPlayerTrans = dynamic_cast<CTransform*>(CManagement::GetInstance()->Get_Component(ID_DYNAMIC, L"GameLogic_Layer", L"JSPlayer", L"Com_Transform"));
+
+    if (!pPlayerTrans)
+        return;
+
+    pPlayerTrans->Get_Info(INFO_LOOK, &m_vPlayerLook);
 }
 
 CJSCamera* CJSCamera::Create(LPDIRECT3DDEVICE9 pGraphicDev,

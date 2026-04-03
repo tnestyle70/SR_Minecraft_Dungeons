@@ -11,6 +11,7 @@ CJSPlayer::CJSPlayer(LPDIRECT3DDEVICE9 pGraphicDev)
 	, m_pBufferCom(nullptr)
 	, m_pTransformCom(nullptr)
 	, m_pTextureCom(nullptr)
+	, m_pColliderCom(nullptr)
 {
 }
 
@@ -45,6 +46,7 @@ void CJSPlayer::LateUpdate_GameObject(const _float& fTimeDelta)
 {
 	CGameObject::LateUpdate_GameObject(fTimeDelta);
 
+	m_pColliderCom->Update_Collider(m_pTransformCom->Get_World());
 	CRenderer::GetInstance()->Add_RenderGroup(RENDER_NONALPHA, this);
 }
 
@@ -59,6 +61,8 @@ void CJSPlayer::Render_GameObject()
 
 	m_pGraphicDev->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);      // 솔리드로 복구
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+
+	m_pColliderCom->Render_Collider();
 }
 
 HRESULT CJSPlayer::Add_Component()
@@ -82,8 +86,15 @@ HRESULT CJSPlayer::Add_Component()
 	m_mapComponent[ID_DYNAMIC].insert({ L"Com_Transform", pComponent });
 
 	// Texture
-	
 
+	// Collider
+	m_pColliderCom = CJSCollider::Create(m_pGraphicDev, { 0.f, 0.5f, 0.f }, { 1.f, 2.f, 1.f });
+
+	if (!m_pColliderCom)
+		return E_FAIL;
+
+	m_mapComponent[ID_DYNAMIC].insert({ L"Com_Collider", m_pColliderCom });
+	
 	return S_OK;
 }
 
@@ -93,12 +104,10 @@ void CJSPlayer::Advance(const _float& fTimeDelta)
 	m_pTransformCom->Get_Info(INFO_LOOK, &vLook);
 	m_pTransformCom->Move_Pos(&vLook, m_fSpeed, fTimeDelta);
 
-	_vec3 vPos;
-	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+	m_fTotalDistance += m_fSpeed * fTimeDelta;
+	CJSScoreMgr::GetInstance()->Set_Distance(m_fTotalDistance);
 
-	CJSScoreMgr::GetInstance()->Set_Distance(vPos.z);
-
-	if (vPos.z >= m_fNextSpeedUpZ && m_fSpeed < m_fMaxSpeed)
+	if (m_fTotalDistance >= m_fNextSpeedUpZ && m_fSpeed < m_fMaxSpeed)
 	{
 		m_fSpeed += m_fSpeedUpAmount;
 		m_fNextSpeedUpZ += m_fSpeedUpInterval;
@@ -141,6 +150,12 @@ void CJSPlayer::Falling()
 
 	_vec3 vPos;
 	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+
+	CHUNKTYPE eChunkType = CJSChunkMgr::GetInstance()->Get_CurrentChunkType(vPos);
+
+	if (eChunkType == CHUNK_CORNER_LEFT || eChunkType == CHUNK_CORNER_RIGHT)
+		return;
+
 	TILEID eTileID = CJSChunkMgr::GetInstance()->Get_TileID(vPos);
 
 	if (eTileID == TILE_EMPTY && !m_bJump)
@@ -149,11 +164,7 @@ void CJSPlayer::Falling()
 		m_bJump = true;
 		m_fVelocityY = 0.f;
 
-		CSoundMgr::GetInstance()->PlayEffect(L"Player/Scream.wav", 0.8f);
-	}
-	else if (eTileID == TILE_NORMAL)
-	{
-		m_bFalling = false;
+		CSoundMgr::GetInstance()->PlayEffect(L"Player/Scream.wav", 1.f);
 	}
 }
 
@@ -168,19 +179,71 @@ void CJSPlayer::Check_Collect()
 
 void CJSPlayer::Key_Input(const _float& fTimeDelta)
 {
+	_vec3 vPos;
+	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+	CHUNKTYPE eType = CJSChunkMgr::GetInstance()->Get_CurrentChunkType(vPos);
+
+	if (eType == CHUNK_CORNER_LEFT || eType == CHUNK_CORNER_RIGHT)
+	{
+		if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_A) && !m_bRotated)
+		{
+			m_pTransformCom->Rotation(ROT_Y, -90.f);
+			m_bRotated = true;
+		}
+		if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_D) && !m_bRotated)
+		{
+			m_pTransformCom->Rotation(ROT_Y, 90.f);
+			m_bRotated = true;
+		}
+	}
+	else
+	{
+		m_bRotated = false;
+	}
+
 	if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_LEFT))
 	{
 		_vec3 vRight;
 		m_pTransformCom->Get_Info(INFO_RIGHT, &vRight);
 
-		m_pTransformCom->Move_Pos(&vRight, -m_fSideSpeed, fTimeDelta);
+		_vec3 vPos;
+		m_pTransformCom->Get_Info(INFO_POS, &vPos);
+		vPos += -vRight * m_fSideSpeed * fTimeDelta;
+
+		_matrix matTemp;
+		D3DXMatrixTranslation(&matTemp, vPos.x, vPos.y, vPos.z);
+		m_pColliderCom->Update_Collider(&matTemp);
+
+		if (!CJSChunkMgr::GetInstance()->Check_WallCollision(m_pColliderCom))
+			m_pTransformCom->Move_Pos(&vRight, -m_fSideSpeed, fTimeDelta);
+		else
+		{
+			m_pTransformCom->Get_Info(INFO_POS, &vPos);
+			D3DXMatrixTranslation(&matTemp, vPos.x, vPos.y, vPos.z);
+			m_pColliderCom->Update_Collider(&matTemp);
+		}
 	}
 	else if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_RIGHT))
 	{
 		_vec3 vRight;
 		m_pTransformCom->Get_Info(INFO_RIGHT, &vRight);
 
-		m_pTransformCom->Move_Pos(&vRight, m_fSideSpeed, fTimeDelta);
+		_vec3 vPos;
+		m_pTransformCom->Get_Info(INFO_POS, &vPos);
+		vPos += vRight * m_fSideSpeed * fTimeDelta;
+
+		_matrix matTemp;
+		D3DXMatrixTranslation(&matTemp, vPos.x, vPos.y, vPos.z);
+		m_pColliderCom->Update_Collider(&matTemp);
+
+		if (!CJSChunkMgr::GetInstance()->Check_WallCollision(m_pColliderCom))
+			m_pTransformCom->Move_Pos(&vRight, m_fSideSpeed, fTimeDelta);
+		else
+		{
+			m_pTransformCom->Get_Info(INFO_POS, &vPos);
+			D3DXMatrixTranslation(&matTemp, vPos.x, vPos.y, vPos.z);
+			m_pColliderCom->Update_Collider(&matTemp);
+		}
 	}
 
 	if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_UP) && !m_bJump && !m_bFalling)

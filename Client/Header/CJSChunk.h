@@ -37,7 +37,7 @@ public:
 public:
 	HRESULT Ready_Tile(_vec3 vChunkPos);
 	HRESULT Ready_Emerald(_vec3 vChunkPos);
-	HRESULT Ready_Emerald_Line(_vec3 vChunkPos, _int iX);
+	HRESULT Ready_Emerald_Line(_vec3 vChunkPos);
 	HRESULT Ready_Emerald_Parabola(_vec3 vChunkPos);
 
 public:
@@ -47,21 +47,25 @@ public:
 	TILEID Get_TileID(_vec3 vPlayerPos);
 	void Check_Collect(_vec3 vPlayerPos);
 	_vec3 Get_EndPos();
+	_bool Check_WallCollision(_vec3 vPlayerPos);
+	CJSCollider* Get_LeftWallCol() { return m_pLeftWallCol; }
+	CJSCollider* Get_RightWallCol() { return m_pRightWallCol; }
 
 private:
 	HRESULT Add_Component();
 	_vec3 Calc_TilePos(_vec3 vChunkPos, _int x, _int z);
+	HRESULT Ready_Collider(_vec3 vChunkPos);
 
 public:
 	static CJSChunk* Create(LPDIRECT3DDEVICE9 pGraphicDev, _vec3 vPos, CLayer* pLayer, CHUNKTYPE eType, DIRECTION eDir);
 
 private:
-	//CLayer* m_pLayer;
-
 	CTransform* m_pTransformCom;
+	CJSCollider* m_pLeftWallCol = nullptr;
+	CJSCollider* m_pRightWallCol = nullptr;
 
 	static const _int   TILE_X = 5;
-	static const _int   TILE_Z = 32;
+	static const _int   TILE_Z = 16;
 	static const _float TILE_SIZE;
 
 	vector<CJSTile*> m_vecTile;
@@ -69,9 +73,6 @@ private:
 	vector<CJSEmerald*> m_vecEmerald;
 
 	CHUNKTYPE m_eChunkType;
-	//DIRECTION m_eDir = DIR_FORWARD;
-
-	//_bool m_bDead = false;
 
 private:
 	virtual void Free();

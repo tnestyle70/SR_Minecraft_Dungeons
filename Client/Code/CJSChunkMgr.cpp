@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "CJSChunkMgr.h"
 #include "CLayer.h"
-#include "CJSChunk.h"
-#include "CJSCornerChunk.h"
 #include "CJSBaseChunk.h"
 
 IMPLEMENT_SINGLETON(CJSChunkMgr)
@@ -24,26 +22,24 @@ HRESULT CJSChunkMgr::Ready_Manager(LPDIRECT3DDEVICE9 pGraphicDev, CLayer* pLayer
     {
         _vec3 vPos = { 0.f, 0.f, m_fChunkSize * i };
 
-        // 첫 번째 청크는 무조건 FULL
-        if (i == 0)
+        CJSChunk* pChunk = CJSChunk::Create(m_pGraphicDev, vPos, m_pLayer, CHUNK_FULL, m_eCurrentDir);
+        if (pChunk)
         {
-            CJSChunk* pChunk = CJSChunk::Create(m_pGraphicDev, vPos, m_pLayer, CHUNK_FULL, m_eCurrentDir);
-            if (pChunk)
-            {
-                m_pLayer->Add_GameObject(L"Chunk", pChunk);
-                m_ChunkList.push_back(pChunk);
-            }
+            m_pLayer->Add_GameObject(L"Chunk", pChunk);
+            m_ChunkList.push_back(pChunk);
         }
-        else
-            Spawn_Chunk(vPos);
     }
+
+    m_iStraightCount = 0;
+    m_iStraightMax = 2 + rand() % 2;
+
     return S_OK;
 }
 
 void CJSChunkMgr::Update_Manager(const _float& fTimeDelta, _vec3 vPlayerPos)
 {
-    for (auto& pChunk : m_RemoveList)
-        Safe_Release(pChunk);
+    //for (auto& pChunk : m_RemoveList)
+    //    Safe_Release(pChunk);
 
     m_RemoveList.clear();
 
@@ -65,10 +61,15 @@ void CJSChunkMgr::Update_Manager(const _float& fTimeDelta, _vec3 vPlayerPos)
         case DIR_LEFT:
             fDist = vPlayerPos.x - vEndPos.x;
             break;
+        case DIR_BACKWARD:
+            fDist = vPlayerPos.z - vEndPos.z;
+            break;
         }
 
         if (fDist < m_fChunkSize * (m_iRenderCount / 2))
+        {
             Spawn_Chunk(vEndPos);
+        }
     }
 }
 
@@ -78,16 +79,11 @@ TILEID CJSChunkMgr::Get_TileID(_vec3 vPlayerPos)
     {
         CJSChunk* pJSChunk = dynamic_cast<CJSChunk*>(pChunk);
         if (pJSChunk == nullptr)
-            continue;  // 코너 청크면 스킵
+            continue;
 
-        _vec3 vChunkPos;
-        pChunk->Get_Position(vChunkPos);
-
-        if (vPlayerPos.z >= vChunkPos.z &&
-            vPlayerPos.z < vChunkPos.z + m_fChunkSize)
-        {
-            return pJSChunk->Get_TileID(vPlayerPos);
-        }
+        TILEID eID = pJSChunk->Get_TileID(vPlayerPos);
+        if (eID == TILE_NORMAL)
+            return TILE_NORMAL;
     }
     return TILE_EMPTY;
 }
@@ -104,12 +100,56 @@ void CJSChunkMgr::Check_Collect(_vec3 vPlayerPos)
     }
 }
 
+CHUNKTYPE CJSChunkMgr::Get_CurrentChunkType(_vec3 vPlayerPos)
+{
+    for (auto& pChunk : m_ChunkList)
+    {
+        CJSCornerChunk* pCorner = dynamic_cast<CJSCornerChunk*>(pChunk);
+        if (pCorner == nullptr)
+            continue;
+
+        _vec3 vChunkPos;
+        pCorner->Get_Position(vChunkPos);
+
+        _float fSize = 10.f;
+        _bool bInRange = false;
+
+        switch (pCorner->Get_Dir())
+        {
+        case DIR_FORWARD:
+            bInRange = (vPlayerPos.x >= vChunkPos.x - fSize &&
+                vPlayerPos.x <= vChunkPos.x + fSize &&
+                vPlayerPos.z >= vChunkPos.z - fSize * 0.5f &&
+                vPlayerPos.z <= vChunkPos.z + fSize);
+            break;
+        case DIR_RIGHT:
+            bInRange = (vPlayerPos.z >= vChunkPos.z - fSize &&
+                vPlayerPos.z <= vChunkPos.z + fSize &&
+                vPlayerPos.x >= vChunkPos.x - fSize * 0.5f &&
+                vPlayerPos.x <= vChunkPos.x + fSize);
+            break;
+        case DIR_LEFT:
+            bInRange = (vPlayerPos.z >= vChunkPos.z - fSize &&
+                vPlayerPos.z <= vChunkPos.z + fSize &&
+                vPlayerPos.x <= vChunkPos.x + fSize * 0.5f &&
+                vPlayerPos.x >= vChunkPos.x - fSize);
+            break;
+        case DIR_BACKWARD:
+            bInRange = (vPlayerPos.x >= vChunkPos.x - fSize &&
+                vPlayerPos.x <= vChunkPos.x + fSize &&
+                vPlayerPos.z <= vChunkPos.z + fSize * 0.5f &&
+                vPlayerPos.z >= vChunkPos.z - fSize);
+            break;
+        }
+
+        if (bInRange)
+            return pCorner->Get_ChunkType();
+    }
+    return CHUNK_FULL;
+}
+
 void CJSChunkMgr::Spawn_Chunk(_vec3 vPos)
 {
-    TCHAR szBuf[128];
-    wsprintf(szBuf, L"Spawn Pos X: %d, Z: %d, Dir: %d", (_int)vPos.x, (_int)vPos.z, m_eCurrentDir);
-    OutputDebugString(szBuf);
-
     CHUNKTYPE eType = CHUNK_FULL;
     CJSBaseChunk* pChunk = nullptr;
 
@@ -125,7 +165,6 @@ void CJSChunkMgr::Spawn_Chunk(_vec3 vPos)
 
         pChunk = CJSCornerChunk::Create(m_pGraphicDev, vPos, m_pLayer, eType, m_eCurrentDir);
 
-        // 생성 후 방향 전환
         if (eType == CHUNK_CORNER_LEFT)
             m_eCurrentDir = Turn_Left(m_eCurrentDir);
         else
@@ -161,19 +200,10 @@ void CJSChunkMgr::Remove_OldChunk(_vec3 vPlayerPos)
     _vec3 vBackPos;
     m_ChunkList.front()->Get_Position(vBackPos);
 
-    _float fDist = 0.f;
-    switch (m_eCurrentDir)
-    {
-    case DIR_FORWARD:
-        fDist = vPlayerPos.z - vBackPos.z;
-        break;
-    case DIR_RIGHT:
-        fDist = vPlayerPos.x - vBackPos.x;
-        break;
-    case DIR_LEFT:
-        fDist = vBackPos.x - vPlayerPos.x;
-        break;
-    }
+    // 방향 상관없이 3D 직선 거리로 체크
+    _vec3 vDiff = vPlayerPos - vBackPos;
+    vDiff.y = 0.f;  // Y 무시
+    _float fDist = D3DXVec3Length(&vDiff);
 
     if (fDist > m_fChunkSize + 10.f)
     {
@@ -188,8 +218,9 @@ DIRECTION CJSChunkMgr::Turn_Left(DIRECTION eDir)
     switch (eDir)
     {
     case DIR_FORWARD:   return DIR_LEFT;
-    case DIR_LEFT:      return DIR_FORWARD;
+    case DIR_LEFT:      return DIR_BACKWARD;
     case DIR_RIGHT:     return DIR_FORWARD;
+    case DIR_BACKWARD:  return DIR_RIGHT;
     }
     return DIR_FORWARD;
 }
@@ -199,10 +230,30 @@ DIRECTION CJSChunkMgr::Turn_Right(DIRECTION eDir)
     switch (eDir)
     {
     case DIR_FORWARD:   return DIR_RIGHT;
-    case DIR_RIGHT:     return DIR_FORWARD;
+    case DIR_RIGHT:     return DIR_BACKWARD;
+    case DIR_BACKWARD:  return DIR_LEFT;
     case DIR_LEFT:      return DIR_FORWARD;
     }
     return DIR_FORWARD;
+}
+
+_bool CJSChunkMgr::Check_WallCollision(CJSCollider* pPlayerCol)
+{
+    for (auto& pChunk : m_ChunkList)
+    {
+        CJSChunk* pJSChunk = dynamic_cast<CJSChunk*>(pChunk);
+        if (pJSChunk == nullptr)
+            continue;
+
+        if (pJSChunk->Get_LeftWallCol() &&
+            pPlayerCol->Check_Collision(pJSChunk->Get_LeftWallCol()))
+            return true;
+
+        if (pJSChunk->Get_RightWallCol() &&
+            pPlayerCol->Check_Collision(pJSChunk->Get_RightWallCol()))
+            return true;
+    }
+    return false;
 }
 
 void CJSChunkMgr::Free()

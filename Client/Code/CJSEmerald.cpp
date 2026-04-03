@@ -36,6 +36,9 @@ void CJSEmerald::LateUpdate_GameObject(const _float& fTimeDelta)
 {
 	CGameObject::LateUpdate_GameObject(fTimeDelta);
 
+	if (m_bDead)
+		return;
+
 	CRenderer::GetInstance()->Add_RenderGroup(RENDER_ALPHA, this);
 }
 

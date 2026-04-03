@@ -2,6 +2,7 @@
 #include "CJSCornerChunk.h"
 #include "CRenderer.h"
 #include "CLayer.h"
+#include "CJSChunkMgr.h"
 
 const _float CJSCornerChunk::TILE_SIZE = 2.f;
 
@@ -45,20 +46,20 @@ HRESULT CJSCornerChunk::Ready_Tile(_vec3 vChunkPos)
             if (m_eChunkType == CHUNK_CORNER_RIGHT)
             {
                 // 위쪽 행 전체 벽
-                if (z == 0) bWall = true;
+                if (z == CORNER_SIZE - 1) bWall = true;
                 // 왼쪽 열 전체 벽
                 if (x == 0) bWall = true;
                 // 오른쪽 아래 코너 벽
-                if (z == CORNER_SIZE - 1 && x >= CORNER_SIZE - 2) bWall = true;
+                if (z == 0 && x == CORNER_SIZE - 1) bWall = true;
             }
             else if (m_eChunkType == CHUNK_CORNER_LEFT)
             {
                 // 위쪽 행 전체 벽
-                if (z == 0) bWall = true;
+                if (z == CORNER_SIZE - 1) bWall = true;
                 // 오른쪽 열 전체 벽
                 if (x == CORNER_SIZE - 1) bWall = true;
                 // 왼쪽 아래 코너 벽
-                if (z == CORNER_SIZE - 1 && x == 0) bWall = true;
+                if (z == 0 && x == 0) bWall = true;
             }
 
             _vec3 vTilePos = {};
@@ -79,6 +80,9 @@ HRESULT CJSCornerChunk::Ready_Tile(_vec3 vChunkPos)
                 vTilePos.x = vChunkPos.x - z * TILE_SIZE;
                 vTilePos.z = vChunkPos.z + (x - 2) * TILE_SIZE;
                 break;
+            case DIR_BACKWARD:
+                vTilePos.x = vChunkPos.x - (x - 2) * TILE_SIZE;
+                vTilePos.z = vChunkPos.z - z * TILE_SIZE;
             }
 
             if (bWall)
@@ -111,54 +115,28 @@ _vec3 CJSCornerChunk::Get_EndPos()
     _vec3 vPos;
     m_pTransformCom->Get_Info(INFO_POS, &vPos);
 
-    _float fCornerLength = TILE_SIZE * CORNER_SIZE;  // 2.f * 5 = 10.f
+    _float fLong = TILE_SIZE * CORNER_SIZE - (2 * TILE_SIZE);  // 6.f
+    _float fShort = 2 * TILE_SIZE;  // 4.f
 
-    // 코너 이후 새 방향으로 끝 위치 계산
     switch (m_eChunkType)
     {
-    //case CHUNK_CORNER_RIGHT:
-    //    switch (m_eDir)
-    //    {
-    //    case DIR_FORWARD:   vPos.x += fCornerLength; break;
-    //    case DIR_RIGHT:     vPos.z -= fCornerLength; break;
-    //    case DIR_LEFT:      vPos.z += fCornerLength; break;
-    //    }
-    //    break;
-
     case CHUNK_CORNER_RIGHT:
         switch (m_eDir)
         {
-        case DIR_FORWARD:
-            vPos.x += fCornerLength;
-            //vPos.z += 2 * TILE_SIZE;  // 새 방향 청크 Z 중심 맞추기
-            break;
-        case DIR_RIGHT:
-            vPos.z -= fCornerLength;
-            //vPos.x -= 2 * TILE_SIZE;
-            break;
-        case DIR_LEFT:
-            vPos.z += fCornerLength;
-            //vPos.x += 2 * TILE_SIZE;
-            break;
+        case DIR_FORWARD:   vPos.x += fLong;  vPos.z += fShort; break;
+        case DIR_RIGHT:     vPos.z -= fLong;  vPos.x += fShort; break;
+        case DIR_BACKWARD:  vPos.x -= fLong;  vPos.z -= fShort; break;
+        case DIR_LEFT:      vPos.z += fLong;  vPos.x -= fShort; break;
         }
         break;
+
     case CHUNK_CORNER_LEFT:
         switch (m_eDir)
         {
-        case DIR_FORWARD:
-            vPos.x -= fCornerLength;
-            //vPos.z -= 2 * TILE_SIZE;
-            break;
-
-        case DIR_RIGHT:
-            vPos.z += fCornerLength;
-            //vPos.x += 2 * TILE_SIZE;
-            break;
-
-        case DIR_LEFT:
-            vPos.z -= fCornerLength;
-            //vPos.x -= 2 * TILE_SIZE;
-            break;
+        case DIR_FORWARD:   vPos.x -= fLong;  vPos.z += fShort; break;
+        case DIR_LEFT:      vPos.z -= fLong;  vPos.x -= fShort; break;
+        case DIR_BACKWARD:  vPos.x += fLong;  vPos.z -= fShort; break;
+        case DIR_RIGHT:     vPos.z += fLong;  vPos.x += fShort; break;
         }
         break;
     }
