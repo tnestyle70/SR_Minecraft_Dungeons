@@ -74,7 +74,7 @@ HRESULT CJSStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 	CGameObject* pGameObject = nullptr;
 
 	//camera
-	_vec3 vEye{ 0.f, 10.f, -10.f };
+	_vec3 vEye{ 0.f, 8.f, -10.f };
 	_vec3 vAt{ 0.f, 0.f, 1.f };
 	_vec3 vUp{ 0.f, 1.f, 0.f };
 

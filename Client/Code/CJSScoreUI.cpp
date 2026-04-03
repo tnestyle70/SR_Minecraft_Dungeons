@@ -3,6 +3,7 @@
 #include "CFontMgr.h"
 #include "CRenderer.h"
 #include "CJSScoreMgr.h"
+#include "CJSChunkMgr.h"
 
 CJSScoreUI::CJSScoreUI(LPDIRECT3DDEVICE9 pGraphicDev)
     : CGameObject(pGraphicDev)
@@ -59,6 +60,12 @@ void CJSScoreUI::Render_GameObject()
     wsprintf(szSpeed, L"Speed: %d", (_int)m_fSpeed);
     _vec2 vSpeedPos = { 10.f, 110.f };
     CFontMgr::GetInstance()->Render_Font(L"Font_Score", szSpeed, &vSpeedPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+
+    //TCHAR szDir[64];
+    //const TCHAR* dirNames[] = { L"FORWARD", L"LEFT", L"RIGHT", L"BACKWARD" };
+    //wsprintf(szDir, L"Dir: %s", dirNames[CJSChunkMgr::GetInstance()->Get_CurrentDir()]);
+    //_vec2 vDirPos = { 10.f, 170.f };
+    //CFontMgr::GetInstance()->Render_Font(L"Font_Score", szDir, &vDirPos, D3DXCOLOR(1.f, 1.f, 0.f, 1.f));
 }
 
 CJSScoreUI* CJSScoreUI::Create(LPDIRECT3DDEVICE9 pGraphicDev)

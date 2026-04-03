@@ -34,6 +34,7 @@
 #include "CTexture.h"
 #include "CCalculator.h"
 #include "CCollider.h"
+#include "CJSCollider.h"
 
 #include "CCamera.h"
 

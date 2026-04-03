@@ -264,6 +264,9 @@
     <ClCompile Include="..\Code\CJSCubeTex.cpp">
       <Filter>03. Component\00. VIBuffer</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CJSCollider.cpp">
+      <Filter>03. Component\04. Collider</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\CGraphicDev.h">
@@ -428,6 +431,9 @@
     </ClInclude>
     <ClInclude Include="..\Header\CJSCubeTex.h">
       <Filter>03. Component\00. VIBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSCollider.h">
+      <Filter>03. Component\04. Collider</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

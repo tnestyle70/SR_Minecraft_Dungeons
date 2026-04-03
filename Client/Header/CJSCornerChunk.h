@@ -21,6 +21,13 @@ public:
     virtual void LateUpdate_GameObject(const _float& fTimeDelta);
     virtual void Render_GameObject();
 
+public:
+    CHUNKTYPE Get_ChunkType() { return m_eChunkType; }
+    void Get_Position(_vec3& vPos) { m_pTransformCom->Get_Info(INFO_POS, &vPos); }
+    _vec3 Get_EndPos();
+    virtual bool Is_Dead() override { return m_bDead; }
+    void Set_Dead() { m_bDead = true; }
+
 private:
     HRESULT Ready_Tile(_vec3 vChunkPos);
     HRESULT Add_Component();
@@ -32,21 +39,11 @@ private:
 private:
     CJSCubeTex* m_pBufferCom = nullptr;
     CTransform* m_pTransformCom = nullptr;
-    //CLayer* m_pLayer = nullptr;
 
     CHUNKTYPE m_eChunkType = CHUNK_CORNER_RIGHT;
-    //DIRECTION m_eDir = DIR_FORWARD;
 
     vector<CJSTile*> m_vecTile;
     vector<CJSTile*> m_vecWall;
-
-    //_bool m_bDead = false;
-
-public:
-    void Get_Position(_vec3& vPos) { m_pTransformCom->Get_Info(INFO_POS, &vPos); }
-    _vec3 Get_EndPos();
-    virtual bool Is_Dead() override { return m_bDead; }
-    void Set_Dead() { m_bDead = true; }
 
 public:
     static CJSCornerChunk* Create(LPDIRECT3DDEVICE9 pGraphicDev, _vec3 vPos, CLayer* pLayer, CHUNKTYPE eType, DIRECTION eDir);
