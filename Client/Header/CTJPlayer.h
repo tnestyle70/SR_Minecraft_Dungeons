@@ -78,8 +78,35 @@ private:
     _float   m_fLightningTimer = 0.f;
     _float   m_fLightningInterval = 4.f;
 
+    // 번개 이펙트
+    Engine::CRcTex* m_pThunderBufferCom = nullptr;
+    Engine::CTexture* m_pLightningTextureCom = nullptr;
+    Engine::CTexture* m_pSparkTextureCom = nullptr;
+    bool m_bThunderEffect = false;
+    float m_fThunderEffectTimer = 0.f;
+    float m_fThunderEffectDuration = 0.5f;
+    int m_iLightningFrame = 0;
+    int m_iSparkFrame = 0;
+    float m_fFrameTimer = 0.f;
+    float m_fFrameInterval = 0.1f;
+    _vec3 m_vThunderPos = {};
+
     // 화염 장판
-    _bool    m_bFireTrail = false;
+    struct TJFireTrail
+    {
+        _vec3 vPos;
+        _float fLifeTime = 3.f;
+        _float fDmgTimer = 0.f;
+    };
+
+    // 화염 장판
+    _bool m_bFireTrail = false;
+    vector<TJFireTrail> m_vecFireTrails;
+    _float m_fFireSpawnTimer = 0.f;
+    _float m_fFireSpawnInterval = 0.3f;
+    Engine::CRcTex* m_pFireBufferCom = nullptr;
+    Engine::CTexture* m_pFireTextureCom = nullptr;
+    float m_fFireDamage = 5.f;
 
     // 회전 칼날
     _bool    m_bBladeOrbit = false;
