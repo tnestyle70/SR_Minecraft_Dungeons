@@ -10,7 +10,8 @@
 
 class CMonster;
 class CRedStoneGolem;
-class CAncientGuardian;
+class CAncientGuardian; 
+class CEnderEye;
 
 enum BODYPART
 {
@@ -78,7 +79,7 @@ protected:
 
 public:
 	const vector<CPlayerArrow*>& Get_Arrows() const { return m_vecArrows; }
-
+	void Add_EnderEye(CEnderEye* pEye) { m_vecEnderEyes.push_back(pEye); }
 private:
 	//플레이어 정보
 
@@ -126,7 +127,10 @@ private:
 
 	//사운드용 발걸음
 	float m_fStepTimer = 0.f;
-	static constexpr float m_fStepInterval = 0.35f;
+	static constexpr float m_fStepInterval = 0.35f; 
+
+
+	vector<CEnderEye*> m_vecEnderEyes;
 
 public:
 

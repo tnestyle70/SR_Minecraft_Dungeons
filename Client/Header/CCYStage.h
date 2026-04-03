@@ -3,6 +3,7 @@
 #include "CCYCamera.h"
 #include "CCYPlayer.h"
 #include "CTorch.h"
+#include "CEventBus.h"
 #include <vector>
 #include <algorithm>
 
@@ -19,6 +20,13 @@ public:
     virtual void    Render_Scene();
     virtual void    Render_UI() override;
 
+    void Add_Time(float fTime)
+    {
+        m_fTimer += fTime;
+        m_bShowAddTime = true;
+        m_fAddTimeShow = 1.5f;
+    }
+
 private:
     HRESULT Ready_Environment_Layer(const _tchar* pLayerTag);
     HRESULT Ready_GameLogic_Layer(const _tchar* pLayerTag);
@@ -32,6 +40,15 @@ private:
     CCYCamera* m_pCYCamera = nullptr;
     CCYPlayer* m_pCYPlayer = nullptr;
     vector<CTorch*> m_vecTorches;
+
+    // 타이머
+    float      m_fTimer = 10.f;
+    bool       m_bGameOver = false;
+    LPD3DXFONT m_pFont = nullptr;
+
+    // +5초 표시
+    float m_fAddTimeShow = 0.f;
+    bool  m_bShowAddTime = false;
 
 public:
     static CCYStage* Create(LPDIRECT3DDEVICE9 pGraphicDev);

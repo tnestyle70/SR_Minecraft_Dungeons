@@ -13,13 +13,14 @@ public:
 
 public:
     HRESULT Ready_GameObject(const _vec3* pEye, const _vec3* pAt, const _vec3* pUp,
-        float fFov = D3DXToRadian(60.f),
-        float fAspect = (_float)WINCX / WINCY,
-        float fNear = 0.1f,
-        float fFar = 1000.f);
+                              float fFov = D3DXToRadian(60.f),
+                              float fAspect = (_float)WINCX / WINCY,
+                              float fNear = 0.1f,
+                              float fFar = 1000.f);
 
     virtual _int Update_GameObject(const _float& fTimeDelta) override;
     virtual void Render_GameObject() override {}
+    virtual void LateUpdate_GameObject(const _float& fTimeDelta) override;
 
     _matrix Get_ViewMatrix() { return m_matView; }
     _vec3   Get_Eye() { return m_vEye; }

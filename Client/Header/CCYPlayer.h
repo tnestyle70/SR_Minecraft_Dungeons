@@ -3,6 +3,7 @@
 #include "CProtoMgr.h"
 #include "CBlockMgr.h"
 #include "CPlayerBody.h"
+#include "CPlayerArrow.h"
 
 class CCYCamera;
 
@@ -26,6 +27,8 @@ public:
     _float Get_Hp()    const { return m_fHp; }
     _float Get_MaxHp() const { return m_fMaxHp; }
     void   Hit(float fDmg) { m_fHp -= fDmg; if (m_fHp < 0.f) m_fHp = 0.f; }
+
+    const vector<CPlayerArrow*>& Get_Arrows() const { return m_vecArrows; }
 
 private:
     HRESULT Add_Component();
@@ -57,17 +60,23 @@ private:
     float m_fGravity = -35.f;
     float m_fMaxFall = -20.f;
     bool  m_bOnGround = false;
-   
+
     float m_fHp = 100.f;
     float m_fMaxHp = 100.f;
 
-    // 공격 모션
+    // 공격
     int   m_iComboStep = 0;
     float m_fAtkTime = 0.f;
-    float m_fAtkDuration = 0.55f;
+    float m_fAtkDuration = 0.4f;
     float m_fComboTimer = 0.f;
-    float m_fComboWindow = 0.6f;
+    float m_fComboWindow = 0.3f;
     bool  m_bAtkInput = false;
+
+    // 활
+    bool  m_bCharging = false;
+    float m_fCharge = 0.f;
+    float m_fMaxCharge = 2.f;
+    vector<CPlayerArrow*> m_vecArrows;
 
 public:
     static CCYPlayer* Create(LPDIRECT3DDEVICE9 pGraphicDev);
