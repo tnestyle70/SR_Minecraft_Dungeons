@@ -3,6 +3,7 @@
 #include "CProtoMgr.h"
 #include "CJSTile.h"
 #include "CJSEmerald.h"
+#include "CJSObstacle.h"
 #include "Engine_Enum.h"
 
 namespace Engine
@@ -48,6 +49,7 @@ public:
 	void Check_Collect(_vec3 vPlayerPos);
 	_vec3 Get_EndPos();
 	_bool Check_WallCollision(_vec3 vPlayerPos);
+	_bool Check_ObstacleCollision(CJSCollider* pPlayerCol);
 	CJSCollider* Get_LeftWallCol() { return m_pLeftWallCol; }
 	CJSCollider* Get_RightWallCol() { return m_pRightWallCol; }
 
@@ -55,6 +57,7 @@ private:
 	HRESULT Add_Component();
 	_vec3 Calc_TilePos(_vec3 vChunkPos, _int x, _int z);
 	HRESULT Ready_Collider(_vec3 vChunkPos);
+	HRESULT Ready_Obstacle(_vec3 vChunkPos);
 
 public:
 	static CJSChunk* Create(LPDIRECT3DDEVICE9 pGraphicDev, _vec3 vPos, CLayer* pLayer, CHUNKTYPE eType, DIRECTION eDir);
@@ -71,8 +74,11 @@ private:
 	vector<CJSTile*> m_vecTile;
 	vector<CJSTile*> m_vecWall;
 	vector<CJSEmerald*> m_vecEmerald;
+	vector<CJSObstacle*> m_vecObstacle;
 
 	CHUNKTYPE m_eChunkType;
+
+	_bool m_bHasObstacle = false;
 
 private:
 	virtual void Free();

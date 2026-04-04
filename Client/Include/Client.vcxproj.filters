@@ -329,7 +329,7 @@
     </ClCompile>
     <ClCompile Include="..\Code\CVoidFlame.cpp">
       <Filter>01. Scene\01. Stage\07. GB\04. Network\06. VoidFlame</Filter>
-	</ClCompile>
+    </ClCompile>
     <ClCompile Include="..\Code\CTJLevelUpUi.cpp">
       <Filter>02. GameObject\12. UI</Filter>
     </ClCompile>
@@ -355,6 +355,18 @@
       <Filter>02. GameObject\17. JS</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\CJSBaseChunk.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSObstacle.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSSkyBox.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSWaterPlane.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSBodyPart.cpp">
       <Filter>02. GameObject\17. JS</Filter>
     </ClCompile>
   </ItemGroup>
@@ -692,7 +704,7 @@
     </ClInclude>
     <ClInclude Include="..\Header\CVoidFlame.h">
       <Filter>01. Scene\01. Stage\07. GB\04. Network\06. VoidFlame</Filter>
-	</ClInclude>
+    </ClInclude>
     <ClInclude Include="..\Header\CTJLevelUpUi.h">
       <Filter>02. GameObject\12. UI</Filter>
     </ClInclude>
@@ -718,6 +730,18 @@
       <Filter>02. GameObject\17. JS</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CJSBaseChunk.h">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSObstacle.h">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSSkyBox.h">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSWaterPlane.h">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSBodyPart.h">
       <Filter>02. GameObject\17. JS</Filter>
     </ClInclude>
   </ItemGroup>

@@ -27,9 +27,11 @@ public:
     _vec3 Get_EndPos();
     virtual bool Is_Dead() override { return m_bDead; }
     void Set_Dead() { m_bDead = true; }
+    vector<CJSCollider*>& Get_WallCols() { return m_vecWallCol; }
 
 private:
     HRESULT Ready_Tile(_vec3 vChunkPos);
+    HRESULT Ready_Collider(_vec3 vChunkPos);
     HRESULT Add_Component();
 
 private:
@@ -44,6 +46,7 @@ private:
 
     vector<CJSTile*> m_vecTile;
     vector<CJSTile*> m_vecWall;
+    vector<CJSCollider*> m_vecWallCol;
 
 public:
     static CJSCornerChunk* Create(LPDIRECT3DDEVICE9 pGraphicDev, _vec3 vPos, CLayer* pLayer, CHUNKTYPE eType, DIRECTION eDir);

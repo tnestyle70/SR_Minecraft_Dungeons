@@ -242,15 +242,39 @@ _bool CJSChunkMgr::Check_WallCollision(CJSCollider* pPlayerCol)
     for (auto& pChunk : m_ChunkList)
     {
         CJSChunk* pJSChunk = dynamic_cast<CJSChunk*>(pChunk);
+        if (pJSChunk)
+        {
+            if (pJSChunk->Get_LeftWallCol() &&
+                pPlayerCol->Check_Collision(pJSChunk->Get_LeftWallCol()))
+                return true;
+            if (pJSChunk->Get_RightWallCol() &&
+                pPlayerCol->Check_Collision(pJSChunk->Get_RightWallCol()))
+                return true;
+            continue;
+        }
+
+        CJSCornerChunk* pCorner = dynamic_cast<CJSCornerChunk*>(pChunk);
+        if (pCorner)
+        {
+            for (auto& pCol : pCorner->Get_WallCols())
+            {
+                if (pPlayerCol->Check_Collision(pCol))
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
+_bool CJSChunkMgr::Check_ObstacleCollision(CJSCollider* pPlayerCol)
+{
+    for (auto& pChunk : m_ChunkList)
+    {
+        CJSChunk* pJSChunk = dynamic_cast<CJSChunk*>(pChunk);
         if (pJSChunk == nullptr)
             continue;
 
-        if (pJSChunk->Get_LeftWallCol() &&
-            pPlayerCol->Check_Collision(pJSChunk->Get_LeftWallCol()))
-            return true;
-
-        if (pJSChunk->Get_RightWallCol() &&
-            pPlayerCol->Check_Collision(pJSChunk->Get_RightWallCol()))
+        if (pJSChunk->Check_ObstacleCollision(pPlayerCol))
             return true;
     }
     return false;

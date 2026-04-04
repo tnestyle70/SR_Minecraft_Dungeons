@@ -267,6 +267,12 @@
     <ClCompile Include="..\Code\CJSCollider.cpp">
       <Filter>03. Component\04. Collider</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CJSSpriteBuffer.cpp">
+      <Filter>03. Component\00. VIBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSBodyBuffer.cpp">
+      <Filter>03. Component\00. VIBuffer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\CGraphicDev.h">
@@ -434,6 +440,12 @@
     </ClInclude>
     <ClInclude Include="..\Header\CJSCollider.h">
       <Filter>03. Component\04. Collider</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSSpriteBuffer.h">
+      <Filter>03. Component\00. VIBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSBodyBuffer.h">
+      <Filter>03. Component\00. VIBuffer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
