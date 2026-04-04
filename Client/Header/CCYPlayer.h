@@ -30,6 +30,10 @@ public:
 
     const vector<CPlayerArrow*>& Get_Arrows() const { return m_vecArrows; }
 
+    // 공격 콜라이더
+    Engine::CCollider* Get_AtkCollider()    const { return m_pAtkColliderCom; }
+    bool Get_AtkColliderActive()            const { return m_iComboStep > 0 && m_fAtkTime > 0.1f; }
+
 private:
     HRESULT Add_Component();
     void    Sync_WithCamera();
@@ -39,6 +43,7 @@ private:
 private:
     Engine::CTransform* m_pTransformCom = nullptr;
     Engine::CCollider* m_pColliderCom = nullptr;
+    Engine::CCollider* m_pAtkColliderCom = nullptr;  // ← 추가
     CCYCamera* m_pCamera = nullptr;
 
     // 오른팔

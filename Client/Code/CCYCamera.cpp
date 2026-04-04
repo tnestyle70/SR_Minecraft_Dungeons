@@ -30,27 +30,39 @@ _int CCYCamera::Update_GameObject(const _float& fTimeDelta)
     // F2 토글 - 자유시점
     if (GetAsyncKeyState(VK_F2) & 0x8000)
     {
-        if (!m_bF2Check)
-        {
-            m_bF2Check = true;
-            m_bFreeMode = !m_bFreeMode;
-        }
+        if (!m_bF2Check) { m_bF2Check = true; m_bFreeMode = !m_bFreeMode; }
     }
     else m_bF2Check = false;
 
     // TAB 토글 - 마우스 고정
     if (GetAsyncKeyState(VK_TAB) & 0x8000)
     {
-        if (!m_bTabCheck)
-        {
-            m_bTabCheck = true;
-            m_bMouseFix = !m_bMouseFix;
-        }
+        if (!m_bTabCheck) { m_bTabCheck = true; m_bMouseFix = !m_bMouseFix; }
     }
     else m_bTabCheck = false;
 
-    // 카메라 이동
-    Free_Move(fTimeDelta);
+    // 낙하 중이면 WASD 이동 막기
+    if (!m_bFalling)
+        Free_Move(fTimeDelta);
+
+    // 낙하 처리
+    if (m_bFalling)
+    {
+        m_fVelocityY += m_fGravity * fTimeDelta;
+        _vec3 vLook = m_vAt - m_vEye;
+        m_vEye.y += m_fVelocityY * fTimeDelta;
+        m_vAt = m_vEye + vLook;
+
+        if (m_vEye.y <= m_fTargetY)
+        {
+            _vec3 vLook2 = m_vAt - m_vEye;
+            m_vEye.y = m_fTargetY;
+            m_vAt = m_vEye + vLook2;
+            m_fVelocityY = 0.f;
+            m_bFalling = false;
+        }
+    }
+
     FPS_MouseRotate();
 
     // 마우스 중앙 고정
@@ -65,10 +77,9 @@ _int CCYCamera::Update_GameObject(const _float& fTimeDelta)
 }
 
 void CCYCamera::LateUpdate_GameObject(const _float& fTimeDelta)
-{ 
+{
     if (m_pCYPlayer && !m_bFreeMode)
     {
-
         Engine::CTransform* pTrans = m_pCYPlayer->Get_Transform();
         if (pTrans)
         {
@@ -88,7 +99,6 @@ void CCYCamera::FPS_MouseRotate()
 {
     D3DXMatrixLookAtLH(&m_matView, &m_vEye, &m_vAt, &m_vUp);
 
-    // 마우스 X → 좌우 회전
     _long dwMouseX = CDInputMgr::GetInstance()->Get_DIMouseMove(DIMS_X);
     if (dwMouseX)
     {
@@ -100,7 +110,6 @@ void CCYCamera::FPS_MouseRotate()
         m_vAt = m_vEye + vLook;
     }
 
-    // 마우스 Y → 상하 회전 (±80도 클램프)
     _long dwMouseY = CDInputMgr::GetInstance()->Get_DIMouseMove(DIMS_Y);
     if (dwMouseY)
     {
@@ -131,7 +140,6 @@ void CCYCamera::Free_Move(const _float& fTimeDelta)
     _matrix matCamWorld;
     D3DXMatrixInverse(&matCamWorld, 0, &m_matView);
 
-    // Shift 누르면 5배 빠르게
     float fSpeed = m_fFreeSpeed;
     if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
         fSpeed *= 5.f;
@@ -142,7 +150,6 @@ void CCYCamera::Free_Move(const _float& fTimeDelta)
     D3DXVec3Normalize(&vLook, &vLook);
     D3DXVec3Normalize(&vRight, &vRight);
 
-    // 1인칭 모드에서는 Y축 제거
     if (!m_bFreeMode)
     {
         vLook.y = 0.f;
