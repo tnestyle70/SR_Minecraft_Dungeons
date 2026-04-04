@@ -9,6 +9,8 @@
 #include "CCubeBodyTex.h"
 #include "CJSCubeTex.h"
 #include "CNormalCubeTex.h"
+#include "CJSSpriteBuffer.h"
+#include "CJSBodyBuffer.h"
 
 // RedStoneGolem
 #include "CRedStoneGolemBodyTex.h"

@@ -357,6 +357,19 @@
     <ClCompile Include="..\Code\CJSBaseChunk.cpp">
       <Filter>02. GameObject\17. JS</Filter>
     </ClCompile>
+
+    <ClCompile Include="..\Code\CJSObstacle.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSSkyBox.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSWaterPlane.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CJSBodyPart.cpp">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
     <ClCompile Include="..\Code\CCYMonster.cpp">
       <Filter>01. Scene\01. Stage\06. CY</Filter>
     </ClCompile>
@@ -724,6 +737,18 @@
       <Filter>02. GameObject\17. JS</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CJSBaseChunk.h">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSObstacle.h">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSSkyBox.h">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSWaterPlane.h">
+      <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CJSBodyPart.h">
       <Filter>02. GameObject\17. JS</Filter>
     </ClInclude>
     <ClInclude Include="..\Header\CCYMonster.h">

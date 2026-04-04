@@ -32,6 +32,7 @@ public:
 	DIRECTION Get_CurrentDir() { return m_eCurrentDir; }
 	list<CJSBaseChunk*>& Get_ChunkList() { return m_ChunkList; }
 	_bool Check_WallCollision(CJSCollider* pPlayerCol);
+	_bool Check_ObstacleCollision(CJSCollider* pPlayerCol);
 
 private:
 	void Spawn_Chunk(_vec3 vPos);

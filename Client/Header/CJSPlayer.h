@@ -1,6 +1,7 @@
 #pragma once
 #include "CGameObject.h"
 #include "CProtoMgr.h"
+#include "CJSBodyPart.h"
 
 class CJSPlayer : public CGameObject
 {
@@ -23,6 +24,12 @@ private:
 	void Jump(const _float& fTimeDelta);
 	void Falling();
 	void Check_Collect();
+	void Check_WallCollision();
+
+private:
+	HRESULT Ready_BodyParts();
+	void	Update_BodyParts(const _float& fTimeDelta);
+	void	LateUpdate_BodyParts(const _float& fTimeDelta);
 
 public:
 	static CJSPlayer* Create(LPDIRECT3DDEVICE9 pGraphicDev);
@@ -33,8 +40,8 @@ private:
 	CTexture* m_pTextureCom;
 	CJSCollider* m_pColliderCom;
 
-	_float  m_fNextSpeedUpZ = 25.f;   // 처음 속도 증가 지점
-	_float  m_fSpeedUpInterval = 25.f; // 속도 증가 간격
+	_float  m_fNextSpeedUpZ = 100.f;   // 처음 속도 증가 지점
+	_float  m_fSpeedUpInterval = 100.f; // 속도 증가 간격
 	_float  m_fSpeedUpAmount = 1.f;    // 한 번에 증가하는 속도
 	_float  m_fMaxSpeed = 50.f;        // 최대 속도
 
@@ -49,6 +56,18 @@ private:
 
 	_bool	m_bRotated = false;
 	_float  m_fTotalDistance = 0.f;  // 총 이동 거리 누적
+
+	_bool   m_bSlide = false;
+	_vec3   m_vNormalColSize = { 1.f, 2.f, 1.f };   // 기본 콜라이더 크기
+	_vec3   m_vSlideColSize = { 1.f, 0.8f, 1.f };  // 슬라이드 콜라이더 크기
+
+private:
+	CJSBodyPart* m_pHead = nullptr;
+	CJSBodyPart* m_pBody = nullptr;
+	CJSBodyPart* m_pArmL = nullptr;
+	CJSBodyPart* m_pArmR = nullptr;
+	CJSBodyPart* m_pLegL = nullptr;
+	CJSBodyPart* m_pLegR = nullptr;
 
 private:
 	virtual void Free();

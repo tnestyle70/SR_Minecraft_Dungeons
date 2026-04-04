@@ -65,6 +65,17 @@ _uint CLoading::Loading_SquidCoast()
             return E_FAIL;
     } 
  
+    if (nullptr == CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_JSSpriteBuffer"))
+    {
+        if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSSpriteBuffer", Engine::CJSSpriteBuffer::Create(m_pGraphicDev))))
+            return E_FAIL;
+    }
+
+    if (nullptr == CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_JSBodyBuffer"))
+    {
+        if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSBodyBuffer", Engine::CJSBodyBuffer::Create(m_pGraphicDev))))
+            return E_FAIL;
+    }
 
     //UI - Inventory
     //Slot Frame
@@ -162,6 +173,10 @@ _uint CLoading::Loading_SquidCoast()
         Engine::CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/SkyBox/sky.dds"))))
         return E_FAIL;
 
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JungleSkyBoxTexture",
+        Engine::CTexture::Create(m_pGraphicDev, TEX_CUBE, L"../Bin/Resource/Texture/SkyBox/jungle.dds"))))
+        return E_FAIL;
+
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_EffectTexture",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Explosion/Explosion%d.png", 90))))
         return E_FAIL;
@@ -196,6 +211,16 @@ _uint CLoading::Loading_SquidCoast()
     // EnderEye
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_EnderEyeTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Object/A_teleport_ender_duringanim.png"))))
+        return E_FAIL;
+
+    // TemplRun Fire
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_FireTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Blocks/fire_layer_1.png"))))
+        return E_FAIL;
+
+    // TempleRun Steve
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSPlayerTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/mob/steve_real.png"))))
         return E_FAIL;
 
     //오징어 해안 로딩 텍스쳐`
