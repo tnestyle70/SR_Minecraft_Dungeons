@@ -10,6 +10,9 @@
 #include "CLightMgr.h"
 #include "CJSScoreUI.h"
 #include "CJSScoreMgr.h"
+#include "CJSSkyBox.h"
+#include "CJSWaterPlane.h"
+#include "CScreenfx.h"
 
 CJSStage::CJSStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -23,9 +26,12 @@ CJSStage::~CJSStage()
 HRESULT CJSStage::Ready_Scene()
 {
 	CSoundMgr::GetInstance()->StopAll();
-	CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_JSStage.wav", 0.8f);
+	CSoundMgr::GetInstance()->PlayBGM(L"JS/1-02.-Background-Music.wav", 0.8f);
 
 	if (FAILED(Ready_Light()))
+		return E_FAIL;
+
+	if (FAILED(Ready_Fog()))
 		return E_FAIL;
 
 	if (FAILED(Ready_Environment_Layer(L"Environment_Layer")))
@@ -42,11 +48,16 @@ HRESULT CJSStage::Ready_Scene()
 
 _int CJSStage::Update_Scene(const _float& fTimeDelta)
 {
-	_int iExit = CScene::Update_Scene(fTimeDelta);
-
 	_vec3 vPlayerPos;
 	CTransform* pPlayerTrans = dynamic_cast<CTransform*>(CManagement::GetInstance()->Get_Component(ID_DYNAMIC, L"GameLogic_Layer", L"JSPlayer", L"Com_Transform"));
 	pPlayerTrans->Get_Info(INFO_POS, &vPlayerPos);
+
+	if (m_pWaterPlane)
+	{
+		m_pWaterPlane->Set_PlayerPos(vPlayerPos);
+	}
+
+	_int iExit = CScene::Update_Scene(fTimeDelta);
 
 	CJSChunkMgr::GetInstance()->Update_Manager(fTimeDelta, vPlayerPos);
 
@@ -86,6 +97,25 @@ HRESULT CJSStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 	if (FAILED(pLayer->Add_GameObject(L"JSCamera", pGameObject)))
 		return E_FAIL;
 
+	// SkyBox
+	pGameObject = CJSSkyBox::Create(m_pGraphicDev);
+
+	if (!pGameObject)
+		return E_FAIL;
+
+	if (FAILED(pLayer->Add_GameObject(L"JSSkyBox", pGameObject)))
+		return E_FAIL;
+
+	// Water
+	m_pWaterPlane = CJSWaterPlane::Create(m_pGraphicDev);
+
+	if (!m_pWaterPlane)
+		return E_FAIL;
+
+	if (FAILED(pLayer->Add_GameObject(L"WaterPlane", m_pWaterPlane)))
+		return E_FAIL;
+
+	// Chunk
 	if (FAILED(CJSChunkMgr::GetInstance()->Ready_Manager(m_pGraphicDev, pLayer)))
 		return E_FAIL;
 
@@ -157,6 +187,26 @@ HRESULT CJSStage::Ready_Light()
 	return S_OK;
 }
 
+HRESULT CJSStage::Ready_Fog()
+{
+	// 포그 활성화
+	m_pGraphicDev->SetRenderState(D3DRS_FOGENABLE, TRUE);
+
+	// 포그 색상 (어두운 남색 계열)
+	m_pGraphicDev->SetRenderState(D3DRS_FOGCOLOR, D3DCOLOR_XRGB(50, 87, 90));
+
+	// 선형 포그 (시작, 끝 거리 설정)
+	m_pGraphicDev->SetRenderState(D3DRS_FOGTABLEMODE, D3DFOG_LINEAR);
+
+	_float fStart = 30.f;   // 포그 시작 거리
+	_float fEnd = 80.f;   // 포그 끝 거리 (완전히 가려짐)
+
+	m_pGraphicDev->SetRenderState(D3DRS_FOGSTART, *(DWORD*)&fStart);
+	m_pGraphicDev->SetRenderState(D3DRS_FOGEND, *(DWORD*)&fEnd);
+
+	return S_OK;
+}
+
 void CJSStage::Clear_DeadObject(const _tchar* pLayerTag, const _float& fTimeDelta)
 {
 	auto iter = m_mapLayer.find(pLayerTag);
@@ -182,6 +232,11 @@ CJSStage* CJSStage::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 
 void CJSStage::Free()
 {
+	m_pGraphicDev->SetRenderState(D3DRS_FOGENABLE, FALSE);
+
+	if (m_pWaterPlane)
+		Safe_Release(m_pWaterPlane);
+
 	CJSScoreMgr::DestroyInstance();
 	CJSChunkMgr::DestroyInstance();
 	CScene::Free();

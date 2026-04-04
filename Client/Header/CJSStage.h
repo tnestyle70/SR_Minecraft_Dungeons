@@ -1,6 +1,8 @@
 #pragma once
 #include "CScene.h"
 
+class CJSWaterPlane;
+
 class CJSStage : public CScene
 {
 protected:
@@ -19,12 +21,16 @@ private:
 	HRESULT Ready_GameLogic_Layer(const _tchar* pLayerTag);
 	HRESULT Ready_UI_Layer(const _tchar* pLayerTag);
 	HRESULT Ready_Light();
+	HRESULT Ready_Fog();
 
 private:
 	void Clear_DeadObject(const _tchar* pLayerTag, const _float& fTimeDelta);
 
 public:
 	static CJSStage* Create(LPDIRECT3DDEVICE9 pGraphicDev);
+
+private:
+	CJSWaterPlane* m_pWaterPlane = nullptr;
 
 private:
 	virtual void Free();

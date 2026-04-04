@@ -120,5 +120,20 @@ private:
 	float m_fFreeCamYaw = 0.f; //수평 공전 오프셋
 	float m_fFreeCamPitch = 0.f;
 	bool m_bFreeLook = false; //좌클릭 누르고 있는 동안 true
+
+public:
+	//TJ스테이지 전용
+	void Start_Shake(float fDuration, float fIntensity)
+	{
+		m_fShakeDuration = fDuration;
+		m_fShakeTimer = 0.f;
+		m_fShakeIntensity = fIntensity;
+	}
+
+private:
+	_float m_fShakeDuration = 0.f;
+	_float m_fShakeTimer = 0.f;
+	_float m_fShakeIntensity = 0.f;
+
 };
 

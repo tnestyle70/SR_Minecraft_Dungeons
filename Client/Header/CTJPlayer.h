@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "CPlayer.h"
 #include "CTNT.h"
+#include "CTJBoss.h"
 
 enum class ETJAbility
 {
@@ -35,8 +36,8 @@ public:
     void    Set_LevelUp(bool b) { m_bLevelUp = b; }
 
     // 능력 상태 조회
-    bool    Has_TNTAura()    const { return m_bTNTAura; }
-    int     Get_ArrowCount() const { return m_iArrowCount; }
+    _bool    Has_TNTAura()    const { return m_bTNTAura; }
+    _int     Get_ArrowCount() const { return m_iArrowCount; }
 
     void Apply_Ability(ETJAbility eAbility);
     _int  Get_AbilityLevel(ETJAbility eAbility) const { return m_iAbilityLevel[(int)eAbility]; }
@@ -44,6 +45,7 @@ public:
     _bool Is_AbilityMaxed(ETJAbility eAbility) const { return m_iAbilityLevel[(int)eAbility] >= m_iAbilityMaxLevel[(int)eAbility]; }
 
     virtual void Key_Input(const _float& fTimeDelta) override;
+    void Set_TJBoss(CTJBoss* pBoss) { m_pTJBoss = pBoss; }
 
 public:
     static CTJPlayer* Create(LPDIRECT3DDEVICE9 pGraphicDev);
@@ -57,6 +59,7 @@ private:
     _int     m_iExp = 0;
     _int     m_iMaxExp = 1.f;
     _bool    m_bLevelUp = false;
+    _int     m_iMaxLevel = 18;
 
     // TNT 오라
     _bool    m_bTNTAura = false;
@@ -82,13 +85,13 @@ private:
     Engine::CRcTex* m_pThunderBufferCom = nullptr;
     Engine::CTexture* m_pLightningTextureCom = nullptr;
     Engine::CTexture* m_pSparkTextureCom = nullptr;
-    bool m_bThunderEffect = false;
-    float m_fThunderEffectTimer = 0.f;
-    float m_fThunderEffectDuration = 0.5f;
-    int m_iLightningFrame = 0;
-    int m_iSparkFrame = 0;
-    float m_fFrameTimer = 0.f;
-    float m_fFrameInterval = 0.1f;
+    _bool m_bThunderEffect = false;
+    _float m_fThunderEffectTimer = 0.f;
+    _float m_fThunderEffectDuration = 0.5f;
+    _int m_iLightningFrame = 0;
+    _int m_iSparkFrame = 0;
+    _float m_fFrameTimer = 0.f;
+    _float m_fFrameInterval = 0.1f;
     _vec3 m_vThunderPos = {};
 
     // 화염 장판
@@ -117,8 +120,8 @@ private:
     _float m_fBladeHitTimer = 0.f;
     _float m_fBladeHitInterval = 0.5f; // 타격 간격
     
-    float m_fBladeSelfAngle = 0.f; // 자전 각도
-    float m_fBladeSelfSpeed = 360.f; // 초당 자전 각도
+    _float m_fBladeSelfAngle = 0.f; // 자전 각도
+    _float m_fBladeSelfSpeed = 360.f; // 초당 자전 각도
 
     Engine::CRcTex* m_pBladeBufferCom = nullptr;
     Engine::CTexture* m_pBladeTextureCom = nullptr;
@@ -126,4 +129,6 @@ private:
 
     _int m_iAbilityLevel[(int)ETJAbility::ABILITY_END] = {};
     _int m_iAbilityMaxLevel[(int)ETJAbility::ABILITY_END] = { 3, 3, 3, 3, 3, 3 };
+
+    CTJBoss* m_pTJBoss = nullptr;
 };

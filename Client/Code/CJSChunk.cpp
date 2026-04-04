@@ -4,6 +4,7 @@
 #include "CLayer.h"
 #include "CJSScoreMgr.h"
 #include "CSoundMgr.h"
+#include "CManagement.h"
 
 const _float CJSChunk::TILE_SIZE = 2.0f;
 
@@ -32,9 +33,11 @@ HRESULT CJSChunk::Ready_GameObject(_vec3 vPos, CLayer* pLayer, CHUNKTYPE eType, 
 
 	if (FAILED(Ready_Tile(vPos)))
 		return E_FAIL;
-    if (FAILED(Ready_Emerald(vPos)))
-        return E_FAIL;
     if (FAILED(Ready_Collider(vPos)))
+        return E_FAIL;
+    if (FAILED(Ready_Obstacle(vPos)))
+        return E_FAIL;
+    if (FAILED(Ready_Emerald(vPos)))
         return E_FAIL;
 
 	return S_OK;
@@ -125,29 +128,22 @@ HRESULT CJSChunk::Ready_Tile(_vec3 vChunkPos)
 
 HRESULT CJSChunk::Ready_Emerald(_vec3 vChunkPos)
 {
+    if (m_bHasObstacle)
+        return S_OK;
+
     switch (m_eChunkType)
     {
     case CHUNK_FULL:
         Ready_Emerald_Line(vChunkPos);
         break;
-
     case CHUNK_LEFT:
         break;
-
     case CHUNK_RIGHT:
         break;
-
     case CHUNK_GAP:
         Ready_Emerald_Parabola(vChunkPos);
         break;
-
-    case CHUNK_END:
-        break;
-
-    default:
-        break;
     }
-
     return S_OK;
 }
 
@@ -245,6 +241,34 @@ HRESULT CJSChunk::Ready_Collider(_vec3 vChunkPos)
     return S_OK;
 }
 
+HRESULT CJSChunk::Ready_Obstacle(_vec3 vChunkPos)
+{
+    if (m_eChunkType != CHUNK_FULL)
+        return S_OK;
+
+    if (rand() % 10 >= 1)
+        return S_OK;
+
+    m_bHasObstacle = true;
+
+    _int iObstacleZ = TILE_Z / 2;
+
+    for (_int x = 1; x <= 3; ++x)
+    {
+        _vec3 vPos = Calc_TilePos(vChunkPos, x, iObstacleZ);
+        vPos.y = vChunkPos.y + 2.5f;
+
+        CJSObstacle* pObstacle = CJSObstacle::Create(m_pGraphicDev, vPos);
+        if (pObstacle == nullptr)
+            return E_FAIL;
+
+        m_pLayer->Add_GameObject(L"Obstacle", pObstacle);
+        m_vecObstacle.push_back(pObstacle);
+    }
+
+    return S_OK;
+}
+
 TILEID CJSChunk::Get_TileID(_vec3 vPlayerPos)
 {
     for (auto& pTile : m_vecTile)
@@ -332,6 +356,20 @@ _bool CJSChunk::Check_WallCollision(_vec3 vPlayerPos)
     return false;
 }
 
+_bool CJSChunk::Check_ObstacleCollision(CJSCollider* pPlayerCol)
+{
+    for (auto& pObstacle : m_vecObstacle)
+    {
+        if (pObstacle->Is_Dead())
+            continue;
+
+        if (pPlayerCol->Check_Collision(pObstacle->Get_Collider()))
+            return true;
+    }
+
+    return false;
+}
+
 HRESULT CJSChunk::Add_Component()
 {
 	CComponent* pComponent = nullptr;
@@ -404,6 +442,10 @@ void CJSChunk::Free()
     for (auto& pEmerald : m_vecEmerald)
         pEmerald->Set_Dead();
     m_vecEmerald.clear();
+
+    for (auto& pObstacle : m_vecObstacle)
+        pObstacle->Set_Dead();
+    m_vecObstacle.clear();
 
     if (m_pLeftWallCol)
         Safe_Release(m_pLeftWallCol);

@@ -17,12 +17,17 @@ public:
     _int Get_Score() { return m_iScore; }
     _float Get_Distance() { return m_fDistance; }
     _float Get_Speed() { return m_fSpeed; }
-    void Reset() { m_iScore = 0; m_fDistance = 0.f; }
+    void Set_GameOver(DEATHTYPE eType) { m_eDeathType = eType; }
+    DEATHTYPE Get_DeathType() { return m_eDeathType; }
+    _bool Is_GameOver() { return m_eDeathType != DEATH_NONE; }
+    void Reset() { m_iScore = 0; m_fDistance = 0.f; m_eDeathType = DEATH_NONE; }
 
 private:
     _int m_iScore = 0;
     _float m_fDistance = 0.f;
     _float m_fSpeed = 20.f;
+
+    DEATHTYPE m_eDeathType = DEATH_NONE;
 
 private:
     virtual void Free();

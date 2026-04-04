@@ -92,7 +92,12 @@ HRESULT CCYPlayer::Add_Component()
     m_pBowTextureCom = dynamic_cast<Engine::CTexture*>
         (CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_BowStandbyTexture"));
     if (!m_pBowTextureCom) return E_FAIL;
-    m_mapComponent[ID_STATIC].insert({ L"Com_BowTexture", m_pBowTextureCom });
+    m_mapComponent[ID_STATIC].insert({ L"Com_BowTexture", m_pBowTextureCom }); 
+
+    m_pAtkColliderCom = Engine::CCollider::Create(m_pGraphicDev,
+        _vec3(3.5f, 2.0f, 3.5f), _vec3(0.f, 0.f, 0.f));
+    if (!m_pAtkColliderCom) return E_FAIL;
+    m_mapComponent[ID_STATIC].insert({ L"Com_AtkCollider", m_pAtkColliderCom });
 
     return S_OK;
 }
@@ -179,12 +184,31 @@ _int CCYPlayer::Update_GameObject(const _float& fTimeDelta)
                 if (p->Is_Dead() && !p->Is_Exploding()) { Safe_Release(p); return true; }
                 return false;
             }),
-        m_vecArrows.end());
+        m_vecArrows.end()); 
+
+    if (m_iComboStep > 0 && m_fAtkTime > 0.1f)
+    {
+        _vec3 vPos;
+        m_pTransformCom->Get_Info(INFO_POS, &vPos);
+        _matrix matView = m_pCamera->Get_ViewMatrix();
+        _matrix matCamWorld;
+        D3DXMatrixInverse(&matCamWorld, 0, &matView);
+        _vec3 vLook;
+        memcpy(&vLook, &matCamWorld.m[2][0], sizeof(_vec3));
+        D3DXVec3Normalize(&vLook, &vLook);
+        _vec3 vAtkPos = vPos + vLook * 1.5f;
+        vAtkPos.y += 0.9f;
+        m_pAtkColliderCom->Update_AABB(vAtkPos);
+    }
+    else
+    {
+        m_pAtkColliderCom->Update_AABB(_vec3(0.f, -9999.f, 0.f));
+    }
 
     FPS_Gravity(fTimeDelta);
     FPS_BlockCollision();
 
-    CRenderer::GetInstance()->Add_RenderGroup(RENDER_ALPHA, this);
+   
 
     return iExit;
 }

@@ -32,6 +32,9 @@ HRESULT CJSCornerChunk::Ready_GameObject(_vec3 vPos, CLayer* pLayer, CHUNKTYPE e
     if (FAILED(Ready_Tile(vPos)))
         return E_FAIL;
 
+    if (FAILED(Ready_Collider(vPos)))
+        return E_FAIL;
+
     return S_OK;
 }
 
@@ -157,6 +160,65 @@ void CJSCornerChunk::Render_GameObject()
 {
 }
 
+HRESULT CJSCornerChunk::Ready_Collider(_vec3 vChunkPos)
+{
+    _float fHeight = 3.f * TILE_SIZE;
+    _float fSize = CORNER_SIZE * TILE_SIZE;  // 10.f
+    _vec3  vColSize = { TILE_SIZE, fHeight, TILE_SIZE };
+
+    // 5x5 타일 중 bWall인 위치에 콜라이더 생성
+    for (_int z = 0; z < CORNER_SIZE; ++z)
+    {
+        for (_int x = 0; x < CORNER_SIZE; ++x)
+        {
+            _bool bWall = false;
+
+            if (m_eChunkType == CHUNK_CORNER_RIGHT)
+            {
+                if (z == CORNER_SIZE - 1) bWall = true;
+                if (x == 0) bWall = true;
+                if (z == 0 && x == CORNER_SIZE - 1) bWall = true;
+            }
+            else if (m_eChunkType == CHUNK_CORNER_LEFT)
+            {
+                if (z == CORNER_SIZE - 1) bWall = true;
+                if (x == CORNER_SIZE - 1) bWall = true;
+                if (z == 0 && x == 0) bWall = true;
+            }
+
+            if (!bWall) continue;
+
+            _vec3 vTilePos = {};
+            vTilePos.y = vChunkPos.y + fHeight * 0.5f;
+
+            switch (m_eDir)
+            {
+            case DIR_FORWARD:
+                vTilePos.x = vChunkPos.x + (x - 2) * TILE_SIZE;
+                vTilePos.z = vChunkPos.z + z * TILE_SIZE;
+                break;
+            case DIR_RIGHT:
+                vTilePos.x = vChunkPos.x + z * TILE_SIZE;
+                vTilePos.z = vChunkPos.z - (x - 2) * TILE_SIZE;
+                break;
+            case DIR_LEFT:
+                vTilePos.x = vChunkPos.x - z * TILE_SIZE;
+                vTilePos.z = vChunkPos.z + (x - 2) * TILE_SIZE;
+                break;
+            case DIR_BACKWARD:
+                vTilePos.x = vChunkPos.x - (x - 2) * TILE_SIZE;
+                vTilePos.z = vChunkPos.z - z * TILE_SIZE;
+                break;
+            }
+
+            CJSCollider* pCol = CJSCollider::Create(m_pGraphicDev, vTilePos, vColSize);
+            if (pCol)
+                m_vecWallCol.push_back(pCol);
+        }
+    }
+    return S_OK;
+}
+
 HRESULT CJSCornerChunk::Add_Component()
 {
     CComponent* pComponent = nullptr;
@@ -189,6 +251,10 @@ void CJSCornerChunk::Free()
     for (auto& pWall : m_vecWall)
         pWall->Set_Dead();
     m_vecWall.clear();
+
+    for (auto& pCol : m_vecWallCol)
+        Safe_Release(pCol);
+    m_vecWallCol.clear();
 
     CGameObject::Free();
 }

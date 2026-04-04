@@ -137,8 +137,10 @@ _int CDynamicCamera::Update_GameObject(const _float& fTimeDelta)
         {
             vOffset = m_vFollowOffset;
         }
+        //머지해서 각자 잘 되나 
 
         m_vEye = vPlayerPos + vOffset;
+
         //Look -at 탑승 중이면 드래곤 전방 약간 앞을 바라봄
         _vec3 vLookOffset = { 0.f, 1.5f, 0.f };
         if (m_fCamBlend > 0.001f)
@@ -166,6 +168,19 @@ _int CDynamicCamera::Update_GameObject(const _float& fTimeDelta)
         //D3DXVec3Lerp(&vOffset, &m_vFollowOffset, &m_vDragonOffset, m_fCamBlend);
         //m_vEye = vPlayerPos + vOffset;
         //m_vAt = vPlayerPos + _vec3(0.f, 1.5f, 0.f);
+
+        m_vAt = vPlayerPos + _vec3(0.f, 1.5f, 0.f);
+
+        // 카메라 쉐이킹
+        if (m_fShakeTimer < m_fShakeDuration)
+        {
+            m_fShakeTimer += fTimeDelta;
+            float fStrength = m_fShakeIntensity * (1.f - m_fShakeTimer / m_fShakeDuration);
+            m_vEye.x += ((rand() % 100) / 100.f - 0.5f) * fStrength;
+            m_vEye.y += ((rand() % 100) / 100.f - 0.5f) * fStrength;
+            m_vEye.z += ((rand() % 100) / 100.f - 0.5f) * fStrength;
+        }
+
     }
     else
     {

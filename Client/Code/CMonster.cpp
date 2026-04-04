@@ -99,15 +99,6 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
         matWorld._42 = vPos.y;
         matWorld._43 = vPos.z;
         m_pTransformCom->Set_World(&matWorld);
-
-        //=======Death Effect========//
-        //if (m_pDeathEmitter)
-        //{
-        //    _vec3 vPos;
-        //    m_pTransformCom->Get_Info(INFO_POS, &vPos);
-        //    vPos.y += vPos.y + 1.f;
-        //    m_pDeathEmitter->Set_Position(vPos);
-        //}
     }
 
     if (pAnim && pAnim->Is_DeadDone())
@@ -154,10 +145,7 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
             m_pExplosionColliderCom->Update_AABB(vPos);
             m_bExploded = true;
             pAnim->Set_State(EMonsterState::DEAD);
-
-            // 설명 : 폭발 조명 + 화면 플래시 생성
             m_pExplosionLight = new CExplosionLight(m_pGraphicDev, vPos);
-            // 설명 : 크리퍼 몸 노란 번쩍임 시작
             m_bExplosionFlash = true;
             m_fExplosionFlashTimer = 0.f;
             CSoundMgr::GetInstance()->PlayEffect(L"Monster/explode.wav", 1.f);
@@ -177,7 +165,7 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
         }
     }
 
-    // 설명 : 폭발 조명 업데이트 → Is_Done() 시 자동 삭제
+    // 폭발 조명 업데이트
     if (m_pExplosionLight)
     {
         m_pExplosionLight->Update(fTimeDelta);
@@ -188,7 +176,7 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
         }
     }
 
-    // 설명 : 크리퍼 몸 노란 번쩍임 타이머 관리 (0.3초 후 종료)
+    // 크리퍼 번쩍임 타이머
     if (m_bExplosionFlash)
     {
         m_fExplosionFlashTimer += fTimeDelta;
@@ -196,20 +184,38 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
             m_bExplosionFlash = false;
     }
 
-    // 플레이어 근접 공격 콜라이더와 충돌 체크 (몬스터 피격)
-    Engine::CComponent* pAtkCom = CManagement::GetInstance()->Get_Component(
-        ID_STATIC, L"GameLogic_Layer", L"Player", L"Com_AtkCollider");
-    Engine::CCollider* pAtkCollider = dynamic_cast<Engine::CCollider*>(pAtkCom);
-
+    // 플레이어 근접 공격 콜라이더와 충돌 체크
     CPlayer* pPlayer = CMonsterMgr::GetInstance()->Get_Player();
+
+    Engine::CCollider* pAtkCollider = nullptr;
+    if (pPlayer)
+    {
+        Engine::CComponent* pAtkCom = CManagement::GetInstance()->Get_Component(
+            ID_STATIC, L"GameLogic_Layer", L"Player", L"Com_AtkCollider");
+        pAtkCollider = dynamic_cast<Engine::CCollider*>(pAtkCom);
+    }
 
     if (m_eType == EMonsterType::SKELETON)
         CRenderer::GetInstance()->Add_RenderGroup(RENDER_ALPHA, this);
     else
         CRenderer::GetInstance()->Add_RenderGroup(RENDER_NONALPHA, this);
 
+    // ★ pPlayer 체크 전에 항상 호출
+    m_pBodyCom->Update_Body(fTimeDelta, m_bIsMoving, false);
+
+    // ★ 스켈레톤 화살도 pPlayer 체크 전에 항상 호출
+    if (m_eType == EMonsterType::SKELETON)
+    {
+        if (pAnim && pAnim->Get_State() == EMonsterState::ATTACK)
+        {
+            if (!m_bFired) { Fire_Arrow(); m_bFired = true; }
+        }
+        else m_bFired = false;
+        Update_Arrow(fTimeDelta);
+    }
+
     if (!pPlayer)
-        return 0;
+        return iExit;
 
     // 근접 공격
     bool bMeleeColliding = (pAtkCollider && pAnim
@@ -222,8 +228,6 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
         Take_Damage((int)pPlayer->Get_MeleeDmg());
 
     m_bPrevMeleeColliding = bMeleeColliding;
-
-    m_pBodyCom->Update_Body(fTimeDelta, m_bIsMoving, false);
 
     if (pAnim && pAnim->Get_KnockbackDelta() > 0.f)
     {
@@ -251,24 +255,6 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
         }
     }
 
-    // 스켈레톤 화살 처리
-    if (m_eType == EMonsterType::SKELETON)
-    {
-        if (pAnim && pAnim->Get_State() == EMonsterState::ATTACK)
-        {
-            if (!m_bFired)
-            {
-                Fire_Arrow();
-                m_bFired = true;
-            }
-        }
-        else
-        {
-            m_bFired = false;
-        }
-        Update_Arrow(fTimeDelta);
-    }
-
     // 기본화살 충돌
     if (pAnim && pAnim->Get_State() != EMonsterState::HIT
         && pAnim->Get_State() != EMonsterState::DEAD)
@@ -281,15 +267,8 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
             if (!pArrowCollider) continue;
             if (m_pColliderCom->IsColliding(pArrowCollider->Get_AABB()))
             {
-                if (pArrow->Is_Firework())
-                {
-                    pArrow->Trigger_Explode();
-                }
-                else
-                {
-                    Take_Damage((int)pArrow->Get_Damage());
-                    pArrow->Set_Dead();
-                }
+                if (pArrow->Is_Firework()) pArrow->Trigger_Explode();
+                else { Take_Damage((int)pArrow->Get_Damage()); pArrow->Set_Dead(); }
                 break;
             }
         }
@@ -320,13 +299,10 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
     {
         for (auto& pTNT : pPlayer->Get_TNTs())
         {
-            if (!pTNT || (pTNT->Is_Dead() && !pTNT->Is_Exploding()))
-                continue;
-            if (!pTNT->Is_Exploding())
-                continue;
+            if (!pTNT || (pTNT->Is_Dead() && !pTNT->Is_Exploding())) continue;
+            if (!pTNT->Is_Exploding()) continue;
             CCollider* pExplodeCollider = pTNT->Get_ExplodeCollider();
-            if (!pExplodeCollider)
-                continue;
+            if (!pExplodeCollider) continue;
             if (m_pColliderCom->IsColliding(pExplodeCollider->Get_AABB()))
                 Take_Damage(50);
         }
@@ -497,19 +473,26 @@ void CMonster::Render_Bow()
 
 void CMonster::Fire_Arrow()
 {
-    Engine::CComponent* pCom = CManagement::GetInstance()->Get_Component(
-        ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
-    Engine::CTransform* pPlayerTrans = dynamic_cast<Engine::CTransform*>(pCom);
-    if (!pPlayerTrans) return;
+    _vec3 vPlayerPos;
+
+    if (m_bHasTarget)
+    {
+        vPlayerPos = m_vTargetPos;
+    }
+    else
+    {
+        Engine::CComponent* pCom = CManagement::GetInstance()->Get_Component(
+            ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
+        Engine::CTransform* pPlayerTrans = dynamic_cast<Engine::CTransform*>(pCom);
+        if (!pPlayerTrans) return;
+        pPlayerTrans->Get_Info(INFO_POS, &vPlayerPos);
+    }
 
     _matrix matRArm = m_pBodyCom->Get_PartWorld(
         MonsterPart::RIGHT_ARM,
         m_pTransformCom->Get_World()
     );
     _vec3 vStartPos = { matRArm._41, matRArm._42, matRArm._43 };
-
-    _vec3 vPlayerPos;
-    pPlayerTrans->Get_Info(INFO_POS, &vPlayerPos);
 
     _vec3 vDir = vPlayerPos - vStartPos;
     D3DXVec3Normalize(&vDir, &vDir);
@@ -526,6 +509,22 @@ void CMonster::Take_Damage(int iDamage)
     m_fKnockbackAccum = 0.f;
     m_iHp -= iDamage;
 
+    // 거리 체크
+    CPlayer* pPlayer = CMonsterMgr::GetInstance()->Get_Player();
+    float fDist = 9999.f;
+    if (pPlayer)
+    {
+        Engine::CTransform* pTrans = dynamic_cast<Engine::CTransform*>
+            (pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform"));
+        if (pTrans)
+        {
+            _vec3 vPlayerPos, vMyPos;
+            pTrans->Get_Info(INFO_POS, &vPlayerPos);
+            m_pTransformCom->Get_Info(INFO_POS, &vMyPos);
+            fDist = D3DXVec3Length(&(vPlayerPos - vMyPos));
+        }
+    }
+
     CMonsterAnim* pAnim = dynamic_cast<CMonsterAnim*>(m_pBodyCom->Get_Anim());
     if (!pAnim) return;
 
@@ -538,37 +537,43 @@ void CMonster::Take_Damage(int iDamage)
         m_iHp = 0;
         pAnim->Set_State(EMonsterState::DEAD);
 
-        switch (m_eType)
+        if (fDist <= 30.f)
         {
-        case EMonsterType::ZOMBIE:
-            CSoundMgr::GetInstance()->PlayEffect(L"Monster/zombieDead.wav", 0.7f);
-            break;
-        case EMonsterType::SPIDER:
-            CSoundMgr::GetInstance()->PlayEffect(L"Monster/spiderDeath.wav", 0.7f);
-            break;
-        case EMonsterType::SKELETON:
-            CSoundMgr::GetInstance()->PlayEffect(L"Monster/skeletonDeath.wav", 0.7f);
-            break;
+            switch (m_eType)
+            {
+            case EMonsterType::ZOMBIE:
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/zombieDead.wav", 0.7f);
+                break;
+            case EMonsterType::SPIDER:
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/spiderDeath.wav", 0.7f);
+                break;
+            case EMonsterType::SKELETON:
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/skeletonDeath.wav", 0.7f);
+                break;
+            }
         }
     }
     else
     {
         pAnim->Set_State(EMonsterState::HIT);
 
-        switch (m_eType)
+        if (fDist <= 30.f)
         {
-        case EMonsterType::ZOMBIE:
-            CSoundMgr::GetInstance()->PlayEffect(L"Monster/zombieHit.wav", 0.7f);
-            break;
-        case EMonsterType::SKELETON:
-            CSoundMgr::GetInstance()->PlayEffect(L"Monster/skeletonHurt.wav", 0.7f);
-            break;
-        case EMonsterType::CREEPER:
-            CSoundMgr::GetInstance()->PlayEffect(L"Monster/Creeper_HIT.wav", 0.7f);
-            break;
-        case EMonsterType::SPIDER:
-            CSoundMgr::GetInstance()->PlayEffect(L"Monster/spiderHIT.wav", 0.7f);
-            break;
+            switch (m_eType)
+            {
+            case EMonsterType::ZOMBIE:
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/zombieHit.wav", 0.7f);
+                break;
+            case EMonsterType::SKELETON:
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/skeletonHurt.wav", 0.7f);
+                break;
+            case EMonsterType::CREEPER:
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/Creeper_HIT.wav", 0.7f);
+                break;
+            case EMonsterType::SPIDER:
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/spiderHIT.wav", 0.7f);
+                break;
+            }
         }
     }
 }
@@ -654,15 +659,24 @@ void CMonster::Resolve_BlockCollision()
 }
 
 void CMonster::Update_AI(const _float& fTimeDelta)
-{
-    Engine::CComponent* pCom = CManagement::GetInstance()->Get_Component(
-        ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
-    Engine::CTransform* pPlayerTrans = dynamic_cast<Engine::CTransform*>(pCom);
-    if (!pPlayerTrans) return;
+{ 
+    _vec3 vPlayerPos;
 
-    _vec3 vMyPos, vPlayerPos;
+    if (m_bHasTarget)
+    {
+        vPlayerPos = m_vTargetPos;
+    }
+    else
+    {
+        Engine::CComponent* pCom = CManagement::GetInstance()->Get_Component(
+            ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
+        Engine::CTransform* pPlayerTrans = dynamic_cast<Engine::CTransform*>(pCom);
+        if (!pPlayerTrans) return;
+        pPlayerTrans->Get_Info(INFO_POS, &vPlayerPos);
+    }
+
+    _vec3 vMyPos;
     m_pTransformCom->Get_Info(INFO_POS, &vMyPos);
-    pPlayerTrans->Get_Info(INFO_POS, &vPlayerPos);
 
     float fDist = D3DXVec3Length(&(vPlayerPos - vMyPos));
 
@@ -678,12 +692,11 @@ void CMonster::Update_AI(const _float& fTimeDelta)
         m_fIdleSoundTimer = 0.f;
         if (pAnim->Get_State() == EMonsterState::IDLE)
         {
-            if (fDist <= m_fDetectRange * 10.f)
+            if (fDist <= 30.f)
             {
                 switch (m_eType)
                 {
                 case EMonsterType::ZOMBIE:
-                    //CSoundMgr::GetInstance()->PlayEffect(L"Monster/zombieIdle.wav", 0.5f);
                     break;
                 case EMonsterType::SPIDER:
                     CSoundMgr::GetInstance()->PlayEffect(L"Monster/spiderIdle.wav", 0.5f);
@@ -693,7 +706,6 @@ void CMonster::Update_AI(const _float& fTimeDelta)
                     break;
                 }
             }
-            
         }
     }
     

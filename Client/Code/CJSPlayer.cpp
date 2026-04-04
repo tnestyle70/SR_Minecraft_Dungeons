@@ -26,6 +26,9 @@ HRESULT CJSPlayer::Ready_GameObject()
 
 	m_pTransformCom->Set_Pos(0.f, 2.f, 0.f);
 
+	if (FAILED(Ready_BodyParts()))
+		return E_FAIL;
+
 	return S_OK;
 }
 
@@ -33,11 +36,21 @@ _int CJSPlayer::Update_GameObject(const _float& fTimeDelta)
 {
 	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
 
+	if (CJSScoreMgr::GetInstance()->Is_GameOver())
+	{
+		if (CJSScoreMgr::GetInstance()->Get_DeathType() == DEATH_FALL)
+			Jump(fTimeDelta);
+		return iExit;
+	}
+
 	Falling();
 	Jump(fTimeDelta);
 	Key_Input(fTimeDelta);
 	Advance(fTimeDelta);
+	Check_WallCollision();
 	Check_Collect();
+
+	Update_BodyParts(fTimeDelta);
 
 	return iExit;
 }
@@ -45,6 +58,7 @@ _int CJSPlayer::Update_GameObject(const _float& fTimeDelta)
 void CJSPlayer::LateUpdate_GameObject(const _float& fTimeDelta)
 {
 	CGameObject::LateUpdate_GameObject(fTimeDelta);
+	LateUpdate_BodyParts(fTimeDelta);
 
 	m_pColliderCom->Update_Collider(m_pTransformCom->Get_World());
 	CRenderer::GetInstance()->Add_RenderGroup(RENDER_NONALPHA, this);
@@ -52,16 +66,6 @@ void CJSPlayer::LateUpdate_GameObject(const _float& fTimeDelta)
 
 void CJSPlayer::Render_GameObject()
 {
-	m_pGraphicDev->SetTransform(D3DTS_WORLD, m_pTransformCom->Get_World());
-
-	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-	m_pGraphicDev->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);  // ¿ÍÀÌ¾îÇÁ·¹ÀÓ ON
-
-	m_pBufferCom->Render_Buffer();
-
-	m_pGraphicDev->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);      // ¼Ö¸®µå·Î º¹±¸
-	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
-
 	m_pColliderCom->Render_Collider();
 }
 
@@ -120,31 +124,37 @@ void CJSPlayer::Jump(const _float& fTimeDelta)
 {
 	if (m_bJump)
 	{
-		_vec3 vMyPos;
-		m_pTransformCom->Get_Info(INFO_POS, &vMyPos);
-
 		m_fVelocityY -= m_fGravity * fTimeDelta;
 
-		vMyPos.y += m_fVelocityY;
-
-		_vec3 vUp = { 0.f, 1.f, 0.f };
-		m_pTransformCom->Set_Pos(vMyPos.x, vMyPos.y, vMyPos.z);
+		_vec3 vPos;
+		m_pTransformCom->Get_Info(INFO_POS, &vPos);
+		vPos.y += m_fVelocityY;
 
 		if (m_bFalling)
-			return;
-
-		if (vMyPos.y <= m_fGroundY)
 		{
-			vMyPos.y = m_fGroundY;
+			if (vPos.y <= -20.f)
+				CJSScoreMgr::GetInstance()->Set_GameOver(DEATH_FALL);
+			else
+				m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
+			return;
+		}
+
+		if (vPos.y <= m_fGroundY)
+		{
+			vPos.y = m_fGroundY;
 			m_fVelocityY = 0.f;
 			m_bJump = false;
-			m_pTransformCom->Set_Pos(vMyPos.x, vMyPos.y, vMyPos.z);
 		}
+
+		m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
 	}
 }
 
 void CJSPlayer::Falling()
 {
+	if (CJSScoreMgr::GetInstance()->Is_GameOver())
+		return;
+
 	if (m_bFalling)
 		return;
 
@@ -164,7 +174,7 @@ void CJSPlayer::Falling()
 		m_bJump = true;
 		m_fVelocityY = 0.f;
 
-		CSoundMgr::GetInstance()->PlayEffect(L"Player/Scream.wav", 1.f);
+		CSoundMgr::GetInstance()->PlayEffect(L"JS/2-16.-Scream.wav", 1.f);
 	}
 }
 
@@ -177,6 +187,124 @@ void CJSPlayer::Check_Collect()
 	CJSChunkMgr::GetInstance()->Check_Collect(vPos);
 }
 
+void CJSPlayer::Check_WallCollision()
+{
+	if (CJSScoreMgr::GetInstance()->Is_GameOver())
+		return;
+
+	_vec3 vPos, vLook;
+	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+	m_pTransformCom->Get_Info(INFO_LOOK, &vLook);
+
+	_vec3 vCheckPos = vPos + vLook * 0.5f;
+	_matrix matCheck;
+	D3DXMatrixTranslation(&matCheck, vCheckPos.x, vCheckPos.y, vCheckPos.z);
+	m_pColliderCom->Update_Collider(&matCheck);
+
+	if (CJSChunkMgr::GetInstance()->Check_WallCollision(m_pColliderCom))
+		CJSScoreMgr::GetInstance()->Set_GameOver(DEATH_COLLISION);
+
+	if (CJSChunkMgr::GetInstance()->Check_ObstacleCollision(m_pColliderCom))
+		CJSScoreMgr::GetInstance()->Set_GameOver(DEATH_COLLISION);
+}
+
+HRESULT CJSPlayer::Ready_BodyParts()
+{
+	// ¸Ó¸®
+	PartDesc headDesc;
+	headDesc.vOffset = { 0.f, 0.75f, 0.f };
+	headDesc.fSizeX = 0.5f;
+	headDesc.fSizeY = 0.5f;
+	headDesc.fSizeZ = 0.5f;
+	headDesc.front = { 0.12500f, 0.12500f, 0.25000f, 0.25000f };
+	headDesc.back = { 0.37500f, 0.12500f, 0.50000f, 0.25000f };
+	headDesc.left = { 0.00000f, 0.12500f, 0.12500f, 0.25000f };
+	headDesc.right = { 0.25000f, 0.12500f, 0.37500f, 0.25000f };
+	headDesc.top = { 0.12500f, 0.00000f, 0.25000f, 0.12500f };
+	headDesc.bottom = { 0.25000f, 0.00000f, 0.37500f, 0.12500f };
+	m_pHead = CJSBodyPart::Create(m_pGraphicDev, m_pTransformCom, headDesc);
+	if (!m_pHead) return E_FAIL;
+
+	// ¸öÅë
+	PartDesc bodyDesc;
+	bodyDesc.vOffset = { 0.f, 0.f, 0.f };
+	bodyDesc.fSizeX = 0.5f;
+	bodyDesc.fSizeY = 0.75f;
+	bodyDesc.fSizeZ = 0.3f;
+	bodyDesc.front = { 0.31250f, 0.31250f, 0.43750f, 0.50000f };
+	bodyDesc.back = { 0.50000f, 0.31250f, 0.62500f, 0.50000f };
+	bodyDesc.left = { 0.25000f, 0.31250f, 0.31250f, 0.50000f };
+	bodyDesc.right = { 0.43750f, 0.31250f, 0.50000f, 0.50000f };
+	bodyDesc.top = { 0.31250f, 0.25000f, 0.43750f, 0.31250f };
+	bodyDesc.bottom = { 0.43750f, 0.25000f, 0.56250f, 0.31250f };
+	m_pBody = CJSBodyPart::Create(m_pGraphicDev, m_pTransformCom, bodyDesc);
+	if (!m_pBody) return E_FAIL;
+
+	// ¿ÞÆÈ
+	PartDesc armLDesc;
+	armLDesc.vOffset = { -0.4f, 0.f, 0.f };
+	armLDesc.fSizeX = 0.3f;
+	armLDesc.fSizeY = 0.75f;
+	armLDesc.fSizeZ = 0.3f;
+	armLDesc.front = { 0.68750f, 0.31250f, 0.75000f, 0.50000f };
+	armLDesc.back = { 0.81250f, 0.31250f, 0.87500f, 0.50000f };
+	armLDesc.left = { 0.62500f, 0.31250f, 0.68750f, 0.50000f };
+	armLDesc.right = { 0.75000f, 0.31250f, 0.81250f, 0.50000f };
+	armLDesc.top = { 0.68750f, 0.25000f, 0.75000f, 0.31250f };
+	armLDesc.bottom = { 0.75000f, 0.25000f, 0.81250f, 0.31250f };
+	m_pArmL = CJSBodyPart::Create(m_pGraphicDev, m_pTransformCom, armLDesc);
+	if (!m_pArmL) return E_FAIL;
+
+	// ¿À¸¥ÆÈ (¿ÞÆÈÀÌ¶û UV µ¿ÀÏ, ¿ÀÇÁ¼Â¸¸ ¹Ý´ë)
+	PartDesc armRDesc = armLDesc;
+	armRDesc.vOffset = { 0.4f, 0.f, 0.f };
+	m_pArmR = CJSBodyPart::Create(m_pGraphicDev, m_pTransformCom, armRDesc);
+	if (!m_pArmR) return E_FAIL;
+
+	// ¿Þ´Ù¸®
+	PartDesc legLDesc;
+	legLDesc.vOffset = { -0.15f, -0.75f, 0.f };
+	legLDesc.fSizeX = 0.3f;
+	legLDesc.fSizeY = 0.75f;
+	legLDesc.fSizeZ = 0.3f;
+	legLDesc.front = { 0.06250f, 0.31250f, 0.12500f, 0.50000f };
+	legLDesc.back = { 0.18750f, 0.31250f, 0.25000f, 0.50000f };
+	legLDesc.left = { 0.00000f, 0.31250f, 0.06250f, 0.50000f };
+	legLDesc.right = { 0.12500f, 0.31250f, 0.18750f, 0.50000f };
+	legLDesc.top = { 0.06250f, 0.25000f, 0.12500f, 0.31250f };
+	legLDesc.bottom = { 0.12500f, 0.25000f, 0.18750f, 0.31250f };
+	m_pLegL = CJSBodyPart::Create(m_pGraphicDev, m_pTransformCom, legLDesc);
+	if (!m_pLegL) return E_FAIL;
+
+	// ¿À¸¥´Ù¸® (¿Þ´Ù¸®¶û UV µ¿ÀÏ, ¿ÀÇÁ¼Â¸¸ ¹Ý´ë)
+	PartDesc legRDesc = legLDesc;
+	legRDesc.vOffset = { 0.15f, -0.75f, 0.f };
+	m_pLegR = CJSBodyPart::Create(m_pGraphicDev, m_pTransformCom, legRDesc);
+	if (!m_pLegR) return E_FAIL;
+
+	return S_OK;
+}
+
+void CJSPlayer::Update_BodyParts(const _float& fTimeDelta)
+{
+	if (m_pHead)  m_pHead->Update_GameObject(fTimeDelta);
+	if (m_pBody)  m_pBody->Update_GameObject(fTimeDelta);
+	if (m_pArmL)  m_pArmL->Update_GameObject(fTimeDelta);
+	if (m_pArmR)  m_pArmR->Update_GameObject(fTimeDelta);
+	if (m_pLegL)  m_pLegL->Update_GameObject(fTimeDelta);
+	if (m_pLegR)  m_pLegR->Update_GameObject(fTimeDelta);
+}
+
+void CJSPlayer::LateUpdate_BodyParts(const _float& fTimeDelta)
+{
+	if (m_pHead)  m_pHead->LateUpdate_GameObject(fTimeDelta);
+	if (m_pBody)  m_pBody->LateUpdate_GameObject(fTimeDelta);
+	if (m_pArmL)  m_pArmL->LateUpdate_GameObject(fTimeDelta);
+	if (m_pArmR)  m_pArmR->LateUpdate_GameObject(fTimeDelta);
+	if (m_pLegL)  m_pLegL->LateUpdate_GameObject(fTimeDelta);
+	if (m_pLegR)  m_pLegR->LateUpdate_GameObject(fTimeDelta);
+}
+	
 void CJSPlayer::Key_Input(const _float& fTimeDelta)
 {
 	_vec3 vPos;
@@ -246,12 +374,35 @@ void CJSPlayer::Key_Input(const _float& fTimeDelta)
 		}
 	}
 
-	if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_UP) && !m_bJump && !m_bFalling)
+	if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_UP) && !m_bJump && !m_bFalling && !m_bSlide)
 	{
 		m_fVelocityY = m_fJumpPower;
 		m_bJump = true;
 
-		CSoundMgr::GetInstance()->PlayEffect(L"Player/Grunt-Jump.wav", 0.8f);
+		CSoundMgr::GetInstance()->PlayEffect(L"JS/2-04.-Grunt-Jump.wav", 0.8f);
+	}
+
+	if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_DOWN) && !m_bJump && !m_bFalling)
+	{
+		if (!m_bSlide)
+		{
+			m_bSlide = true;
+			Safe_Release(m_pColliderCom);
+			m_pColliderCom = CJSCollider::Create(m_pGraphicDev, { 0.f, 0.f, 0.f }, m_vSlideColSize);
+			m_mapComponent[ID_DYNAMIC].erase(L"Com_Collider");
+			m_mapComponent[ID_DYNAMIC].insert({ L"Com_Collider", m_pColliderCom });
+		}
+	}
+	else
+	{
+		if (m_bSlide)
+		{
+			m_bSlide = false;
+			Safe_Release(m_pColliderCom);
+			m_pColliderCom = CJSCollider::Create(m_pGraphicDev, { 0.f, 0.5f, 0.f }, m_vNormalColSize);
+			m_mapComponent[ID_DYNAMIC].erase(L"Com_Collider");
+			m_mapComponent[ID_DYNAMIC].insert({ L"Com_Collider", m_pColliderCom });
+		}
 	}
 }
 
@@ -271,5 +422,11 @@ CJSPlayer* CJSPlayer::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 
 void CJSPlayer::Free()
 {
+	Safe_Release(m_pHead);
+	Safe_Release(m_pBody);
+	Safe_Release(m_pArmL);
+	Safe_Release(m_pArmR);
+	Safe_Release(m_pLegL);
+	Safe_Release(m_pLegR);
 	CGameObject::Free();
 }

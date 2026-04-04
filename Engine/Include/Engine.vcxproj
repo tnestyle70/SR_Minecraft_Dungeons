@@ -148,8 +148,10 @@ call Copy.bat</Command>
     <ClInclude Include="..\Header\CBoxBottomTex.h" />
     <ClInclude Include="..\Header\CBoxTopTex.h" />
     <ClInclude Include="..\Header\CFlexibleCubeTex.h" />
+    <ClInclude Include="..\Header\CJSBodyBuffer.h" />
     <ClInclude Include="..\Header\CJSCollider.h" />
     <ClInclude Include="..\Header\CJSCubeTex.h" />
+    <ClInclude Include="..\Header\CJSSpriteBuffer.h" />
     <ClInclude Include="..\Header\CLampBodyTex.h" />
     <ClInclude Include="..\Header\CLampHeadTex.h" />
     <ClInclude Include="..\Header\CNormalCubeTex.h" />
@@ -206,8 +208,10 @@ call Copy.bat</Command>
     <ClCompile Include="..\Code\CBoxBottomTex.cpp" />
     <ClCompile Include="..\Code\CBoxTopTex.cpp" />
     <ClCompile Include="..\Code\CFlexibleCubeTex.cpp" />
+    <ClCompile Include="..\Code\CJSBodyBuffer.cpp" />
     <ClCompile Include="..\Code\CJSCollider.cpp" />
     <ClCompile Include="..\Code\CJSCubeTex.cpp" />
+    <ClCompile Include="..\Code\CJSSpriteBuffer.cpp" />
     <ClCompile Include="..\Code\CLampBodyTex.cpp" />
     <ClCompile Include="..\Code\CLampHeadTex.cpp" />
     <ClCompile Include="..\Code\CNormalCubeTex.cpp" />
