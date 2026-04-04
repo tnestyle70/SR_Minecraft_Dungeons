@@ -13,10 +13,10 @@ public:
 
 public:
     HRESULT Ready_GameObject(const _vec3* pEye, const _vec3* pAt, const _vec3* pUp,
-                              float fFov = D3DXToRadian(60.f),
-                              float fAspect = (_float)WINCX / WINCY,
-                              float fNear = 0.1f,
-                              float fFar = 1000.f);
+        float fFov = D3DXToRadian(60.f),
+        float fAspect = (_float)WINCX / WINCY,
+        float fNear = 0.1f,
+        float fFar = 1000.f);
 
     virtual _int Update_GameObject(const _float& fTimeDelta) override;
     virtual void Render_GameObject() override {}
@@ -27,18 +27,31 @@ public:
 
     void Set_Player(CCYPlayer* pPlayer) { m_pCYPlayer = pPlayer; }
 
+    void Start_Fall(float fTargetY)
+    {
+        m_bFalling = true;
+        m_fTargetY = fTargetY;
+        m_fVelocityY = 0.f;
+    }
+
 private:
     void FPS_MouseRotate();
     void Free_Move(const _float& fTimeDelta);
 
 private:
     CCYPlayer* m_pCYPlayer = nullptr;
-    float       m_fPitch = 0.f;
-    float       m_fFreeSpeed = 50.f;
-    bool        m_bF2Check = false;
-    bool        m_bFreeMode = false;
-    bool        m_bMouseFix = true;
-    bool        m_bTabCheck = false;
+    float      m_fPitch = 0.f;
+    float      m_fFreeSpeed = 50.f;
+    bool       m_bF2Check = false;
+    bool       m_bFreeMode = false;
+    bool       m_bMouseFix = true;
+    bool       m_bTabCheck = false;
+
+    // ³«ÇÏ
+    bool  m_bFalling = false;
+    float m_fTargetY = 0.f;
+    float m_fVelocityY = 0.f;
+    float m_fGravity = -20.f;
 
 public:
     static CCYCamera* Create(LPDIRECT3DDEVICE9 pGraphicDev,

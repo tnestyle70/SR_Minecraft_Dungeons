@@ -19,7 +19,7 @@ struct AStarNode
 
 class CMonster : public CGameObject
 {
-private:
+protected:
     explicit CMonster(LPDIRECT3DDEVICE9 pGraphicDev);
     explicit CMonster(const CGameObject& rhs);
     virtual ~CMonster();
@@ -35,7 +35,12 @@ public:
     virtual bool        Is_Dead()                   override { return m_bDeadDone; } // 몬스터 삭제 
     void                Take_Damage(int iDamage);
     int                 Get_Hp()                    const { return m_iHp; }
-    int                 Get_AtkDamage()             const { return m_iAtkDamage; }
+    int                 Get_AtkDamage()             const { return m_iAtkDamage; } 
+    CCollider* Get_AtkCollider() const { return m_pAtkColliderCom; } 
+    void Set_TargetPos(_vec3 vPos) { m_vTargetPos = vPos; m_bHasTarget = true;}
+
+    void Set_DetectRange(float fRange) { m_fDetectRange = fRange; }
+    void Set_AttackRange(float fRange) { m_fAttackRange = fRange; }
 
     //Get, Set Monster Active
     bool IsActive() { return m_bActive; }
@@ -43,7 +48,16 @@ public:
 
     EMonsterType Get_Type() { return m_eType; }
 
-    CCollider* Get_Collider() const { return m_pColliderCom; }
+    CCollider* Get_Collider() const { return m_pColliderCom; } 
+
+    void Render_Arrows()
+    {
+        for (auto* pArrow : m_vecArrows)
+        {
+            if (pArrow && !pArrow->Is_Dead())
+                pArrow->Render_GameObject();
+        }
+    }
 
 private:
     HRESULT             Add_Component();
@@ -87,7 +101,7 @@ private:
     vector<CArrow*>         m_vecArrows;
     bool                    m_bFired = false;
 
-    EMonsterType            m_eType = EMonsterType::ZOMBIE;
+    
     bool                    m_bIsMoving = false;
 
     float                   m_fKnockbackAccum = 0.f;
@@ -119,11 +133,17 @@ private:
 
     bool m_bActive = false;
     bool m_bPrevMeleeColliding = false; // 몬스터 1회만 피격
-    bool m_bPrevExplosionColliding = false; // 폭죽화살도 1회만 피격
+    bool m_bPrevExplosionColliding = false; // 폭죽화살도 1회만 피격 
+
+    _vec3 m_vTargetPos = { 0.f, 0.f, 0.f };
+    bool  m_bHasTarget = false; 
+
+protected:
+        EMonsterType            m_eType = EMonsterType::ZOMBIE;
 public:
     static CMonster* Create(LPDIRECT3DDEVICE9 pGraphicDev,
         EMonsterType eType = EMonsterType::ZOMBIE, _vec3 vPos = { -1.f, 5.f, 3.f });
 
-private:
+protected:
     virtual void Free();
 };
