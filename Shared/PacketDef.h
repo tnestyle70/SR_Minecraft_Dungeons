@@ -17,7 +17,8 @@ enum PACKET_TYPE : WORD
     C2S_DAMAGE       = 5,
     C2S_DRAGON_SYNC  = 6,   // dragon rider only, 5TPS
     C2S_ARROW        = 7,   // arrow fire event (replaces C2S_ATTACK)
-
+    C2S_FLAME = 8, //flame sync
+    
     S2C_LOGIN_ACK    = 101,
     S2C_SPAWN        = 102,
     S2C_STATE_SNAPSHOT = 103,
@@ -25,6 +26,7 @@ enum PACKET_TYPE : WORD
     // S2C_ATTACK    = 106  (Deprecated — replaced by S2C_ARROW)
     S2C_DAMAGE       = 107,
     S2C_ARROW        = 108,   // arrow broadcast
+    S2C_FLAME = 110,
     S2C_DRAGON_SYNC  = 109,   // dragon position broadcast
 };
 
@@ -161,6 +163,26 @@ struct PKT_S2C_Arrow
     BYTE  pad[3];               //  3
 };  // total 40 bytes
 static_assert(sizeof(PKT_S2C_Arrow) == 40, "PKT_S2C_Arrow size mismatch");
+
+//flame shot - void flame sync(player + dragon)
+struct PKT_C2S_Flame
+{
+    PKT_HEADER header;
+    float fPosX, fPosY, fPosZ; // 12 bytes fire position 
+    float fDirX, fDirY, fDirZ; // 12 bytes normalized direction
+    float fDamage; //4 bytes;
+};
+static_assert(sizeof(PKT_C2S_Flame) == 32, "PKT_C2S_Flame size mismatch");
+
+struct PKT_S2C_Flame
+{
+    PKT_HEADER header; // 4bytes
+    int iPlayerId; //4 bytes
+    float fPosX, fPosY, fPosZ; // 12 bytes fire position 
+    float fDirX, fDirY, fDirZ; // 12 bytes normalized direction
+    float fDamage; //4 bytes
+}; // total 36 bytes
+static_assert(sizeof(PKT_S2C_Flame) == 36, "PKT_S2C_Flame size mismatch");
 
 // Deprecated — backward compat (server maps recv to C2S_ARROW)
 struct PKT_C2S_Attack

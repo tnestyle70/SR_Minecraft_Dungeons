@@ -8,6 +8,7 @@
 class CMonster;
 class CRedStoneGolem;
 class CAncientGuradian;
+class CEnderDragon;
 class CSpawnEffect;
 
 struct SpawnGroup
@@ -50,11 +51,13 @@ public:
 	void AddMonster(CGameObject* pGameObject, int iTriggerID, _vec3 vPos);
 	void AddGuardian(CAncientGuardian* pBoss) { m_pGuardian = pBoss; }
 	void AddGolem(CRedStoneGolem* pBoss) { m_pGolem = pBoss; }
+	void Add_EnderDragon(CEnderDragon* pEnderDragon) { m_pEnderDragon = pEnderDragon; }
 	void Clear();
 ; private: 
 	//트리거 박스 밟았을 경우 생성할 ID별 몬스터 목록
 	CAncientGuardian* m_pGuardian = nullptr;
 	CRedStoneGolem* m_pGolem = nullptr;
+	CEnderDragon* m_pEnderDragon = nullptr;
 	map<int, SpawnGroup> m_mapMonsterGroups = {};
 	map<int, vector<_vec3>> m_mapMonsterPos = {};
 	int m_iTriggerID = -1;

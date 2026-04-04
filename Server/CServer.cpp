@@ -201,6 +201,9 @@ void CServer::RecvThread()
                 case C2S_ARROW:
                     HandleArrow(pSession, reinterpret_cast<const PKT_C2S_Arrow*>(pHdr));
                     break;
+                case C2S_FLAME:
+                    HandleFlame(pSession, reinterpret_cast<const PKT_C2S_Flame*>(pHdr));
+                    break;
                 case C2S_DRAGON_SYNC:
                     HandleDragonSync(pSession, reinterpret_cast<const PKT_C2S_DragonSync*>(pHdr));
                     break;
@@ -233,20 +236,24 @@ void CServer::HandleLogin(CSession* pSession, const PKT_C2S_Login* pPkt)
             pSession->GetSessionId(), pPkt->iVersion, PROTOCOL_VERSION);
         return;
     }
+    //Nick Name Allocation 
+    int iSlot = m_iNickIndex.fetch_add(1) % 4;
+    const char* szAssigned = NICK_POOL[iSlot];
 
-    if (CSessionMgr::GetInstance()->FindByNickname(pPkt->szNickname))
+    if (CSessionMgr::GetInstance()->FindByNickname(szAssigned))
     {
-        ack.bSuccess  = false;
+        ack.bSuccess = false;
         ack.iPlayerId = -1;
-        strncpy_s(ack.szMessage, "Nickname already in use", _TRUNCATE);
+        strncpy_s(ack.szMessage, "Name slot occupied", _TRUNCATE);
         pSession->Send(&ack, sizeof(ack));
-        LOG_WARN("Session %d login rejected: duplicate nickname '%s'",
-            pSession->GetSessionId(), pPkt->szNickname);
+        LOG_WARN("Session %d login rejected: slot '%s' already in use",
+            pSession->GetSessionId(), szAssigned);
         return;
     }
 
     int iPlayerId = CSessionMgr::GetInstance()->IssuePlayerId();
-    pSession->SetNickname(pPkt->szNickname);
+
+    pSession->SetNickname(szAssigned);   // 클라 닉네임 무시
     pSession->SetPlayerId(iPlayerId);
     pSession->SetLoggedIn(true);
 
@@ -257,16 +264,16 @@ void CServer::HandleLogin(CSession* pSession, const PKT_C2S_Login* pPkt)
     pSession->Send(&ack, sizeof(ack));
 
     LOG_NET("Player %d ('%s') logged in (session %d)",
-        iPlayerId, pPkt->szNickname, pSession->GetSessionId());
+        iPlayerId, szAssigned, pSession->GetSessionId());
 
     // ── Day 2: 스폰 포인트 배정 ───────────────────────────────────────
     CTestStage* pStage = CStageMgr::GetInstance()->GetTestStage();
 
-    int iSlot = pStage->AssignSpawnPoint(pSession);
-    if (iSlot < 0)
+    int iSpawnSlot = pStage->AssignSpawnPoint(pSession);
+    if (iSpawnSlot < 0)
     {
         // 슬롯 없음 → 로그인 취소 (이미 LoginAck를 보냈으므로 연결만 끊음)
-        LOG_WARN("Stage full — disconnecting player %d", iPlayerId);
+        //LOG_WARN("Stage full — disconnecting player %d", iPlayerId);
         pSession->Disconnect();
         return;
     }
@@ -319,6 +326,26 @@ void CServer::HandleArrow(CSession* pSession, const PKT_C2S_Arrow* pPkt)
     out.bFirework = pPkt->bFirework;
 
     CSessionMgr::GetInstance()->BroadcastToLoggedIn(&out, sizeof(out), pSession->GetSessionId());
+}
+
+void CServer::HandleFlame(CSession* pSession, const PKT_C2S_Flame* pPkt)
+{
+    //Login Check First
+    if (!pSession->IsLoggedIn())
+        return;
+    PKT_S2C_Flame out = {};
+    FillHeader(out, S2C_FLAME);
+    out.iPlayerId = pSession->GetPlayerId();
+    out.fPosX = pPkt->fPosX;
+    out.fPosY = pPkt->fPosY;
+    out.fPosZ = pPkt->fPosZ;
+    out.fDirX = pPkt->fDirX;
+    out.fDirY = pPkt->fDirY;
+    out.fDirZ = pPkt->fDirZ;
+    out.fDamage = pPkt->fDamage;
+    
+    CSessionMgr::GetInstance()->BroadcastToLoggedIn(&out, sizeof(out),
+        pSession->GetSessionId());
 }
 
 // =====================================================================
@@ -395,3 +422,4 @@ void CServer::HandleDisconnect(int iSessId, int iPlayerId, const char* szNicknam
     // 3. 세션 제거 (소켓 닫기 + map에서 삭제)
     CSessionMgr::GetInstance()->OnDisconnect(iSessId);
 }
+

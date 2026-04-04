@@ -42,7 +42,7 @@ public:
     int Get_DragonIdx() const { return m_iDragonIdx; }
     _vec3 Get_DragonPos() const 
     { 
-        return _vec3(m_fTargetDragonX, m_fTargetDragonY, m_fTargetDragonZ); 
+        return _vec3(m_fCurDragonX, m_fCurDragonY, m_fCurDragonZ);
     }
 
     CCollider* Get_Collider() const { return m_pColliderCom; }
@@ -95,6 +95,11 @@ private:
     float m_fTargetDragonX = 0.f;
     float m_fTargetDragonY = 0.f;
     float m_fTargetDragonZ = 0.f;
+
+    //드래곤 보간용 현재 위치
+    float m_fCurDragonX = 0.f;
+    float m_fCurDragonY = 0.f;
+    float m_fCurDragonZ = 0.f;
 
     // ── 렌더링 컴포넌트 ────────────────────────────────────────────────────
     CPlayerBody* m_pBufferCom[PART_END] = {};

@@ -2,7 +2,8 @@
 #include "CJumpingTrapMgr.h"
 #include "CPlayer.h"
 #include "CSoundMgr.h"
-	
+#include "CEventBus.h"
+
 IMPLEMENT_SINGLETON(CJumpingTrapMgr)
 
 CJumpingTrapMgr::CJumpingTrapMgr()
@@ -16,6 +17,14 @@ CJumpingTrapMgr::~CJumpingTrapMgr()
 
 HRESULT CJumpingTrapMgr::Ready_JumpingTrapMgr()
 {
+	//Event Bus 구독, RedStone 죽었는지 아닌지 판단
+	CEventBus::GetInstance()->Subscribe(eEventType::BOSS_DEAD, this,
+		[this](const FGameEvent& event)
+		{
+			//TriggerId 9의 Box 생성
+			m_mapVisible[9] = true;
+		});
+	
 	return S_OK;
 }
 
@@ -23,6 +32,9 @@ _int CJumpingTrapMgr::Update(const _float& fTimeDelta)
 {
 	for (auto& pair : m_mapJumpingTrapGroups)
 	{
+		//해당 TriggerID의 visible이 false인 경우 return
+		if (!m_mapVisible[pair.first])
+			return 0;
 		for (auto& pJumpingTrap : pair.second)
 		{
 			pJumpingTrap->Update_GameObject(fTimeDelta);
@@ -103,6 +115,10 @@ void CJumpingTrapMgr::Activate(int iTriggerID)
 	{
 		m_pPlayer->LaunchByTrap(48.f, eJumpingTrapDir::FORWARD);
 	}
+	if (iTriggerID == 9)
+	{
+		m_pPlayer->LaunchByTrap(45.f, eJumpingTrapDir::FORWARD);
+	}
 }
 
 void CJumpingTrapMgr::Add_JumpingTrap(CGameObject * pGameObject, int iTriggerID)
@@ -137,10 +153,18 @@ void CJumpingTrapMgr::Set_Player(CPlayer * pPlayer)
 	m_pPlayer = pPlayer;
 }
 
+void CJumpingTrapMgr::Set_GroupVisible(int iTriggerID, bool bVisible)
+{
+	m_mapVisible[iTriggerID] = bVisible;
+}
+
 bool CJumpingTrapMgr::Is_Active(int iTriggerID)
 {
 	return false;
 }
 
 void CJumpingTrapMgr::Free()
-{}
+{
+	//이벤트 버스 소멸전 해제
+	CEventBus::GetInstance()->Unsubscribe(eEventType::BOSS_DEAD, this);
+}

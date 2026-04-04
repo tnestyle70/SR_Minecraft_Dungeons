@@ -8,18 +8,6 @@
 #include <string>
 #include <algorithm>
 
-namespace
-{
-	void AgentLog(const char* location, const char* message, const std::string& data, const char* hypothesisId)
-	{
-		std::ofstream ofs("debug-47244f.log", std::ios::app);
-		if (!ofs.is_open()) return;
-		ofs << "{\"sessionId\":\"47244f\",\"runId\":\"pre-fix\",\"hypothesisId\":\"" << hypothesisId
-			<< "\",\"location\":\"" << location << "\",\"message\":\"" << message
-			<< "\",\"data\":" << data << ",\"timestamp\":" << GetTickCount64() << "}\n";
-	}
-}
-
 static const _vec3 s_PatrolPoints[] =
 {
 	_vec3(10.f, 10.f, 10.f),
@@ -32,7 +20,7 @@ CDragon::CDragon(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CGameObject(pGraphicDev)
 	, m_vMoveTarget(0.f, 8.f, 10.f)
 	, m_vVelocity(0.f, 0.f, 0.f)
-	, m_fMoveSpeed(100.f)
+	, m_fMoveSpeed(50.f)
 	, m_fWingTimer(0.f)
 	, m_fWingSpeed(3.5f)
 	, m_fWingAmp(D3DX_PI * 0.35f)
@@ -83,35 +71,20 @@ CDragon::~CDragon()
 
 HRESULT CDragon::Ready_GameObject()
 {
-	// #region agent log
-	AgentLog("CDragon.cpp:Ready_GameObject:entry", "dragon ready start", "{\"ok\":true}", "H1");
-	// #endregion
 	if (FAILED(Init_SpineChain()))
 	{
-		// #region agent log
-		AgentLog("CDragon.cpp:Ready_GameObject:Init_SpineChain", "init spine failed", "{\"ok\":false}", "H2");
-		// #endregion
 		return E_FAIL;
 	}
 	if (FAILED(Init_NeckAndHead()))
 	{
-		// #region agent log
-		AgentLog("CDragon.cpp:Ready_GameObject:Init_NeckAndHead", "init neck/head failed", "{\"ok\":false}", "H2");
-		// #endregion
 		return E_FAIL;
 	}
 	if (FAILED(Init_TailChain()))
 	{
-		// #region agent log
-		AgentLog("CDragon.cpp:Ready_GameObject:Init_TailChain", "init tail failed", "{\"ok\":false}", "H2");
-		// #endregion
 		return E_FAIL;
 	}
 	if (FAILED(Init_WingChains()))
 	{
-		// #region agent log
-		AgentLog("CDragon.cpp:Ready_GameObject:Init_WingChains", "init wings failed", "{\"ok\":false}", "H2");
-		// #endregion
 		return E_FAIL;
 	}
 
@@ -125,16 +98,10 @@ HRESULT CDragon::Ready_GameObject()
 
 	if (!m_pTextureCom)
 	{
-		// #region agent log
-		AgentLog("CDragon.cpp:Ready_GameObject:TextureClone", "texture clone failed", "{\"proto\":\"Proto_ObsidianPngTexture\"}", "H1");
-		// #endregion
 		MSG_BOX("Dragon Texture Clone Failed");
 		return E_FAIL;
 	}
 	
-	// #region agent log
-	AgentLog("CDragon.cpp:Ready_GameObject:success", "dragon ready success", "{\"ok\":true}", "H1");
-	// #endregion
 	return S_OK;
 }
 
@@ -736,22 +703,27 @@ void CDragon::Handle_Input(const _float& fTimeDelta)
 	const _float fTurnSpeed = D3DX_PI * 1.f;
 	_float fYaw = 0.f;
 
-	if (GetAsyncKeyState('A') & 0x8000 ||
-		GetAsyncKeyState(VK_LEFT) & 0x8000)
+	if (GetAsyncKeyState('A') & 0x8000) 
+		//|| GetAsyncKeyState(VK_LEFT) & 0x8000)
 	{
 		fYaw -= fTurnSpeed * fTimeDelta;
 	}
-	if (GetAsyncKeyState('D') & 0x8000 ||
-		GetAsyncKeyState(VK_RIGHT) & 0x8000)
+	if (GetAsyncKeyState('D') & 0x8000) 
+		//|| GetAsyncKeyState(VK_RIGHT) & 0x8000)
 	{
 		fYaw += fTurnSpeed * fTimeDelta;
 	}
-	if (GetAsyncKeyState('S') & 0x8000 ||
-		GetAsyncKeyState(VK_DOWN) & 0x8000)
+	if (GetAsyncKeyState('S') & 0x8000)
+		//|| GetAsyncKeyState(VK_DOWN) & 0x8000)
 	{
 		//더 빠르게 U턴
 		fYaw += fTurnSpeed * 2.f * fTimeDelta;
 	}
+
+	//마우스 Yaw 추가!
+	bool bMouseInput = (m_fRiderYaw != 0.f) || (m_fRiderPitch != 0.f);
+	fYaw += m_fRiderYaw;
+	m_fRiderYaw = 0.f; //다시 초기화
 
 	if (fYaw != 0)
 	{
@@ -772,6 +744,10 @@ void CDragon::Handle_Input(const _float& fTimeDelta)
 	if (GetAsyncKeyState('Q') & 0x8000) vTarget.y += fLookAhead;
 	if (GetAsyncKeyState('E') & 0x8000) vTarget.y -= fLookAhead;
 
+	//마우스 Pitch 제어 추가
+	vTarget.y -= m_fRiderPitch * 50.f;  // drag down = descend, up = ascend
+	m_fRiderPitch = 0.f;  // consumed
+
 	//타겟 적용
 	m_vMoveTarget = vTarget;
 	m_bManualControl = true;
@@ -782,11 +758,12 @@ void CDragon::Handle_Input(const _float& fTimeDelta)
 		| (GetAsyncKeyState('D') & 0x8000)
 		| (GetAsyncKeyState('Q') & 0x8000)
 		| (GetAsyncKeyState('E') & 0x8000)
-		| (GetAsyncKeyState(VK_LEFT) & 0x8000)
-		| (GetAsyncKeyState(VK_RIGHT) & 0x8000)
-		| (GetAsyncKeyState(VK_UP) & 0x8000)
-		| (GetAsyncKeyState(VK_DOWN) & 0x8000);
-
+		| bMouseInput;
+		//| (GetAsyncKeyState(VK_LEFT) & 0x8000)
+		//| (GetAsyncKeyState(VK_RIGHT) & 0x8000)
+		//| (GetAsyncKeyState(VK_UP) & 0x8000)
+		//| (GetAsyncKeyState(VK_DOWN) & 0x8000);
+	
 	if (bAnyKey)
 		m_vMoveTarget = vTarget;         // 진행 방향 앞 → 이동
 	else
@@ -831,7 +808,8 @@ void CDragon::Force_RootPos(const _vec3& vPos)
 {
 	m_Spine[0].vPos = vPos;
 	m_vMoveTarget = vPos;
-	m_vVelocity = _vec3(0.f, 0.f, 0.f);
+	// 0 0 0 설정시 관성을 없애버림
+	//m_vVelocity = _vec3(0.f, 0.f, 0.f);
 }
 
 HRESULT CDragon::Init_SpineChain()
@@ -998,23 +976,14 @@ HRESULT CDragon::Init_WingChains()
 
 CDragon* CDragon::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 {
-	// #region agent log
-	AgentLog("CDragon.cpp:Create:entry", "dragon create called", "{\"deviceNull\":false}", "H3");
-	// #endregion
 	CDragon* pDragon = new CDragon(pGraphicDev);
 
 	if (FAILED(pDragon->Ready_GameObject()))
 	{
-		// #region agent log
-		AgentLog("CDragon.cpp:Create:ready_failed", "dragon ready failed in create", "{\"result\":\"E_FAIL\"}", "H3");
-		// #endregion
 		Safe_Release(pDragon);
 		MSG_BOX("CDragon Create Failed");
 		return nullptr;
 	}
-	// #region agent log
-	AgentLog("CDragon.cpp:Create:success", "dragon create success", "{\"ok\":true}", "H3");
-	// #endregion
 	return pDragon;
 }
 

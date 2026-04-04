@@ -47,12 +47,14 @@ HRESULT CHUD::Ready_GameObject()
 	//아티펙트
 	m_fArtifactX = 560.f; m_fArtifactY = 160.f;
 	m_fArtifactW = 150.f; m_fArtifactH = 150.f;
-	
-
 
 	//미션 텍스트
 	m_fMissionTextX = 835.f; m_fMissionTextY = 15.f;
 	m_fMissionTextW = 300.f; m_fMissionTextH = 40.f;
+
+	//Death Image
+	m_fDeathX = 470.f; m_fDeathY = 50.f;
+	m_fDeathW = 300.f; m_fDeathH = 300.f;
 	
 	//이벤트 버스 연결, 처치된 몬스터 수 받기
 	CEventBus::GetInstance()->Subscribe(eEventType::MONSTER_DEAD, this,
@@ -131,7 +133,7 @@ void CHUD::Update_Missison(const _float fTimeDelta)
 	switch (m_eMissionType)
 	{
 	case eMissionType::MISSION_NPC1:
-		if (m_iZombieCount >= 1 && m_iCreeperCount >= 2 && m_iSpiderCount >= 2
+		if (m_iZombieCount >= 10 && m_iCreeperCount >= 10 && m_iSpiderCount >= 10
 			 && m_bFirstMissionComplete)
 		{
 			FGameEvent event;
@@ -144,7 +146,7 @@ void CHUD::Update_Missison(const _float fTimeDelta)
 		}
 		break;
 	case eMissionType::MISSION_NPC2:
-		if (m_iSkeletonCount >= 2 && m_bFirstMissionComplete)
+		if (m_iSkeletonCount >= 10 && m_bFirstMissionComplete)
 		{
 			FGameEvent event;
 			event.eType = eEventType::MISSION_COMPLETE;
@@ -159,6 +161,21 @@ void CHUD::Update_Missison(const _float fTimeDelta)
 		break;
 	default:
 		break;
+	}
+}
+
+void CHUD::Update_Death(const _float fTimeDelta)
+{
+	//플레이어가 죽었을 경우 타이머 돌리기
+	m_bDeath = m_pNetworkPlayer->Is_Dead();
+	if (m_bDeath)
+	{
+		m_fDeathCooltime += fTimeDelta;
+		if (m_fDeathCooltime >= m_fDeathDuration)
+		{
+			m_bDeath = false;
+			//m_pNetworkPlayer->Set_Revive();
+		}
 	}
 }
 
@@ -514,6 +531,11 @@ void CHUD::Render_MissionComplete()
 	m_pBufferCom->Render_Buffer();
 }
 
+void CHUD::Render_Death()
+{
+	
+}
+
 HRESULT CHUD::Add_Component()
 {
 	Engine::CComponent* pComponent = nullptr;
@@ -617,6 +639,15 @@ HRESULT CHUD::Add_Component()
 
 	m_mapComponent[ID_STATIC].insert({ L"Com_ArtifactTexture", pComponent });
 
+	//Death
+	pComponent = m_pDeath = dynamic_cast<CTexture*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_DeathTexture"));
+
+	if (nullptr == pComponent)
+		return E_FAIL;
+
+	m_mapComponent[ID_STATIC].insert({ L"Com_DeathTexture", pComponent });
+	
 	return S_OK;
 }
 

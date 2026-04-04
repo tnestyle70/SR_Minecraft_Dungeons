@@ -8,7 +8,11 @@ CBreathFlame::CBreathFlame()
 {
 	D3DXMatrixIdentity(&m_matBeamWorld);
 }
-CBreathFlame::~CBreathFlame() { Free(); }
+
+CBreathFlame::~CBreathFlame() 
+{
+	Free(); 
+}
 
 void CBreathFlame::Activate(LPDIRECT3DDEVICE9 pDev, float fBeamRadius, float fBeamLength)
 {
@@ -45,11 +49,13 @@ HRESULT CBreathFlame::Create_BeamMesh()
 	cube.fWidth  = m_fBeamRadius * 2.f;
 	cube.fHeight = m_fBeamRadius * 2.f;
 	cube.fDepth  = m_fBeamLength;
+	m_fMeshDepth = m_fBeamLength;
 
 	FACE_UV uv = { 0.f, 0.f, 1.f, 1.f };
 	cube.front = cube.back = cube.top = cube.bottom = cube.left = cube.right = uv;
 
 	m_pBeamBuffer = Engine::CCubeBodyTex::Create(m_pGraphicDev, cube);
+
 	if (!m_pBeamBuffer)
 	{
 		MSG_BOX("CBreathFlame BeamMesh Create Failed");
@@ -67,7 +73,7 @@ void CBreathFlame::Update(const _float& fTimeDelta,
 	m_fGrowthTimer += fTimeDelta;
 	m_fTime += fTimeDelta;
 
-	float fGrowth = min(1.f, m_fGrowthTimer / 1.0f);
+	float fGrowth = min(1.f, m_fGrowthTimer / 0.2f);
 
 	// Build beam world matrix from head direction
 	_vec3 vZ = vHeadDir;
@@ -91,7 +97,8 @@ void CBreathFlame::Update(const _float& fTimeDelta,
 
 	// Scale Z by growth ratio
 	_matrix matScale;
-	D3DXMatrixScaling(&matScale, 1.f, 1.f, fGrowth);
+	float fSclaeZ = fCurrentLen / m_fMeshDepth;
+	D3DXMatrixScaling(&matScale, 1.f, 1.f, fSclaeZ);
 
 	// Rotation matrix (look-at from head direction)
 	_matrix matRot;

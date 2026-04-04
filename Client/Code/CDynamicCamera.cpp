@@ -77,9 +77,98 @@ _int CDynamicCamera::Update_GameObject(const _float& fTimeDelta)
         else
             m_fCamBlend = max(0.f, m_fCamBlend - fTimeDelta * 2.f);
         _vec3 vOffset;
-        D3DXVec3Lerp(&vOffset, &m_vFollowOffset, &m_vDragonOffset, m_fCamBlend);
+        if (m_fCamBlend > 0.0001f)
+        {
+            //드래곤 전방 벡터에서 yaw 계산
+            D3DXVec3Lerp(&m_vSmoothDragonDir, &m_vSmoothDragonDir, &m_vDragonDir, fTimeDelta * 1.f);
+            _vec3 vForward = m_vSmoothDragonDir;
+            vForward.y = 0.f;
+            if (D3DXVec3Length(&vForward) > 0.0001f)
+                D3DXVec3Normalize(&vForward, &vForward);
+            else
+                vForward = { 0.f, 0.f, 1.f };
+            
+            float fYaw = atan2f(vForward.x, vForward.z);
+            _matrix matYaw;
+            D3DXMatrixRotationY(&matYaw, fYaw);
+            //드래곤 오프셋을 yaw 만큼 회전
+            _vec3 vRotatedDragonOffset;
+            D3DXVec3TransformNormal(&vRotatedDragonOffset, &m_vDragonOffset, &matYaw);
+            // 일반 오프셋 ↔ 회전된 드래곤 오프셋 블렌딩
+            D3DXVec3Lerp(&vOffset, &m_vFollowOffset, &vRotatedDragonOffset, m_fCamBlend);
+
+            //자유 시점 공전 적용
+            if (m_bFreeLook || fabsf(m_fFreeCamYaw) > 0.001f || fabsf(m_fFreeCamPitch) > 0.001f)
+            {
+                // 좌클릭 해제 시 부드럽게 0으로 복귀
+                if (!m_bFreeLook)
+                {
+                    float fDecay = 1.f - fTimeDelta * 5.f;   // 감쇠 팩터
+                    m_fFreeCamYaw *= fDecay;
+                    m_fFreeCamPitch *= fDecay;
+                    if (fabsf(m_fFreeCamYaw) < 0.001f) m_fFreeCamYaw = 0.f;
+                    if (fabsf(m_fFreeCamPitch) < 0.001f) m_fFreeCamPitch = 0.f;
+                }
+
+                // 피치 클램프 — 뒤집힘 방지 (-70도 ~ +70도)
+                m_fFreeCamPitch = max(-1.22f, min(1.22f, m_fFreeCamPitch));
+
+                // 기본 오프셋(vOffset) 위에 추가 회전 적용
+                // 1) 수평 회전 (Y축, freeCamYaw)
+                D3DXMATRIX matFreeYaw;
+                D3DXMatrixRotationY(&matFreeYaw, m_fFreeCamYaw);
+
+                // 2) 수직 회전 (Right축, freeCamPitch)
+                //    Right = WorldUp x 현재오프셋 → 오프셋에 수직인 수평축
+                _vec3 vUp = { 0.f, 1.f, 0.f };
+                _vec3 vRight;
+                D3DXVec3Cross(&vRight, &vUp, &vOffset);
+                D3DXVec3Normalize(&vRight, &vRight);
+
+                D3DXMATRIX matFreePitch;
+                D3DXMatrixRotationAxis(&matFreePitch, &vRight, m_fFreeCamPitch);
+
+                // 합성: Pitch 먼저, Yaw 나중 (순서 중요 — 수평 공전이 직관적)
+                D3DXMATRIX matFree = matFreePitch * matFreeYaw;
+                D3DXVec3TransformNormal(&vOffset, &vOffset, &matFree);
+            }
+        }
+        else
+        {
+            vOffset = m_vFollowOffset;
+        }
+        //머지해서 각자 잘 되나 
 
         m_vEye = vPlayerPos + vOffset;
+
+        //Look -at 탑승 중이면 드래곤 전방 약간 앞을 바라봄
+        _vec3 vLookOffset = { 0.f, 1.5f, 0.f };
+        if (m_fCamBlend > 0.001f)
+        {
+            _vec3 vForward = m_vDragonDir;
+            vForward.y = 0.f;
+            if (D3DXVec3Length(&vForward) > 0.001f)
+                D3DXVec3Normalize(&vForward, &vForward);
+            _vec3 vAHeadOffset = vForward * 5.f + _vec3(0.f, 1.5f, 0.f);
+            D3DXVec3Lerp(&vLookOffset, &_vec3(0.f, 1.5f, 0.f), &vAHeadOffset, m_fCamBlend);
+        }
+        m_vAt = vPlayerPos + vLookOffset;
+
+        // free-look: override At to player center (not dragon forward)
+        if (m_fCamBlend > 0.001f &&
+            (fabsf(m_fFreeCamYaw) > 0.001f || fabsf(m_fFreeCamPitch) > 0.001f))
+        {
+            _vec3 vPlayerAt = vPlayerPos + _vec3(0.f, 2.f, 0.f);
+            // smooth blend: partial free-look → partial dragon forward
+            float fFreeBlend = max(fabsf(m_fFreeCamYaw), fabsf(m_fFreeCamPitch));
+            fFreeBlend = min(fFreeBlend * 2.f, 1.f);  // 0.5rad at full
+            D3DXVec3Lerp(&m_vAt, &m_vAt, &vPlayerAt, fFreeBlend);
+        }
+
+        //D3DXVec3Lerp(&vOffset, &m_vFollowOffset, &m_vDragonOffset, m_fCamBlend);
+        //m_vEye = vPlayerPos + vOffset;
+        //m_vAt = vPlayerPos + _vec3(0.f, 1.5f, 0.f);
+
         m_vAt = vPlayerPos + _vec3(0.f, 1.5f, 0.f);
 
         // 카메라 쉐이킹
@@ -91,6 +180,7 @@ _int CDynamicCamera::Update_GameObject(const _float& fTimeDelta)
             m_vEye.y += ((rand() % 100) / 100.f - 0.5f) * fStrength;
             m_vEye.z += ((rand() % 100) / 100.f - 0.5f) * fStrength;
         }
+
     }
     else
     {
@@ -222,7 +312,7 @@ void CDynamicCamera::Set_GBStageActionCam()
         {328, 40.f, 203}, //웨이포인트 2
         {366, 10.f, -19}, //웨이 포인트 3
         {260, 30.f, -195}, //웨이포인트 4
-        {0, 30.f, 0}, //웨이포인트 5
+        {20.f, 30.f, -20.f}, //웨이포인트 5
     };
     
     for (int i = 0; i < 4; ++i)
@@ -238,7 +328,7 @@ void CDynamicCamera::Key_Input(const _float& fTimeDelta)
     _matrix matCamWorld;
     D3DXMatrixInverse(&matCamWorld, 0, &m_matView);
 
-    if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_D) & 0x80)
+    if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_RIGHT) & 0x80)
     {
         _vec3   vRight;
         memcpy(&vRight, &matCamWorld.m[0][0], sizeof(_vec3));
@@ -249,7 +339,7 @@ void CDynamicCamera::Key_Input(const _float& fTimeDelta)
         m_vAt += vLength;
     }
 
-    if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_A) & 0x80)
+    if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_LEFT) & 0x80)
     {
         _vec3   vRight;
         memcpy(&vRight, &matCamWorld.m[0][0], sizeof(_vec3));
@@ -260,7 +350,7 @@ void CDynamicCamera::Key_Input(const _float& fTimeDelta)
         m_vAt  -= vLength;
     }
 
-    if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_W) & 0x80)
+    if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_UP) & 0x80)
     {
         _vec3   vLook;
         memcpy(&vLook, &matCamWorld.m[2][0], sizeof(_vec3));
@@ -271,7 +361,7 @@ void CDynamicCamera::Key_Input(const _float& fTimeDelta)
         m_vAt += vLength;
     }
 
-    if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_S) & 0x80)
+    if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_DOWN) & 0x80)
     {
         _vec3   vLook;
         memcpy(&vLook, &matCamWorld.m[2][0], sizeof(_vec3));
@@ -344,7 +434,6 @@ void CDynamicCamera::Mouse_Move()
 
         m_vAt = m_vEye + vLook;
     }
-
 }
 
 void CDynamicCamera::Mouse_Fix()
@@ -371,6 +460,33 @@ CDynamicCamera* CDynamicCamera::Create(LPDIRECT3DDEVICE9 pGraphicDev,
     }
 
     return pCamera;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ImGui debug panel
+// ─────────────────────────────────────────────────────────────────────────────
+void CDynamicCamera::Render_GameObject()
+{
+    ImGui::Begin("Camera Debug");
+
+    ImGui::Text("-- Follow Offset --");
+    ImGui::DragFloat3("FollowOffset", (float*)&m_vFollowOffset, 0.5f, -50.f, 50.f);
+
+    ImGui::Separator();
+    ImGui::Text("-- Dragon Camera --");
+    ImGui::DragFloat3("DragonOffset", (float*)&m_vDragonOffset, 0.5f, -50.f, 50.f);
+    ImGui::SliderFloat("CamBlend", &m_fCamBlend, 0.f, 1.f);
+    ImGui::Text("DragonCam: %s", m_bDragonCam ? "ON" : "OFF");
+    ImGui::Text("DragonDir: (%.2f, %.2f, %.2f)",
+        m_vDragonDir.x, m_vDragonDir.y, m_vDragonDir.z);
+
+    ImGui::Separator();
+    ImGui::Text("-- Current State --");
+    ImGui::Text("Eye: (%.1f, %.1f, %.1f)", m_vEye.x, m_vEye.y, m_vEye.z);
+    ImGui::Text("At:  (%.1f, %.1f, %.1f)", m_vAt.x, m_vAt.y, m_vAt.z);
+    ImGui::Text("Mode: %s", m_bFollowMode ? "Follow" : "Free");
+
+    ImGui::End();
 }
 
 void CDynamicCamera::Free()

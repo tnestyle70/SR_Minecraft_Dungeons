@@ -28,12 +28,12 @@ private:
     CCollider* m_pColliderCom = nullptr;
 
     _vec3  m_vDir = {};
-    float  m_fSpeed = 3.f;
-    float  m_fDamage = 0.f;
+    float  m_fSpeed = 30.f;
+    float  m_fDamage = 5.f;
     float  m_fLifeTime = 0.f;
     bool   m_bDead = false;
     bool m_bFirework = false;
-
+    
     bool m_bExploding = false;
     float m_fExplodeTimer = 0.f;
     CCollider* m_pExplodeColliderCom = nullptr;

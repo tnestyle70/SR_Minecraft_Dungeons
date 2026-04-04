@@ -1,5 +1,4 @@
 #pragma once
-
 #include <winsock2.h>
 #include <windows.h>
 #include <thread>
@@ -26,11 +25,16 @@ private:
     void HandleLogin      (CSession* pSession, const PKT_C2S_Login*       pPkt);
     void HandleInput      (CSession* pSession, const PKT_C2S_Input*       pPkt);
     void HandleArrow      (CSession* pSession, const PKT_C2S_Arrow*       pPkt); // C2S_ARROW
+    void HandleFlame(CSession* pSession, const PKT_C2S_Flame* pPkt);
     void HandleDragonSync (CSession* pSession, const PKT_C2S_DragonSync*  pPkt); // C2S_DRAGON_SYNC
     void HandleDamage     (CSession* pSession, const PKT_C2S_Damage*      pPkt);
 
     // 세션 종료 공통 처리: 스폰 해제 + Despawn 브로드캐스트 + OnDisconnect
     void HandleDisconnect(int iSessId, int iPlayerId, const char* szNickname);
+
+    //NickName Allocation
+    static constexpr const char* NICK_POOL[] = { "GB", "JS", "TJ", "CY" };
+    std::atomic<int>             m_iNickIndex{ 0 };
 
     SOCKET m_hListenSocket = INVALID_SOCKET;
     std::atomic<bool> m_bRunning = false;

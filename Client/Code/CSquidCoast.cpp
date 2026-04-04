@@ -136,6 +136,29 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		return iExit;
 	}
 
+	if (CTriggerBoxMgr::GetInstance()->IsSceneChanged())
+	{
+		//Render Group Clear Before Change Scene!!!!
+		CTriggerBoxMgr::GetInstance()->SetSceneChanged(false);
+		CRenderer::GetInstance()->Clear_RenderGroup();
+		CTriggerBoxMgr::GetInstance()->Clear();
+		CIronBarMgr::GetInstance()->Clear();
+		CMonsterMgr::GetInstance()->Clear();
+		CJumpingTrapMgr::GetInstance()->Clear();
+		CParticleMgr::GetInstance()->Clear_Emitters();
+		CInventoryMgr::GetInstance()->Clear_Player();
+		CDamageMgr::GetInstance()->Clear_Boss();
+		CEnvironmentMgr::GetInstance()->Clear_Boxes();
+
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_TJ)))
+		{
+			MSG_BOX("Camp Create Failed");
+			return -1;
+		}
+
+		return iExit;
+	}
+
 
 	if (GetAsyncKeyState('L') & 0x8000)
 
@@ -319,7 +342,7 @@ HRESULT CSquidCoast::Ready_Environment_Layer(const _tchar* pLayerTag)
 	if (!pDynamicCam)
 		return E_FAIL;
 
-	pDynamicCam->SetActionCam(eActionCamType::SQUID_COAST);
+	//pDynamicCam->SetActionCam(eActionCamType::SQUID_COAST);
 
 	if (!pGameObject)
 		return E_FAIL;
@@ -365,6 +388,7 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	m_pPlayer = pPlayer;
 
 	//JumpingTrap
+	CJumpingTrapMgr::GetInstance()->Ready_JumpingTrapMgr();
 	CJumpingTrapMgr::GetInstance()->Set_Player(pPlayer);
 
 	// NPC
@@ -622,7 +646,11 @@ HRESULT CSquidCoast::Ready_StageData(const _tchar* szPath)
 
 		CGameObject* pJumpingTrap = CJumpingTrap::Create(m_pGraphicDev, vPos);
 		if (pJumpingTrap)
+		{
 			CJumpingTrapMgr::GetInstance()->Add_JumpingTrap(pJumpingTrap, tData.iTriggerID);
+			CJumpingTrapMgr::GetInstance()->Set_GroupVisible(tData.iTriggerID,
+				(tData.iTriggerID != 9));
+		}
 	}
 
 	fclose(pFile);

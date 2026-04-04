@@ -62,6 +62,35 @@ void CLamp::LateUpdate_GameObject(const _float& fTimeDelta)
 
 void CLamp::Render_GameObject()
 {
+	_vec3 vHeadPos;
+	m_pParts[LAMP_HEAD]->Get_Transform()->Get_Info(INFO_POS, &vHeadPos);
+
+	D3DLIGHT9 tLight;
+	ZeroMemory(&tLight, sizeof(tLight));
+
+	tLight.Type = D3DLIGHT_POINT;
+	tLight.Position = vHeadPos;
+
+	tLight.Diffuse = D3DXCOLOR(1.f, 0.9f, 0.6f, 1.f);
+	tLight.Ambient = D3DXCOLOR(0.3f, 0.3f, 0.2f, 1.f);
+
+	tLight.Range = 6.f;
+	tLight.Attenuation0 = 1.f;
+	tLight.Attenuation1 = 0.1f;
+	tLight.Attenuation2 = 0.01f;
+
+	m_pGraphicDev->SetLight(1, &tLight);
+	m_pGraphicDev->LightEnable(1, TRUE);
+
+	// 2. Material
+	D3DMATERIAL9 mtrl;
+	ZeroMemory(&mtrl, sizeof(mtrl));
+
+	mtrl.Diffuse = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
+	mtrl.Ambient = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
+	mtrl.Specular = D3DXCOLOR(1.f, 1.f, 1.f, 1.f);
+	mtrl.Power = 20.f;
+
 	m_pTextureCom->Set_Texture(0);
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
 

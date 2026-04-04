@@ -6,6 +6,7 @@
 #include "CEventBus.h"
 #include "CSpawnEffect.h"
 #include "CSoundMgr.h"
+#include "CEnderDragon.h"
 
 IMPLEMENT_SINGLETON(CMonsterMgr)
 
@@ -201,6 +202,23 @@ void CMonsterMgr::CheckCursorHover()
 		}
 	}
 
+	if (m_pEnderDragon)
+	{
+		CCollider** pSpineColliders = m_pEnderDragon->Get_SpineCollider();
+		
+		for (int i = 0; i < (int)ENDER_DRAGON_SPINE_COUNT; ++i)
+		{
+			if (!pSpineColliders[i])
+				continue;
+
+			if (pSpineColliders[i]->IntersectRay(vRayOrigin, vRayDir))
+			{
+				CCursorMgr::GetInstance()->SetCursorState(eCursorState::ENEMY_HOVER);
+				bHover = true;
+			}
+		}
+	}
+	
 	if (!bHover && !CCursorMgr::GetInstance()->IsClicked())
 	{
 		CCursorMgr::GetInstance()->SetCursorState(eCursorState::DEFAULT);
@@ -263,6 +281,7 @@ void CMonsterMgr::Clear()
 	}
 	m_pGuardian = nullptr;
 	m_pGolem = nullptr;
+	m_pEnderDragon = nullptr;
 	m_mapMonsterGroups.clear();
 }
 

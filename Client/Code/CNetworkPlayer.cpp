@@ -8,14 +8,12 @@
 #include "CCollider.h"
 #include "CParticleMgr.h"
 #include "CEnvironmentMgr.h"
-#include "CMonster.h"
-#include "CMonsterMgr.h"
-#include "CRedStoneGolem.h"
-#include "CAncientGuardian.h"
 #include "CCursorMgr.h"
 #include <cstdio>
 #include "CEnderDragon.h"
 #include "CDamageMgr.h"
+#include "CCursorMgr.h"
+#include "CSoundMgr.h"
 
 CNetworkPlayer::CNetworkPlayer(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -217,7 +215,6 @@ void CNetworkPlayer::Render_GameObject()
 		float fBlink = sinf(m_fHitTime * D3DX_PI * 8.f);
 		if (fBlink > 0.f)
 		{
-			m_fHp -= 1.f;
 			m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG2);
 			m_pGraphicDev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
 			m_pGraphicDev->SetRenderState(D3DRS_TEXTUREFACTOR, D3DCOLOR_RGBA(255, 0, 0, 255));
@@ -243,8 +240,6 @@ void CNetworkPlayer::Render_GameObject()
 		D3DXMatrixRotationY(&matTorsoRot, fTorsoY);
 		matRootWorld = matTorsoRot * matRootWorld;
 	}
-
-
 
 	//활시위 당기기
 	float fLArmX = 0.f, fLArmY = 0.f;
@@ -279,7 +274,6 @@ void CNetworkPlayer::Render_GameObject()
 		matRArmRoot._43 -= vRight.z * 0.4f;
 	}
 
-
 	//아머 렌더링
 	Render_Part(PART_HEAD, 0.f, m_bCharging ? D3DXToRadian(90.f) : 0.f, 0.f, matRootWorld);
 	Render_Part(PART_BODY, 0.f, 0.f, 0.f, matRootWorld);
@@ -290,7 +284,7 @@ void CNetworkPlayer::Render_GameObject()
 		m_pHeldTNT ? 0.f : (m_bCharging ? fRArmY : (m_iComboStep > 0 ? fAtkY : 0.f)), 0.f, matRootWorld);
 	Render_Part(PART_LLEG, -fSwing, 0.f, 0.f, matRootWorld);
 	Render_Part(PART_RLEG, fSwing, 0.f, 0.f, matRootWorld);
-
+	
 	if (m_eArmorType != ARMOR_NONE && m_pArmorTextureCom)
 	{
 		m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
@@ -613,34 +607,17 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 				//드래곤 시점으로 카메라 전환
 				if (m_pDynamicCamera) 
 					m_pDynamicCamera->Set_DragonCam(true);
-				// #region agent log
-				{
-					FILE* fp = nullptr;
-					if (_wfopen_s(&fp, L"debug-9b3cff.log", L"a") == 0 && fp)
-					{
-						fprintf(fp, "{\"sessionId\":\"9b3cff\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H1\",\"location\":\"Client/Code/CNetworkPlayer.cpp:623\",\"message\":\"mount_toggle\",\"data\":{\"mounted\":true},\"timestamp\":%llu}\n", (unsigned long long)GetTickCount64());
-						fclose(fp);
-					}
-				}
-				// #endregion
+
 			}
 		}
 		else
 		{
-			if (m_pMountedDragon) m_pMountedDragon->Set_Ridden(false);
+			if (m_pMountedDragon) 
+				m_pMountedDragon->Set_Ridden(false);
 			m_pMountedDragon = nullptr;
 			m_bRiding = false;
-			if (m_pDynamicCamera) m_pDynamicCamera->Set_DragonCam(false);
-			// #region agent log
-			{
-				FILE* fp = nullptr;
-				if (_wfopen_s(&fp, L"debug-9b3cff.log", L"a") == 0 && fp)
-				{
-					fprintf(fp, "{\"sessionId\":\"9b3cff\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H1\",\"location\":\"Client/Code/CNetworkPlayer.cpp:634\",\"message\":\"mount_toggle\",\"data\":{\"mounted\":false},\"timestamp\":%llu}\n", (unsigned long long)GetTickCount64());
-					fclose(fp);
-				}
-			}
-			// #endregion
+			if (m_pDynamicCamera) 
+				m_pDynamicCamera->Set_DragonCam(false);
 		}
 	}
 	m_bGKeyPrev = bGCur;
@@ -676,15 +653,14 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 			_vec3 vPos;
 			m_pTransformCom->Get_Info(INFO_POS, &vPos);
 
-			// 가디언 조준 우선
-			bool bAimedGuardian = false;
-			if (m_pTargetGuardian && !m_pTargetGuardian->Is_Dead())
+			// ender dragon spine aim (recalculated every frame)
+			bool bAimed = false;
+			if (m_pTargetDragon && m_iTargetSpineIdx >= 0)
 			{
-				CCollider* pCol = dynamic_cast<CCollider*>(
-					m_pTargetGuardian->Get_Component(ID_STATIC, L"Com_Collider"));
-				if (pCol)
+				CCollider* pDrgCol = m_pTargetDragon->Get_SpineCollider(m_iTargetSpineIdx);
+				if (pDrgCol)
 				{
-					AABB tAABB = pCol->Get_AABB();
+					AABB tAABB = pDrgCol->Get_AABB();
 					_vec3 vCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
 					_vec3 vDir = vCenter - vPos;
 					if (D3DXVec3Length(&vDir) > 0.1f)
@@ -694,13 +670,13 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 						_vec3 vDirH = { vDir.x, 0.f, vDir.z };
 						if (D3DXVec3Length(&vDirH) > 0.01f)
 							m_pTransformCom->m_vAngle.y = D3DXToDegree(atan2f(vDirH.x, vDirH.z)) + 180.f;
-						bAimedGuardian = true;
+						bAimed = true;
 					}
 				}
 			}
 
-			// 가디언 없으면 블록 피킹 방향
-			if (!bAimedGuardian)
+			// fallback: block picking
+			if (!bAimed && CCursorMgr::GetInstance()->IsMouseInClient())
 			{
 				_vec3 vTarget = Picking_OnBlock();
 				_vec3 vDir = vTarget - vPos;
@@ -726,7 +702,7 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 				pArrow->Set_Firework(m_bFireworkArrow);
 				m_vecArrows.push_back(pArrow);
 			}
-			// 화살 발사 이벤트 서버 전송 → 다른 클라이언트에 시각 화살 객체 생성
+			// send arrow event to server
 			CNetworkMgr::GetInstance()->SendArrow(
 				vPos.x, vPos.y, vPos.z,
 				m_vBowDir.x, m_vBowDir.y, m_vBowDir.z,
@@ -737,7 +713,11 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 		}
 	}
 
-
+	//체력 회복
+	if (GetAsyncKeyState('T') & 0x8000)
+	{
+		m_fHp = m_fMaxHp;
+	}
 
 	if (GetAsyncKeyState('R') & 0x8000)
 	{
@@ -752,191 +732,157 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 		m_bRKeyPrev = false;
 	}
 
-	// T 키: 화염포 발사 (마우스 방향, 화살 발사 로직과 동일)
+	if(CCursorMgr::GetInstance()->IsMouseInClient())
+		Picking_OnDragon();
+
+	// T key: fire void flame
+	m_pTargetDragon = CDamageMgr::GetInstance()->Get_EnderDragon();
 	{
-		bool bTCur = (GetAsyncKeyState('T') & 0x8000) != 0;
+		bool bTCur = (GetAsyncKeyState('F') & 0x8000) != 0;
 		if (bTCur && !m_bTKeyPrev)
 		{
 			_vec3 vPos;
 			m_pTransformCom->Get_Info(INFO_POS, &vPos);
 			vPos.y += 1.0f;
 
-			_vec3 vTarget = Picking_OnBlock();
-			_vec3 vDir = vTarget - vPos;
-			vDir.y = 0.f;
-			if (D3DXVec3Length(&vDir) > 0.1f)
-				D3DXVec3Normalize(&vDir, &vDir);
-			else
-				m_pTransformCom->Get_Info(INFO_LOOK, &vDir);
+			_vec3 vDir = { 0.f, 0.f, 0.f };
+			bool bAimed = false;
 
+			// dragon spine target (recalculated from current position)
+			if (m_pTargetDragon && m_iTargetSpineIdx >= 0)
+			{
+				CCollider* pDrgCol = m_pTargetDragon->Get_SpineCollider(m_iTargetSpineIdx);
+				if (pDrgCol)
+				{
+					AABB tAABB = pDrgCol->Get_AABB();
+					_vec3 vCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
+					vDir = vCenter - vPos;
+					if (D3DXVec3Length(&vDir) > 0.1f)
+					{
+						D3DXVec3Normalize(&vDir, &vDir);
+						bAimed = true;
+					}
+				}
+			}
+
+			// fallback: block picking
+			if (!bAimed && CCursorMgr::GetInstance()->IsMouseInClient())
+			{
+				_vec3 vTarget = Picking_OnBlock();
+				vDir = vTarget - vPos;
+				vDir.y = 0.f;
+				if (D3DXVec3Length(&vDir) > 0.1f)
+					D3DXVec3Normalize(&vDir, &vDir);
+				else
+					m_pTransformCom->Get_Info(INFO_LOOK, &vDir);
+			}
+			//======화염포 발사======
 			CVoidFlame* pFlame = CVoidFlame::Create(m_pGraphicDev, vPos, vDir, 20.f);
 			if (pFlame)
+			{
+				//사운드 재생
+				CSoundMgr::GetInstance()->PlayEffect(L"Effect/Ender_Flame2.wav", 1.f);
 				m_vecVoidFlames.push_back(pFlame);
+				//Network Sync
+				CNetworkMgr::GetInstance()->SendFlame(
+					vPos.x, vPos.y, vPos.z,
+					vDir.x, vDir.y, vDir.z, 20.f);
+			}
 		}
 		m_bTKeyPrev = bTCur;
 	}
 
-	// 마우스 클릭 이동 + 클라이언트 영역 안에 존재할 경우만
-	if (GetAsyncKeyState(VK_LBUTTON) & 0x8000 &&
+	//탈것 타고 있는 동안 좌클릭 드래그 dragon yaw pitch 조작
+	if (m_bRiding && m_pMountedDragon && GetAsyncKeyState(VK_LBUTTON) & 0x8000 &&
 		CCursorMgr::GetInstance()->IsMouseInClient())
 	{
-		_vec3 vPickPos = Picking_OnBlock();
-		_vec3 vPos;
-		m_pTransformCom->Get_Info(INFO_POS, &vPos);
+		_long dwMouseX = CDInputMgr::GetInstance()->Get_DIMouseMove(DIMS_X);
+		_long dwMouseY = CDInputMgr::GetInstance()->Get_DIMouseMove(DIMS_Y);
 
-		// 1. 박스 오픈
-		for (auto& pBox : CEnvironmentMgr::GetInstance()->Get_Box())
+		if (m_pDynamicCamera)
 		{
-			if (!pBox)
-				continue;
-
-			Engine::CTransform* pTrans = dynamic_cast<Engine::CTransform*>
-				(pBox->Get_Component(ID_DYNAMIC, L"Com_Transform"));
-
-			if (!pTrans)
-				continue;
-
-			_vec3 vBoxPos;
-			pTrans->Get_Info(INFO_POS, &vBoxPos);
-			_vec3 vPlayerDiff = vBoxPos - vPos;
-			vPlayerDiff.y = 0.f;
-			if (D3DXVec3Length(&vPlayerDiff) >= 2.f)
-				continue;
-
-			_vec3 vPickDiff = vPickPos - vBoxPos;
-			vPickDiff.y = 0.f;
-			if (D3DXVec3Length(&vPickDiff) >= 2.f)
-				continue;
-
-			pBox->Open_Box();
-			break;
+			m_pDynamicCamera->Set_FreeLook(true);
+			if (dwMouseX)
+				m_pDynamicCamera->Set_FreeLookYaw(dwMouseX * 0.003f);
+			if (dwMouseY)
+				m_pDynamicCamera->Set_FreeLookPitch(dwMouseY * 0.003f);
 		}
+	}
+	else if (m_bRiding && m_pDynamicCamera)
+	{
+		m_pDynamicCamera->Set_FreeLook(false);
+	}
 
-		// 2. TNT 줍기
-		if (!m_pHeldTNT)
+	// 마우스 클릭 이동 + 클라이언트 영역 안에 존재할 경우만
+	if (!m_bRiding && GetAsyncKeyState(VK_LBUTTON) & 0x8000 &&
+		CCursorMgr::GetInstance()->IsMouseInClient())
+	{
+		if (!Picking_OnDragon())
 		{
-			for (auto& pTNT : m_vecTNTs)
+			_vec3 vPickPos = Picking_OnBlock();
+			_vec3 vPos;
+			m_pTransformCom->Get_Info(INFO_POS, &vPos);
+
+			// 1. 박스 오픈
+			for (auto& pBox : CEnvironmentMgr::GetInstance()->Get_Box())
 			{
-				if (pTNT->Is_Dead() || pTNT->Is_PickedUp()) continue;
+				if (!pBox)
+					continue;
+
 				Engine::CTransform* pTrans = dynamic_cast<Engine::CTransform*>
-					(pTNT->Get_Component(ID_DYNAMIC, L"Com_Transform"));
+					(pBox->Get_Component(ID_DYNAMIC, L"Com_Transform"));
+
 				if (!pTrans)
 					continue;
-				_vec3 vTNTPos;
-				pTrans->Get_Info(INFO_POS, &vTNTPos);
-				_vec3 vPlayerDiff = vTNTPos - vPos;
+
+				_vec3 vBoxPos;
+				pTrans->Get_Info(INFO_POS, &vBoxPos);
+				_vec3 vPlayerDiff = vBoxPos - vPos;
 				vPlayerDiff.y = 0.f;
 				if (D3DXVec3Length(&vPlayerDiff) >= 2.f)
 					continue;
-				_vec3 vPickDiff = vPickPos - vTNTPos;
-				vPickDiff.y = 0.f;
-				if (D3DXVec3Length(&vPickDiff) >= 2.f)
-					continue;
-				pTNT->PickUp();
-				m_pHeldTNT = pTNT;
-				break;
-			}
-		}
 
-		// 3. 몬스터 피킹하면 이동
-		bool bMonsterPicked = false;
-		for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
-		{
-			for (auto& pMonster : pair.second.vecMonsters)
-			{
-				if (!pMonster->IsActive())
-					continue;
-				CCollider* pCol = pMonster->Get_Collider();
-				if (!pCol)
-					continue;
-				AABB tAABB = pCol->Get_AABB();
-				_vec3 vMonsterCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
-				_vec3 vPickDiff = vPickPos - vMonsterCenter;
+				_vec3 vPickDiff = vPickPos - vBoxPos;
 				vPickDiff.y = 0.f;
 				if (D3DXVec3Length(&vPickDiff) >= 2.f)
 					continue;
 
-				_vec3 vPlayerDiff = vMonsterCenter - vPos;
-				vPlayerDiff.y = 0.f;
-				bool bInRange = D3DXVec3Length(&vPlayerDiff) < 2.f;
-
-				if (bInRange && (m_iComboStep == 0 ||
-					(m_fAtkTime >= m_fAtkDuration && m_fComboTimer > 0.f)))
-				{
-					//바로 공격
-					m_iComboStep = (m_iComboStep % 3) + 1;
-					if (m_iComboStep == 1 || m_iComboStep == 2 || m_iComboStep == 3)
-						m_fAtkTime = 0.f;
-					m_fComboTimer = m_fComboWindow;
-					m_bHasTarget = false;
-				}
-				else
-				{
-					//  이동
-					m_vTargetPos = vMonsterCenter;
-					m_vTargetPos.y = 0.f;
-					m_bHasTarget = true;
-					m_pTargetMonster = pMonster;
-				}
-				bMonsterPicked = true;
+				pBox->Open_Box();
 				break;
 			}
-			if (bMonsterPicked)
-				break;
-		}
 
-		// 보스 피킹
-		CEnderDragon* pEnderDragon = CDamageMgr::GetInstance()->Get_EnderDragon();
-		if (pEnderDragon)
-		{
-			CCollider** pSpineColliders = pEnderDragon->Get_SpineCollider();
-			
-			for (int i = 0; i < (int)ENDER_DRAGON_SPINE_COUNT; ++i)
+			// 2. TNT 줍기
+			if (!m_pHeldTNT)
 			{
-				if (!pSpineColliders[i])
-					continue;
-
-				AABB tAABB = pSpineColliders[i]->Get_AABB();
-				_vec3 vCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
-
-				_vec3 vPickDiff = vPickPos - vCenter;
-				vPickDiff.y = 0.f;
-
-				if (D3DXVec3Length(&vPickDiff) < 3.f)
+				for (auto& pTNT : m_vecTNTs)
 				{
-					_vec3 vPlayerDiff = vCenter - vPos;
+					if (pTNT->Is_Dead() || pTNT->Is_PickedUp()) continue;
+					Engine::CTransform* pTrans = dynamic_cast<Engine::CTransform*>
+						(pTNT->Get_Component(ID_DYNAMIC, L"Com_Transform"));
+					if (!pTrans)
+						continue;
+					_vec3 vTNTPos;
+					pTrans->Get_Info(INFO_POS, &vTNTPos);
+					_vec3 vPlayerDiff = vTNTPos - vPos;
 					vPlayerDiff.y = 0.f;
-					bool bInRange = D3DXVec3Length(&vPlayerDiff) < 3.f;
-
-					if (bInRange && (m_iComboStep == 0 ||
-						(m_fAtkTime >= m_fAtkDuration && m_fComboTimer > 0.f)))
-					{
-						// 바로 공격
-						m_iComboStep = (m_iComboStep % 3) + 1;
-						m_fAtkTime = 0.f;
-						m_fComboTimer = m_fComboWindow;
-						m_bHasTarget = false;
-					}
-					else
-					{
-						// 이동
-						m_vTargetPos = vCenter;
-						m_vTargetPos.y = 0.f;
-						m_bHasTarget = true;
-						m_pTargetMonster = nullptr;
-					}
-					bMonsterPicked = true;
+					if (D3DXVec3Length(&vPlayerDiff) >= 2.f)
+						continue;
+					_vec3 vPickDiff = vPickPos - vTNTPos;
+					vPickDiff.y = 0.f;
+					if (D3DXVec3Length(&vPickDiff) >= 2.f)
+						continue;
+					pTNT->PickUp();
+					m_pHeldTNT = pTNT;
+					break;
 				}
 			}
-		}
 
-		// 4. 일반 이동
-		if (!bMonsterPicked)
-		{
+			// 4. 일반 이동
 			m_vTargetPos = vPickPos;
 			m_vTargetPos.y = 0.f;
 			m_bHasTarget = true;
-			m_pTargetMonster = nullptr;
+			m_pTargetDragon = nullptr;
+			m_iTargetSpineIdx = -1;
 		}
 	}
 
@@ -1103,6 +1049,32 @@ _vec3 CNetworkPlayer::Picking_OnBlock()
 	}
 
 	return vHit;
+}
+
+bool CNetworkPlayer::Picking_OnDragon()
+{
+	//드래곤 피킹 여부 확인
+	_vec3 vRayOrigin, vRayDir;
+	CCursorMgr::GetInstance()->GetPickingRay(vRayOrigin, vRayDir);
+
+	m_pTargetDragon = CDamageMgr::GetInstance()->Get_EnderDragon();
+
+	CCollider** pSpineColliders = m_pTargetDragon->Get_SpineCollider();
+
+	for (int i = 0; i < (int)ENDER_DRAGON_SPINE_COUNT; ++i)
+	{
+		if (!pSpineColliders[i])
+			continue;
+
+		if (pSpineColliders[i]->IntersectRay(vRayOrigin, vRayDir))
+		{
+			m_iTargetSpineIdx = i;
+			CCursorMgr::GetInstance()->SetCursorState(eCursorState::ENEMY_HOVER);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void CNetworkPlayer::Render_Part(BODYPART ePart, _float fAngleX, _float fAngleY, _float fAngleZ,
@@ -1335,7 +1307,13 @@ void CNetworkPlayer::Sync_ToMountedDragon()
 
 	_vec3 vDir = m_pMountedDragon->Get_RiderDir();
 	if (D3DXVec3Length(&vDir) > 0.01f)
+	{
 		m_pTransformCom->m_vAngle.y = D3DXToDegree(atan2f(vDir.x, vDir.z));
+
+		// update camera dragon direction
+		if (m_pDynamicCamera)
+			m_pDynamicCamera->Set_DragonDir(vDir);
+	}
 }
 
 void CNetworkPlayer::Attack_Collision()

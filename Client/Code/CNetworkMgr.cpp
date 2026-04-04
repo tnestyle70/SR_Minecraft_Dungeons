@@ -6,6 +6,7 @@
 #include <cstring>
 #include <cstdio>
 #include <algorithm>
+#include "CVoidFlame.h"
 
 CNetworkMgr* CNetworkMgr::m_pInstance = nullptr;
 
@@ -117,6 +118,15 @@ void CNetworkMgr::Disconnect()
     for (auto* p : m_vecNetArrows)
         if (p) p->Release();
     m_vecNetArrows.clear();
+
+    //Flame 해제 
+    for (auto& pFlame : m_vecNetFlames)
+    {
+        if (pFlame)
+            Safe_Release(pFlame);
+    }
+    m_vecNetFlames.clear();
+    
     m_pLocalPlayer = nullptr;
 
     WSACleanup();
@@ -151,6 +161,26 @@ void CNetworkMgr::Update(float fTimeDelta)
                 return false;
             }),
         m_vecNetArrows.end());
+
+    //Flame 업데이트
+    for (auto& pFlame : m_vecNetFlames)
+    {
+        if (pFlame)
+            pFlame->Update_GameObject(fTimeDelta);
+    }
+    
+    m_vecNetFlames.erase(
+        remove_if(m_vecNetFlames.begin(), m_vecNetFlames.end(),
+            [](CVoidFlame* pFlame)
+            {
+                if (pFlame && pFlame->Is_Dead())
+                {
+                    Safe_Release(pFlame); 
+                    return true;
+                }
+                return false;
+            }),
+        m_vecNetFlames.end());
 }
 
 void CNetworkMgr::LateUpdate(float fTimeDelta)
@@ -175,6 +205,12 @@ void CNetworkMgr::Render()
     {
         if (pArrow)
             pArrow->Render_GameObject();
+    }
+    //Flame Render
+    for (auto& pFlame : m_vecNetFlames)
+    {
+        if (pFlame)
+            pFlame->Render_GameObject();
     }
 }
 
@@ -314,6 +350,9 @@ void CNetworkMgr::ProcessPacket(const PKT_HEADER* pHdr)
     case S2C_ARROW:
         On_Arrow(reinterpret_cast<const PKT_S2C_Arrow*>(pHdr));
         break;
+    case S2C_FLAME:
+        On_Flame(reinterpret_cast<const PKT_S2C_Flame*>(pHdr));
+        break;
     case S2C_DRAGON_SYNC:
         On_DragonSync(reinterpret_cast<const PKT_S2C_DragonSync*>(pHdr));
         break;
@@ -363,6 +402,7 @@ void CNetworkMgr::On_Spawn(const PKT_S2C_Spawn* pPkt)
         // 자신이면 스킵 (로컬 플레이어는 CPlayer가 담당)
         if (info.iPlayerId == m_iMyPlayerId)
         {
+            strncpy_s(m_szMyNick, info.szNickname, _TRUNCATE);
             printf("[NET]   (me) playerId=%d pos=(%.1f,%.1f,%.1f)\n",
                 info.iPlayerId, info.fX, info.fY, info.fZ);
             continue;
@@ -469,6 +509,21 @@ void CNetworkMgr::SendArrow(float fPosX, float fPosY, float fPosZ,
     Send(&pkt, sizeof(pkt));
 }
 
+void CNetworkMgr::SendFlame(float fPosX, float fPosY, float fPosZ, 
+    float fDirX, float fDirY, float fDirZ, float fDamage)
+{
+    if (!m_bConnected || m_iMyPlayerId == -1)
+        return;
+    //Client에서 Server로 보내는 패킷
+    PKT_C2S_Flame pkt = {};
+    FillHeader(pkt, C2S_FLAME);
+    pkt.fPosX = fPosX;  pkt.fPosY = fPosY;  pkt.fPosZ = fPosZ;
+    pkt.fDirX = fDirX;  pkt.fDirY = fDirY;  pkt.fDirZ = fDirZ;
+    pkt.fDamage = fDamage;
+
+    Send(&pkt, sizeof(pkt));
+}
+
 // =====================================================================
 //  SendDamage  —  Day 9: PVP 피해 통보 전송
 // =====================================================================
@@ -501,19 +556,21 @@ void CNetworkMgr::On_Arrow(const PKT_S2C_Arrow* pPkt)
     {
         pArrow->Set_Firework(pPkt->bFirework != 0);
         m_vecNetArrows.push_back(pArrow);
-
-        // #region agent log
-        {
-            FILE* fp = nullptr;
-            if (_wfopen_s(&fp, L"debug-9b3cff.log", L"a") == 0 && fp)
-            {
-                fprintf(fp, "{\"sessionId\":\"9b3cff\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H3\",\"location\":\"Client/Code/CNetworkMgr.cpp:On_Arrow\",\"message\":\"recv_arrow_spawn\",\"data\":{\"attacker\":%d,\"charge\":%.3f,\"firework\":%d,\"netArrowCount\":%d},\"timestamp\":%llu}\n",
-                    pPkt->iPlayerId, pPkt->fCharge, pPkt->bFirework ? 1 : 0, (int)m_vecNetArrows.size(), (unsigned long long)GetTickCount64());
-                fclose(fp);
-            }
-        }
-        // #endregion
     }
+}
+
+void CNetworkMgr::On_Flame(const PKT_S2C_Flame* pPkt)
+{
+    //자신이 생성한 Flame의 경우 이미 NetworkPlayer에서 생성되었으므로 skip
+    if (pPkt->iPlayerId == m_iMyPlayerId)
+        return;
+    
+    _vec3 vPos = { pPkt->fPosX, pPkt->fPosY, pPkt->fPosZ };
+    _vec3 vDir = { pPkt->fDirX, pPkt->fDirY, pPkt->fDirZ };
+
+    CVoidFlame* pFlame = CVoidFlame::Create(m_pGraphicDev, vPos, vDir, pPkt->fDamage);
+    if (pFlame)
+        m_vecNetFlames.push_back(pFlame);
 }
 
 // =====================================================================
