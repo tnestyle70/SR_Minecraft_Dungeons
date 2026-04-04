@@ -104,5 +104,19 @@ private:
 	//자유카메라 <-> 고정카메라
 	bool m_bFollowMode = true;
 	bool m_bF2Check = false;
+
+public:
+	//TJ스테이지 전용
+	void Start_Shake(float fDuration, float fIntensity)
+	{
+		m_fShakeDuration = fDuration;
+		m_fShakeTimer = 0.f;
+		m_fShakeIntensity = fIntensity;
+	}
+
+private:
+	_float m_fShakeDuration = 0.f;
+	_float m_fShakeTimer = 0.f;
+	_float m_fShakeIntensity = 0.f;
 };
 

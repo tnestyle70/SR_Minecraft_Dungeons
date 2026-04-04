@@ -20,7 +20,8 @@
 #include "CTGSkyBox.h"
 #include "CTJSpawnMgr.h"
 #include "CTJLevelUpUI.h"
-
+#include "CTJBoss.h"
+#include "CEventBus.h"
 
 CTGStage::CTGStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -33,6 +34,12 @@ HRESULT CTGStage::Ready_Scene()
 {
 	if (FAILED(Ready_Light()))
 		return E_FAIL;
+
+	D3DXCreateFont(m_pGraphicDev, 24, 0, FW_BOLD, 1, FALSE,
+		DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY,
+		DEFAULT_PITCH | FF_DONTCARE, L"Arial", &m_pFont);
+
+	D3DXCreateLine(m_pGraphicDev, &m_pLine);
 
 	if (FAILED(Ready_Environment_Layer(L"Environment_Layer")))
 		return E_FAIL;
@@ -79,6 +86,39 @@ _int CTGStage::Update_Scene(const _float& fTimeDelta)
 		m_pLevelUpUI->Show(m_pTJPlayer);
 	}
 
+	// 최대 레벨 달성 시 보스 스폰
+	if (m_pTJPlayer && !m_bBossSpawned && m_pTJPlayer->Get_Level() >= 18)
+	{
+		m_bBossSpawned = true;
+		_vec3 vPlayerPos;
+		m_pTJPlayer->Get_Transform()->Get_Info(INFO_POS, &vPlayerPos);
+		_vec3 vBossPos = { vPlayerPos.x + 15.f, vPlayerPos.y, vPlayerPos.z + 15.f };
+		m_pTJBoss = CTJBoss::Create(m_pGraphicDev, vBossPos);
+		if (m_pTJBoss)
+		{
+			m_pTJBoss->Set_Camera(m_pDynamicCamera);
+			m_mapLayer[L"GameLogic_Layer"]->Add_GameObject(L"TJBoss", m_pTJBoss);
+		}
+	}
+
+	m_pTJPlayer->Set_TJBoss(m_pTJBoss);
+
+	// 보스 처치 시 클리어
+	if (m_bBossSpawned && m_pTJBoss && m_pTJBoss->Is_Dead() && !m_bDoorSpawned)
+	{
+		m_bDoorSpawned = true;
+
+		// 몬스터 전체 삭제
+		for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
+			for (auto& pMonster : pair.second.vecMonsters)
+				if (pMonster->IsActive())
+					pMonster->Take_Damage(9999);
+		CTJSpawnMgr::GetInstance()->Stop_Spawn();
+
+		// 보스 위치에 문 생성
+		m_pTJBoss->Get_Transform()->Get_Info(INFO_POS, &m_vDoorPos);
+		m_vDoorPos.y = 0.1f;
+	}
 
 	_int iExit = CScene::Update_Scene(fTimeDelta);
 
@@ -93,6 +133,40 @@ _int CTGStage::Update_Scene(const _float& fTimeDelta)
 	CTJSpawnMgr::GetInstance()->Update(fTimeDelta);
 
 	CParticleMgr::GetInstance()->Update(fTimeDelta);
+
+	// 문 통과 감지
+	if (m_bDoorSpawned && m_pTJPlayer)
+	{
+		_vec3 vPlayerPos;
+		m_pTJPlayer->Get_Transform()->Get_Info(INFO_POS, &vPlayerPos);
+		_vec3 vDiff = vPlayerPos - m_vDoorPos;
+		vDiff.y = 0.f;
+		if (D3DXVec3Length(&vDiff) < 4.f)
+		{
+			m_fDoorTimer += fTimeDelta;
+			if (m_fDoorTimer >= 3.f)
+			{
+				CRenderer::GetInstance()->Clear_RenderGroup();
+				CTriggerBoxMgr::GetInstance()->Clear();
+				CIronBarMgr::GetInstance()->Clear();
+				CMonsterMgr::GetInstance()->Clear();
+				CParticleMgr::GetInstance()->Clear_Emitters();
+				CInventoryMgr::GetInstance()->Clear_Player();
+				CTJSpawnMgr::GetInstance()->Clear();
+				CBlockMgr::GetInstance()->ClearBlocks();
+				if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP)))
+				{
+					MSG_BOX("Scene Change Failed");
+					return -1;
+				}
+				return iExit;
+			}
+		}
+		else
+		{
+			m_fDoorTimer = 0.f;
+		}
+	}
 
 	if (GetAsyncKeyState(VK_RETURN) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
 	{
@@ -148,6 +222,35 @@ void CTGStage::Render_Scene()
 	CBlockMgr::GetInstance()->Render();
 
 	CParticleMgr::GetInstance()->Render();
+	//문 렌더링
+	if (m_bDoorSpawned && m_pDoorBufferCom && m_pDoorTextureCom)
+	{
+		m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+		m_pGraphicDev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+		m_pGraphicDev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+		m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+		m_pGraphicDev->SetRenderState(D3DRS_ALPHAREF, 0x10);
+		m_pGraphicDev->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
+		m_pGraphicDev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+		m_pGraphicDev->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+		m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+		m_pGraphicDev->SetRenderState(D3DRS_ZENABLE, FALSE);
+
+		_matrix matScale, matRotX, matTrans, matWorld;
+		D3DXMatrixScaling(&matScale, 8.f, 8.f, 8.f);
+		D3DXMatrixRotationX(&matRotX, D3DX_PI * 0.5f);
+		D3DXMatrixTranslation(&matTrans, m_vDoorPos.x, m_vDoorPos.y, m_vDoorPos.z);
+		matWorld = matScale * matRotX * matTrans;
+
+		m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+		m_pDoorTextureCom->Set_Texture(0);
+		m_pDoorBufferCom->Render_Buffer();
+
+		m_pGraphicDev->SetRenderState(D3DRS_ZENABLE, TRUE);
+		m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+		m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+		m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+	}
 }
 
 void CTGStage::Render_UI()
@@ -156,6 +259,39 @@ void CTGStage::Render_UI()
 	{
 		CInventoryMgr::GetInstance()->Render();
 		return;
+	}
+
+	// 보스 체력바
+	if (m_bBossSpawned && m_pTJBoss && !m_pTJBoss->Is_Dead() && m_pLine)
+	{
+		RECT rc = { (LONG)(WINCX - 400) / 2, (LONG)20, (LONG)(WINCX + 400) / 2, (LONG)50 };
+		m_pFont->DrawText(nullptr, L"좀비킹", -1, &rc, DT_CENTER | DT_VCENTER, D3DCOLOR_RGBA(255, 255, 255, 255));
+
+		float fRatio = m_pTJBoss->Get_HpRatio();
+
+		float fBarWidth = 400.f;
+		float fBarHeight = 20.f;
+		float fBarX = (WINCX - fBarWidth) * 0.5f;
+		float fBarY = 50.f;
+
+		// 배경바 (회색)
+		D3DXVECTOR2 bgVerts[2] = {
+			{ fBarX, fBarY + fBarHeight * 0.5f },
+			{ fBarX + fBarWidth, fBarY + fBarHeight * 0.5f }
+		};
+		m_pLine->SetWidth(fBarHeight);
+		m_pLine->Begin();
+		m_pLine->Draw(bgVerts, 2, D3DCOLOR_RGBA(80, 80, 80, 200));
+		m_pLine->End();
+
+		// 체력바 (빨강)
+		D3DXVECTOR2 hpVerts[2] = {
+			{ fBarX, fBarY + fBarHeight * 0.5f },
+			{ fBarX + fBarWidth * fRatio, fBarY + fBarHeight * 0.5f }
+		};
+		m_pLine->Begin();
+		m_pLine->Draw(hpVerts, 2, D3DCOLOR_RGBA(220, 30, 30, 220));
+		m_pLine->End();
 	}
 }
 
@@ -237,12 +373,18 @@ HRESULT CTGStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	CHUD* pHUD = dynamic_cast<CHUD*>(pGameObject);
 
 	pHUD->Set_Player(pPlayer);
-
+	CEventBus::GetInstance()->Unsubscribe(eEventType::MISSION_COMPLETE, pHUD);
 	//레벨업 능력카드
 	m_pLevelUpUI = CTJLevelUpUI::Create(m_pGraphicDev);
 	if (!m_pLevelUpUI) return E_FAIL;
 	if (FAILED(pLayer->Add_GameObject(L"LevelUpUI", m_pLevelUpUI)))
 		return E_FAIL;
+	//문 세팅
+	m_pDoorBufferCom = dynamic_cast<Engine::CRcTex*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_RcTex"));
+
+	m_pDoorTextureCom = dynamic_cast<Engine::CTexture*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_TJDoorTexture"));
 
 	//Inventory 세팅
 	if (CInventoryMgr::GetInstance()->Ready_InventoryMgr(m_pGraphicDev))
@@ -369,6 +511,19 @@ CTGStage* CTGStage::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 
 void CTGStage::Free()
 {
+	if (m_pLine)
+	{
+		m_pLine->Release();
+		m_pLine = nullptr;
+	}
+	if (m_pFont)
+	{
+		m_pFont->Release();
+		m_pFont = nullptr;
+	}
+	Safe_Release(m_pDoorBufferCom);
+	Safe_Release(m_pDoorTextureCom);
+	Safe_Release(m_pTJBoss);
 	m_pLevelUpUI = nullptr;
 	m_pTJPlayer = nullptr;
 	CScene::Free();

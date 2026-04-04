@@ -329,7 +329,7 @@
     </ClCompile>
     <ClCompile Include="..\Code\CVoidFlame.cpp">
       <Filter>01. Scene\01. Stage\07. GB\04. Network\06. VoidFlame</Filter>
-	</ClCompile>
+    </ClCompile>
     <ClCompile Include="..\Code\CTJLevelUpUi.cpp">
       <Filter>02. GameObject\12. UI</Filter>
     </ClCompile>
@@ -356,6 +356,9 @@
     </ClCompile>
     <ClCompile Include="..\Code\CJSBaseChunk.cpp">
       <Filter>02. GameObject\17. JS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CTJBoss.cpp">
+      <Filter>02. GameObject\18. TJ</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -692,7 +695,7 @@
     </ClInclude>
     <ClInclude Include="..\Header\CVoidFlame.h">
       <Filter>01. Scene\01. Stage\07. GB\04. Network\06. VoidFlame</Filter>
-	</ClInclude>
+    </ClInclude>
     <ClInclude Include="..\Header\CTJLevelUpUi.h">
       <Filter>02. GameObject\12. UI</Filter>
     </ClInclude>
@@ -719,6 +722,9 @@
     </ClInclude>
     <ClInclude Include="..\Header\CJSBaseChunk.h">
       <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CTJBoss.h">
+      <Filter>02. GameObject\18. TJ</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -4,6 +4,7 @@
 #include "CDInputMgr.h"
 #include "CSoundMgr.h"
 #include "CMonsterMgr.h"
+#include "CTJSpawnMgr.h"
 
 CTJPlayer::CTJPlayer(LPDIRECT3DDEVICE9 pGraphicDev)
     : CPlayer(pGraphicDev)
@@ -116,6 +117,32 @@ _int CTJPlayer::Update_GameObject(const _float& fTimeDelta)
         Set_Hp(min(fHp + m_fRegenAmount, fMax));
     }
 
+    // 화살 - 보스 충돌
+    if (m_pTJBoss && !m_pTJBoss->Is_Dead())
+    {
+        CCollider* pBossCol = m_pTJBoss->Get_Collider();
+        if (pBossCol)
+        {
+            AABB tBossAABB = pBossCol->Get_AABB();
+            for (auto& pArrow : m_vecArrows)
+            {
+                if (!pArrow || pArrow->Is_Dead())
+                    continue;
+                CCollider* pArrowCol = pArrow->Get_Collider();
+                if (!pArrowCol)
+                    continue;
+                AABB tArrowAABB = pArrowCol->Get_AABB();
+                if (tBossAABB.vMin.x <= tArrowAABB.vMax.x && tBossAABB.vMax.x >= tArrowAABB.vMin.x &&
+                    tBossAABB.vMin.y <= tArrowAABB.vMax.y && tBossAABB.vMax.y >= tArrowAABB.vMin.y &&
+                    tBossAABB.vMin.z <= tArrowAABB.vMax.z && tBossAABB.vMax.z >= tArrowAABB.vMin.z)
+                {
+                    m_pTJBoss->Take_Damage(pArrow->Get_Damage());
+                    pArrow->Set_Dead();
+                }
+            }
+        }
+    }
+
     // 번개
     if (m_bLightning)
     {
@@ -124,14 +151,29 @@ _int CTJPlayer::Update_GameObject(const _float& fTimeDelta)
         {
             m_fLightningTimer = 0.f;
 
-            // 몬스터 목록 받아오기
             vector<CMonster*> vecActive;
             for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
                 for (auto& pMonster : pair.second.vecMonsters)
                     if (pMonster->IsActive())
                         vecActive.push_back(pMonster);
 
-            if (!vecActive.empty())
+            bool bTargetBoss = m_pTJBoss && !m_pTJBoss->Is_Dead() &&
+                (vecActive.empty() || rand() % 2 == 0);
+
+            if (bTargetBoss)
+            {
+                CCollider* pCol = m_pTJBoss->Get_Collider();
+                if (pCol)
+                {
+                    AABB tAABB = pCol->Get_AABB();
+                    m_vThunderPos = (tAABB.vMin + tAABB.vMax) * 0.5f;
+                    m_pTJBoss->Take_Damage(30.f);
+                    m_bThunderEffect = true;
+                    m_fThunderEffectTimer = 0.f;
+                    CSoundMgr::GetInstance()->PlayEffect(L"Player/ThunderSound.wav", 1.f);
+                }
+            }
+            else if (!vecActive.empty())
             {
                 CMonster* pTarget = vecActive[rand() % vecActive.size()];
                 CCollider* pCol = pTarget->Get_Collider();
@@ -211,6 +253,20 @@ _int CTJPlayer::Update_GameObject(const _float& fTimeDelta)
                     vDiff.y = 0.f;
                     if (D3DXVec3Length(&vDiff) < 2.f)
                         pMonster->Take_Damage((int)m_fFireDamage);
+
+                    if (m_pTJBoss && !m_pTJBoss->Is_Dead())
+                    {
+                        CCollider* pCol = m_pTJBoss->Get_Collider();
+                        if (pCol)
+                        {
+                            AABB tAABB = pCol->Get_AABB();
+                            _vec3 vCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
+                            _vec3 vDiff = vCenter - tFire.vPos;
+                            vDiff.y = 0.f;
+                            if (D3DXVec3Length(&vDiff) < 2.f)
+                                m_pTJBoss->Take_Damage(m_fFireDamage);
+                        }
+                    }
                 }
             }
         }
@@ -264,6 +320,20 @@ _int CTJPlayer::Update_GameObject(const _float& fTimeDelta)
                         vDiff.y = 0.f;
                         if (D3DXVec3Length(&vDiff) < 5.f)
                             pMonster->Take_Damage(15);
+
+                        if (m_pTJBoss && !m_pTJBoss->Is_Dead())
+                        {
+                            CCollider* pCol = m_pTJBoss->Get_Collider();
+                            if (pCol)
+                            {
+                                AABB tAABB = pCol->Get_AABB();
+                                _vec3 vCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
+                                _vec3 vDiff = vCenter - vBladePos;
+                                vDiff.y = 0.f;
+                                if (D3DXVec3Length(&vDiff) < 5.f)
+                                    m_pTJBoss->Take_Damage(15.f);
+                            }
+                        }
                     }
                 }
             }
@@ -426,6 +496,9 @@ void CTJPlayer::Render_GameObject()
 
 void CTJPlayer::Add_Exp(int iExp)
 {
+    if (m_iLevel >= m_iMaxLevel)
+        return;
+
     m_iExp += iExp;
     if (m_iExp >= m_iMaxExp)
     {
@@ -433,6 +506,9 @@ void CTJPlayer::Add_Exp(int iExp)
         m_iLevel++;
         m_iMaxExp = (int)(m_iMaxExp * 1.2f);
         m_bLevelUp = true;
+
+        CTJSpawnMgr::GetInstance()->Set_SpawnInterval(
+            max(0.3f, 2.f * powf(0.7f, (float)m_iLevel)));
     }
 }
 

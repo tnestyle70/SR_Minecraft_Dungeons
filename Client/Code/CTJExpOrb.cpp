@@ -3,6 +3,7 @@
 #include "CRenderer.h"
 #include "CMonsterMgr.h"
 #include "CPlayer.h"
+#include "CSoundMgr.h"
 
 CTJExpOrb::CTJExpOrb(LPDIRECT3DDEVICE9 pGraphicDev)
     : CGameObject(pGraphicDev)
@@ -49,6 +50,7 @@ _int CTJExpOrb::Update_GameObject(const _float& fTimeDelta)
         if (fDist < 0.5f)
         {
             m_bDead = true;
+            CSoundMgr::GetInstance()->PlayEffect(L"Emerald/sfx_item_emeraldBurstOutPing-001_soundWave.wav", 1.0f);
             return iExit;
         }
         D3DXVec3Normalize(&vDir, &vDir);
