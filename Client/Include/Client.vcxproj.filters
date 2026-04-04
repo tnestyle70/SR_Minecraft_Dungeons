@@ -360,6 +360,9 @@
     <ClCompile Include="..\Code\CCYMonster.cpp">
       <Filter>01. Scene\01. Stage\06. CY</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CTJBoss.cpp">
+      <Filter>02. GameObject\18. TJ</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -725,6 +728,9 @@
     </ClInclude>
     <ClInclude Include="..\Header\CCYMonster.h">
       <Filter>01. Scene\01. Stage\06. CY</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CTJBoss.h">
+      <Filter>02. GameObject\18. TJ</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

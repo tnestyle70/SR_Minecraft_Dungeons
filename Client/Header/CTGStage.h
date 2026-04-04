@@ -3,6 +3,7 @@
 #include "CDynamicCamera.h"
 #include "CTJLevelUpUI.h"
 #include "CTJPlayer.h"
+#include "CTJBoss.h"
 
 class CTGStage : public CScene
 {
@@ -29,4 +30,15 @@ private:
 	CDynamicCamera* m_pDynamicCamera = nullptr;
 	CTJLevelUpUI* m_pLevelUpUI = nullptr;
 	CTJPlayer* m_pTJPlayer = nullptr;
+	CTJBoss* m_pTJBoss = nullptr;
+	bool m_bBossSpawned = false;
+	ID3DXLine* m_pLine = nullptr;
+	ID3DXFont* m_pFont = nullptr;
+
+	//문
+	Engine::CRcTex* m_pDoorBufferCom = nullptr;
+	Engine::CTexture* m_pDoorTextureCom = nullptr;
+	bool m_bDoorSpawned = false;
+	_vec3 m_vDoorPos = {};
+	_float m_fDoorTimer = 0.f;
 };

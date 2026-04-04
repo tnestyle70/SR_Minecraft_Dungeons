@@ -249,6 +249,7 @@
     <ClInclude Include="..\Header\CTerrain.h" />
     <ClInclude Include="..\Header\CTGSkyBox.h" />
     <ClInclude Include="..\Header\CTGStage.h" />
+    <ClInclude Include="..\Header\CTJBoss.h" />
     <ClInclude Include="..\Header\CTJExpOrb.h" />
     <ClInclude Include="..\Header\CTJLevelUpUi.h" />
     <ClInclude Include="..\Header\CTJPlayer.h" />
@@ -373,6 +374,7 @@
     <ClCompile Include="..\Code\CTerrain.cpp" />
     <ClCompile Include="..\Code\CTGSkyBox.cpp" />
     <ClCompile Include="..\Code\CTGStage.cpp" />
+    <ClCompile Include="..\Code\CTJBoss.cpp" />
     <ClCompile Include="..\Code\CTJExpOrb.cpp" />
     <ClCompile Include="..\Code\CTJLevelUpUi.cpp" />
     <ClCompile Include="..\Code\CTJPlayer.cpp" />
