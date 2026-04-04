@@ -6,6 +6,7 @@
 #include "CEventBus.h"
 #include <vector>
 #include <algorithm>
+#include <set>
 
 class CCYStage : public CScene
 {
@@ -34,7 +35,8 @@ private:
     HRESULT Ready_Light();
     HRESULT Ready_StageData(const _tchar* szPath);
     void    Update_TorchLights();
-    _vec3   Get_PlayerPos();
+    _vec3   Get_PlayerPos(); 
+    set<int> m_setIronBarTriggered;
 
 private:
     CCYCamera* m_pCYCamera = nullptr;
@@ -49,6 +51,15 @@ private:
     // +5초 표시
     float m_fAddTimeShow = 0.f;
     bool  m_bShowAddTime = false;
+
+    // 낙하 트리거
+    bool m_bFallTriggered = false;
+
+    // 아이언바 오픈 추적
+    set<int> m_setOpenedGroups; 
+
+    bool m_bPrevAtkColliding = false; 
+    bool m_bPrevPlayerHit = false;
 
 public:
     static CCYStage* Create(LPDIRECT3DDEVICE9 pGraphicDev);

@@ -21,6 +21,9 @@ void CTJSpawnMgr::Update(const _float& fTimeDelta)
     if (!m_pPlayer || !m_pGraphicDev)
         return;
 
+    if (m_bSpawnStop)
+        return;
+
     // 스폰 타이머
     m_fSpawnTimer += fTimeDelta;
     if (m_fSpawnTimer >= m_fSpawnInterval)
@@ -93,6 +96,15 @@ void CTJSpawnMgr::Update(const _float& fTimeDelta)
 
 void CTJSpawnMgr::Spawn_Monster()
 {
+
+    int iCount = 0;
+    for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
+        for (auto& pMonster : pair.second.vecMonsters)
+            if (pMonster->IsActive()) iCount++;
+
+    if (iCount >= m_iMaxMonsters)
+        return;
+
     _vec3 vPlayerPos;
     m_pPlayer->Get_Transform()->Get_Info(INFO_POS, &vPlayerPos);
 

@@ -27,6 +27,8 @@ private:
 
 public:
     void Set_TJPlayer(CTJPlayer* pPlayer) { m_pTJPlayer = pPlayer; }
+    void Set_SpawnInterval(float f) { m_fSpawnInterval = f; }
+    void Stop_Spawn() { m_bSpawnStop = true; }
 
 private:
     LPDIRECT3DDEVICE9 m_pGraphicDev = nullptr;
@@ -35,11 +37,12 @@ private:
     _float m_fSpawnTimer = 0.f;
     _float m_fSpawnInterval = 2.f;
     _float m_fSpawnRadius = 15.f;
+    _int m_iMaxMonsters = 80;
 
     vector<CTJExpOrb*> m_vecExpOrbs;
     CTJPlayer* m_pTJPlayer = nullptr;
     vector<CMonster*> m_vecDeadMonsters;
-
+    bool m_bSpawnStop = false;
 private:
     virtual void Free();
 };

@@ -81,6 +81,16 @@ _int CDynamicCamera::Update_GameObject(const _float& fTimeDelta)
 
         m_vEye = vPlayerPos + vOffset;
         m_vAt = vPlayerPos + _vec3(0.f, 1.5f, 0.f);
+
+        // 카메라 쉐이킹
+        if (m_fShakeTimer < m_fShakeDuration)
+        {
+            m_fShakeTimer += fTimeDelta;
+            float fStrength = m_fShakeIntensity * (1.f - m_fShakeTimer / m_fShakeDuration);
+            m_vEye.x += ((rand() % 100) / 100.f - 0.5f) * fStrength;
+            m_vEye.y += ((rand() % 100) / 100.f - 0.5f) * fStrength;
+            m_vEye.z += ((rand() % 100) / 100.f - 0.5f) * fStrength;
+        }
     }
     else
     {

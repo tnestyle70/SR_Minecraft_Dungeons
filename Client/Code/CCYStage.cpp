@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "CCYStage.h"
 #include "CMonster.h"
+#include "CCYMonster.h"
 #include "CPlayer.h"
 #include "CIronBar.h"
 #include "CTriggerBox.h"
@@ -21,6 +22,8 @@
 #include "CObjectEditor.h"
 #include "CNormalCubeTex.h"
 #include "CCYCamera.h"
+#include "CDamageMgr.h"
+#include "CSoundMgr.h"
 
 CCYStage::CCYStage(LPDIRECT3DDEVICE9 pGraphicDev)
     : CScene(pGraphicDev)
@@ -33,25 +36,17 @@ CCYStage::~CCYStage()
 
 HRESULT CCYStage::Ready_Scene()
 {
-    // 폰트 생성
     D3DXCreateFont(m_pGraphicDev, 40, 0, FW_BOLD, 1, FALSE,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY,
-        DEFAULT_PITCH | FF_DONTCARE, L"Arial", &m_pFont);
+        DEFAULT_PITCH | FF_DONTCARE, L"Arial", &m_pFont); 
 
-    // 몬스터 사망 이벤트 구독
-    CEventBus::GetInstance()->Subscribe(eEventType::MONSTER_DEAD, this,
-        [this](const FGameEvent& event) {
-            Add_Time(5.f);
-        });
+    CSoundMgr::GetInstance()->StopSound(SOUND_BGM);
+    CSoundMgr::GetInstance()->PlayBGM(L"BGM/CCYStageBGM.wav", 0.5f);
 
-    if (FAILED(Ready_Light()))
-        return E_FAIL;
-    if (FAILED(Ready_Environment_Layer(L"Environment_Layer")))
-        return E_FAIL;
-    if (FAILED(Ready_GameLogic_Layer(L"GameLogic_Layer")))
-        return E_FAIL;
-    if (FAILED(Ready_UI_Layer(L"UI_Layer")))
-        return E_FAIL;
+    if (FAILED(Ready_Light()))                                 return E_FAIL;
+    if (FAILED(Ready_Environment_Layer(L"Environment_Layer"))) return E_FAIL;
+    if (FAILED(Ready_GameLogic_Layer(L"GameLogic_Layer")))     return E_FAIL;
+    if (FAILED(Ready_UI_Layer(L"UI_Layer")))                   return E_FAIL;
 
     Ready_StageData(L"../Bin/Data/Stage7.dat");
 
@@ -78,7 +73,7 @@ _int CCYStage::Update_Scene(const _float& fTimeDelta)
         }
     }
 
-    // +5초 표시 타이머
+    // +3초 표시 타이머
     if (m_bShowAddTime)
     {
         m_fAddTimeShow -= fTimeDelta;
@@ -86,9 +81,159 @@ _int CCYStage::Update_Scene(const _float& fTimeDelta)
             m_bShowAddTime = false;
     }
 
+    // ===== 좌클릭 처리 =====
+    if (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
+    {
+        _vec3 vCamEye = m_pCYCamera->Get_Eye();
+
+        // 낙하 트리거
+        if (!m_bFallTriggered)
+        {
+            _vec3 vDiff = _vec3{ -2.f, 19.f, 452.f } - vCamEye;
+            vDiff.y = 0.f;
+            if (D3DXVec3Length(&vDiff) < 3.f)
+            {
+                m_bFallTriggered = true;
+                m_pCYCamera->Start_Fall(-24.f);
+            }
+        }
+
+        // 아이언바 트리거
+        static const _vec3 vIronBarPos[] = {
+            { -3.f,  19.f,  40.f },
+            { -3.f,  19.f, 100.f },
+            { -3.f,  19.f, 195.f },
+            { -3.f,  19.f, 355.f },
+            { -3.f, -26.f, 350.f },
+            { -3.f, -26.f, 208.f },
+            { -3.f, -26.f,  94.f },
+        };
+
+        for (int i = 0; i < 7; ++i)
+        {
+            if (m_setIronBarTriggered.find(i) != m_setIronBarTriggered.end()) continue;
+            _vec3 vDiff = vIronBarPos[i] - vCamEye;
+            vDiff.y = 0.f;
+            if (D3DXVec3Length(&vDiff) < 3.f)
+            {
+                CIronBarMgr::GetInstance()->Close(i + 1);
+                m_setIronBarTriggered.insert(i);
+            }
+        }
+    }
+
     CBlockMgr::GetInstance()->Update(fTimeDelta);
     CTriggerBoxMgr::GetInstance()->Update(fTimeDelta);
     CIronBarMgr::GetInstance()->Update(fTimeDelta);
+
+   
+    _vec3 vCamEye = m_pCYCamera->Get_Eye();
+    for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
+    {
+        for (auto* pMonster : pair.second.vecMonsters)
+        {
+            if (!pMonster->IsActive()) continue;
+            pMonster->Set_TargetPos(vCamEye);
+        }
+    }
+
+    CMonsterMgr::GetInstance()->Update(fTimeDelta);
+
+    // 근접 공격
+    if (m_pCYPlayer && m_pCYPlayer->Get_AtkColliderActive())
+    {
+        CCollider* pAtkCol = m_pCYPlayer->Get_AtkCollider();
+        if (pAtkCol)
+        {
+            bool bHit = false;
+            for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
+            {
+                for (auto* pMonster : pair.second.vecMonsters)
+                {
+                    if (!pMonster->IsActive() || pMonster->Is_Dead()) continue;
+                    CCollider* pMonCol = pMonster->Get_Collider();
+                    if (!pMonCol) continue;
+                    if (pAtkCol->IsColliding(pMonCol->Get_AABB()))
+                    {
+                        bHit = true;
+                        if (!m_bPrevAtkColliding)
+                        {
+                            pMonster->Take_Damage(10);
+                            if (pMonster->Get_Hp() <= 0)
+                            {
+                                pMonster->SetActive(false);
+                                Add_Time(3.f);
+                            }
+                        }
+                    }
+                }
+            }
+            m_bPrevAtkColliding = bHit;
+        }
+    }
+    else
+        m_bPrevAtkColliding = false;
+
+    // 화살 충돌
+    for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
+    {
+        for (auto* pMonster : pair.second.vecMonsters)
+        {
+            if (!pMonster->IsActive() || pMonster->Is_Dead()) continue;
+            CCollider* pMonCol = pMonster->Get_Collider();
+            if (!pMonCol) continue;
+
+            for (auto& pArrow : m_pCYPlayer->Get_Arrows())
+            {
+                if (!pArrow || pArrow->Is_Dead()) continue;
+                CCollider* pArrowCol = pArrow->Get_Collider();
+                if (!pArrowCol) continue;
+                if (pMonCol->IsColliding(pArrowCol->Get_AABB()))
+                {
+                    pMonster->Take_Damage((int)pArrow->Get_Damage());
+                    if (pMonster->Get_Hp() <= 0)
+                    {
+                        pMonster->SetActive(false);
+                        Add_Time(3.f);
+                    }
+                    pArrow->Set_Dead();
+                    break;
+                }
+            }
+        }
+    }
+
+    // 몬스터 공격 - 카메라 거리 기반 피격 감지
+    bool bHit = false;
+    for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
+    {
+        for (auto* pMonster : pair.second.vecMonsters)
+        {
+            if (!pMonster->IsActive() || pMonster->Is_Dead()) continue;
+
+            CCollider* pMonCol = pMonster->Get_Collider();
+            if (!pMonCol) continue;
+
+            AABB tAABB = pMonCol->Get_AABB();
+            _vec3 vMonPos = (tAABB.vMin + tAABB.vMax) * 0.5f;
+
+            _vec3 vDiff = vCamEye - vMonPos;
+            vDiff.y = 0.f;
+            float fDist = D3DXVec3Length(&vDiff);
+
+            if (fDist <= 3.f)
+            {
+                bHit = true;
+                if (!m_bPrevPlayerHit)
+                {
+                    m_pCYPlayer->Hit(10.f);
+                    m_fTimer -= 3.f;
+                    if (m_fTimer < 0.f) m_fTimer = 0.f;
+                }
+            }
+        }
+    }
+    m_bPrevPlayerHit = bHit;
 
     if ((GetAsyncKeyState(VK_F6) & 0x8000) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
     {
@@ -125,6 +270,7 @@ void CCYStage::LateUpdate_Scene(const _float& fTimeDelta)
     CScene::LateUpdate_Scene(fTimeDelta);
     CTriggerBoxMgr::GetInstance()->LateUpdate(fTimeDelta);
     CIronBarMgr::GetInstance()->LateUpdate(fTimeDelta);
+    CMonsterMgr::GetInstance()->LateUpdate(fTimeDelta);
 }
 
 void CCYStage::Render_Scene()
@@ -136,7 +282,6 @@ void CCYStage::Render_Scene()
     }
 
     m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
-
     Update_TorchLights();
 
     D3DMATERIAL9 mat;
@@ -148,6 +293,26 @@ void CCYStage::Render_Scene()
     CBlockMgr::GetInstance()->Render();
 
     m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE);
+
+    CIronBarMgr::GetInstance()->Render();
+    CMonsterMgr::GetInstance()->Render();
+
+    for (auto* pTorch : m_vecTorches)
+        pTorch->Render_GameObject();
+
+    for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
+    {
+        for (auto* pMonster : pair.second.vecMonsters)
+        {
+            if (!pMonster->IsActive()) continue;
+            pMonster->Render_Arrows();
+        }
+    }
+
+    if (m_pCYPlayer)
+        m_pCYPlayer->Render_GameObject();
+
+    CRenderer::GetInstance()->Clear_RenderGroup();
 }
 
 void CCYStage::Render_UI()
@@ -160,7 +325,6 @@ void CCYStage::Render_UI()
 
     if (!m_pFont) return;
 
-    // 타이머 - 오른쪽 상단
     TCHAR szTimer[32];
     wsprintf(szTimer, L"%d", (int)m_fTimer);
 
@@ -170,11 +334,10 @@ void CCYStage::Render_UI()
         D3DCOLOR_ARGB(255, 255, 255, 255);
     m_pFont->DrawText(nullptr, szTimer, -1, &rcTimer, DT_CENTER | DT_VCENTER, color);
 
-    // +5초 표시
     if (m_bShowAddTime)
     {
         RECT rcAdd = { WINCX - 150, 80, WINCX - 20, 130 };
-        m_pFont->DrawText(nullptr, L"+5", -1, &rcAdd,
+        m_pFont->DrawText(nullptr, L"+3", -1, &rcAdd,
             DT_CENTER | DT_VCENTER, D3DCOLOR_ARGB(255, 100, 255, 100));
     }
 }
@@ -210,7 +373,7 @@ HRESULT CCYStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
         return E_FAIL;
 
     m_pCYPlayer->Set_Camera(m_pCYCamera);
-    
+    CDamageMgr::GetInstance()->Ready_Component();
 
     m_mapLayer.insert({ pLayerTag, pLayer });
 
@@ -226,6 +389,7 @@ HRESULT CCYStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 
     return S_OK;
 }
+
 HRESULT CCYStage::Ready_UI_Layer(const _tchar* pLayerTag)
 {
     CLayer* pLayer = CLayer::Create();
@@ -261,8 +425,12 @@ HRESULT CCYStage::Ready_StageData(const _tchar* szPath)
     _wfopen_s(&pFile, szPath, L"rb");
     if (!pFile) return E_FAIL;
 
-    CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_EDITOR);
+    if (FAILED(CBlockMgr::GetInstance()->Ready_BlockMgr(m_pGraphicDev)))
+        return E_FAIL;
+    CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_BATCH);
     CBlockMgr::GetInstance()->ClearBlocks();
+    CMonsterMgr::GetInstance()->Ready_MonsterMgr(m_pGraphicDev);
+    CMonsterMgr::GetInstance()->SetPlayer(nullptr);
     CBlockMgr::GetInstance()->LoadBlocks(pFile);
 
     int iCount = 0;
@@ -273,7 +441,7 @@ HRESULT CCYStage::Ready_StageData(const _tchar* szPath)
         MonsterData tData;
         fread(&tData, sizeof(MonsterData), 1, pFile);
         _vec3 vPos = { (float)tData.x, (float)tData.y, (float)tData.z };
-        CGameObject* pMonster = CMonster::Create(
+        CGameObject* pMonster = CCYMonster::Create(
             m_pGraphicDev, (EMonsterType)tData.iMonsterType, vPos);
         if (pMonster)
             CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID, vPos);
@@ -404,15 +572,15 @@ CCYStage* CCYStage::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 }
 
 void CCYStage::Free()
-{
-    CEventBus::GetInstance()->Unsubscribe(eEventType::MONSTER_DEAD, this);
-
+{ 
+    CSoundMgr::GetInstance()->StopSound(SOUND_BGM);
     if (m_pFont)
     {
         m_pFont->Release();
         m_pFont = nullptr;
     }
 
+    CDamageMgr::GetInstance()->Clear_Boss();
     m_vecTorches.clear();
     CScene::Free();
 }
