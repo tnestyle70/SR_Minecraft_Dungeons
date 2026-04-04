@@ -28,6 +28,7 @@ public:
 
 private:
 	void Update_Missison(const _float fTimeDelta);
+	void Update_Death(const _float fTimeDelta);
 	void Use_Posion(const _float fTimeDelta);
 	
 public:
@@ -50,6 +51,8 @@ private:
 	void Render_Mission2();
 	//미션 성공
 	void Render_MissionComplete();
+	//죽음
+	void Render_Death();
 
 private:
 	Engine::CRcTex* m_pBufferCom = nullptr;
@@ -66,6 +69,8 @@ private:
 	CTexture* m_pSkeletonMission = nullptr;
 	//아티펙트
 	CTexture* m_pArtifact = nullptr;
+	//Death 이미지
+	CTexture* m_pDeath = nullptr;
 
 	CPlayer* m_pPlayer = nullptr;
 	CNetworkPlayer* m_pNetworkPlayer = nullptr;
@@ -90,6 +95,10 @@ private:
 	float m_fMissionTextX, m_fMissionTextY = 0.f;
 	float m_fMissionTextW, m_fMissionTextH = 0.f;
 
+	//Dead Texture 위치, 사이즈
+	float m_fDeathX, m_fDeathY = 0.f;
+	float m_fDeathW, m_fDeathH = 0.f;
+
 	//플레이어 체력
 	int m_iHP = 0;
 	int m_iMaxHP = 0;
@@ -99,6 +108,11 @@ private:
 	_float m_fPosionDuration = 1.f;
 	_bool m_bIsPosionCoolTime = false;
 
+	//사망 쿨타임 
+	_float m_fDeathCooltime = 0.f;
+	_float m_fDeathDuration = 2.f;
+	bool m_bDeath = false;
+	
 	//에메랄드, 유물 
 	int m_iEmerald = 0;
 	int m_iArtifact = 0;
@@ -129,4 +143,3 @@ private:
 	virtual void Free();
 
 };
-

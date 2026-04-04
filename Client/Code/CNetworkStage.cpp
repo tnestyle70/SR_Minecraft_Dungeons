@@ -25,6 +25,7 @@
 #include "CLightMgr.h"
 #include "CSoundMgr.h"
 #include "CDamageMgr.h"
+#include "CMonsterMgr.h"
 
 CNetworkStage::CNetworkStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -160,6 +161,31 @@ _int CNetworkStage::Update_Scene(const _float& fTimeDelta)
 				}
 			}
 		}
+		for (auto& pFlame : m_pLocalPlayer->Get_Flames())
+		{
+			if (!pFlame || pFlame->Is_Dead())    
+				continue;
+
+			CCollider* pFlameCollider = pFlame->Get_Collider();
+			if (!pFlameCollider)               
+				continue;
+
+			for (auto& [id, pRemote] : CNetworkMgr::GetInstance()->GetRemoteMap())
+			{
+				if (!pRemote)
+					continue;
+				auto pRemoteCol = pRemote->Get_Collider();
+				if (!pRemoteCol) continue;
+
+				if (pFlameCollider->IsColliding(pRemoteCol->Get_AABB()))
+				{
+					CNetworkMgr::GetInstance()->SendDamage(
+						pRemote->GetPlayerId(), pFlame->Get_Damage());
+					pFlame->Set_Dead();
+					break;
+				}
+			}
+		}
 	}
 
 	// ── 로컬 플레이어 이동 방향 → 서버 전송 (20TPS) ─────────────────────
@@ -205,11 +231,9 @@ _int CNetworkStage::Update_Scene(const _float& fTimeDelta)
 				CNetworkMgr::GetInstance()->SendInput(fDirX, fDirZ, fRotY, bMoving,
 					vCurPos.x, vCurPos.y, vCurPos.z);
 
-				// 드래곤 동기화 — 탑승 중일 때만 5TPS
-				m_fDragonSyncTimer += fTimeDelta;  // 주의: 여기선 fTimeDelta 대신 m_fInputTimer 블록 안이라 0.05f 누적됨
-				if (bOnDragon && m_fDragonSyncTimer >= 0.2f)  // 5TPS = 200ms
+				// 드래곤 동기화 - 플레이어 동기화와 동일
+				if (bOnDragon) 
 				{
-					m_fDragonSyncTimer = 0.f;
 					for (int i = 0; i < 4; ++i)
 					{
 						if (m_pDragon[i] && m_pDragon[i]->Is_Ridden())
@@ -221,11 +245,6 @@ _int CNetworkStage::Update_Scene(const _float& fTimeDelta)
 						}
 					}
 				}
-				else if (!bOnDragon)
-				{
-					m_fDragonSyncTimer = 0.f;
-				}
-
 				m_vPrevPlayerPos = vCurPos;
 			}
 		}
@@ -237,7 +256,7 @@ _int CNetworkStage::Update_Scene(const _float& fTimeDelta)
 
 	CIronBarMgr::GetInstance()->Update(fTimeDelta);
 
-	//CMonsterMgr::GetInstance()->Update(fTimeDelta);
+	CMonsterMgr::GetInstance()->Update(fTimeDelta);
 
 	//if (GetAsyncKeyState(VK_RETURN) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
 	//{
@@ -270,7 +289,7 @@ void CNetworkStage::LateUpdate_Scene(const _float& fTimeDelta)
 
 	CIronBarMgr::GetInstance()->LateUpdate(fTimeDelta);
 
-	//CMonsterMgr::GetInstance()->LateUpdate(fTimeDelta);
+	CMonsterMgr::GetInstance()->LateUpdate(fTimeDelta);
 
 	//파도 조작
 	if (m_pOcean)
@@ -286,6 +305,9 @@ void CNetworkStage::LateUpdate_Scene(const _float& fTimeDelta)
 
 void CNetworkStage::Render_Scene()
 {
+	//Ocean 먼저 렌더링!
+	m_pOcean->Render_GameObject();
+
 	CBlockMgr::GetInstance()->Render();
 
 	// ── 원격 플레이어 렌더 ────────────────────────────────────────────
@@ -299,6 +321,9 @@ void CNetworkStage::Render_Scene()
 	}
 
 	Render_LightPanel();
+
+	if (m_pDynamicCamera)
+		m_pDynamicCamera->Render_GameObject();
 }
 
 void CNetworkStage::Render_UI()
@@ -327,7 +352,7 @@ HRESULT CNetworkStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 	if (!pDynamicCam)
 		return E_FAIL;
 	
-	pDynamicCam->SetActionCam(eActionCamType::GB_STAGE);
+	//pDynamicCam->SetActionCam(eActionCamType::GB_STAGE);
 	
 	//카메라 오프셋 설정
 	_vec3 vOffset = { -12.f, 30.f, -12.f };
@@ -346,6 +371,7 @@ HRESULT CNetworkStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 	oceanDesc.eType = static_cast<WAVE_TYPE>(2); // Gerstner
 
 	m_pOcean = COcean::Create(m_pGraphicDev, oceanDesc);
+	
 	pGameObject = m_pOcean;
 
 	if (!pGameObject)
@@ -423,6 +449,8 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 
 	//DamageMgr
 	CDamageMgr::GetInstance()->Set_EnderDragon(m_pEnderDragon);
+	//MonsterMgr
+	CMonsterMgr::GetInstance()->Add_EnderDragon(m_pEnderDragon);
 
 	//HUD
 	pGameObject = CHUD::Create(m_pGraphicDev);
@@ -478,9 +506,10 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	}
 
 	// ── 서버 접속 — 프로세스 ID 기반 고유 닉네임 (임시, 추후 로비 UI 연동) ─
-	char szNick[32];
-	sprintf_s(szNick, sizeof(szNick), "Player%u", GetCurrentProcessId() % 10000);
-	CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.44", 9000, szNick);
+	//char szNick[32];
+	//sprintf_s(szNick, sizeof(szNick), "Player%u", GetCurrentProcessId() % 10000);
+	//CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.61", 9000, szNick);
+	CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.61", 9000, "pending");
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
 

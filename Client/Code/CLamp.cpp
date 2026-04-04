@@ -80,8 +80,8 @@ void CLamp::Render_GameObject()
 	tLight.Attenuation1 = 0.1f;
 	tLight.Attenuation2 = 0.01f;
 
-	m_pGraphicDev->SetLight(0, &tLight);
-	m_pGraphicDev->LightEnable(0, TRUE);
+	m_pGraphicDev->SetLight(1, &tLight);
+	m_pGraphicDev->LightEnable(1, TRUE);
 
 	// 2. Material
 	D3DMATERIAL9 mtrl;

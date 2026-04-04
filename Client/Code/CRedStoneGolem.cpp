@@ -8,6 +8,7 @@
 #include "CDamageMgr.h"
 #include "CMonsterMgr.h"
 #include "CSoundMgr.h"
+#include "CEventBus.h"
 
 CRedStoneGolem::CRedStoneGolem(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -44,9 +45,9 @@ HRESULT CRedStoneGolem::Ready_GameObject()
 	
 	//m_pTransformCom->Set_Pos(0.f, 10.f, 0.f);
 
-	m_pTransformCom->Set_Pos(-73.f, 15.f, 430.f);
+	m_pTransformCom->Set_Pos(49.f, 40.f, 302.f);
 	m_pTransformCom->Set_Rotation(ROT_Y, 180.f);
-
+	
 	Set_PartsOffset();
 	Set_DefaultScale();
 	Set_WorldScale();
@@ -60,7 +61,17 @@ HRESULT CRedStoneGolem::Ready_GameObject()
 
 _int CRedStoneGolem::Update_GameObject(const _float& fTimeDelta)
 {
-	if (m_bDeadFinished)
+	if (m_bDeadFinished && !m_bDeadEvent)
+	{
+		FGameEvent event;
+		event.eType = eEventType::BOSS_DEAD;
+		event.iValue = 0;
+		event.iSubType = 0;
+		CEventBus::GetInstance()->Publish(event);
+		m_bDeadEvent = true;
+		return -1;
+	}
+	else if(m_bDeadFinished)
 		return -1;
 
 	_int iExit = CGameObject::Update_GameObject(fTimeDelta);

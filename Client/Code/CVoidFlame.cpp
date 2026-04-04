@@ -33,7 +33,7 @@ HRESULT CVoidFlame::Add_Component()
     m_mapComponent[ID_DYNAMIC].insert({ L"Com_Transform", pComponent });
 
     m_pColliderCom = CCollider::Create(m_pGraphicDev,
-        _vec3(0.5f, 0.5f, 0.5f),
+        _vec3(5.f, 5.f, 5.f),
         _vec3(0.f, 0.f, 0.f));
     if (!m_pColliderCom) return E_FAIL;
     m_mapComponent[ID_STATIC].insert({ L"Com_Collider", m_pColliderCom });
@@ -80,6 +80,9 @@ void CVoidFlame::LateUpdate_GameObject(const _float& fTimeDelta)
 
 void CVoidFlame::Render_GameObject()
 {
+    if (m_bDead)
+        return;
+
     _vec3 vPos;
     m_pTransformCom->Get_Info(INFO_POS, &vPos);
 

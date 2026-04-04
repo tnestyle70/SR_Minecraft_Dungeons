@@ -64,6 +64,10 @@ public:
 	void  Set_Ridden(bool bVal) { m_bRidden = bVal; }
 	void  Force_Idle_State();   // CDragon.cpp에 구현
 	void  Void_Breath(bool bActivate);
+	//마우스 Yaw Pitch 조작
+	void Add_RiderYaw(float fYaw) { m_fRiderYaw += fYaw; }
+	void Add_RiderPitch(float fPitch) { m_fRiderPitch += fPitch; }
+
 	//네트워크 원격 제어 API
 	void  Set_NetworkControlled(bool b) { m_bNetworkControlled = b; }
 	bool  Is_NetworkControlled()  const { return m_bNetworkControlled; }
@@ -154,9 +158,16 @@ private:
 	//입력을 통한 조작
 	_bool m_bManualControl = false;
 	//카메라가 없으니 월드 기준 고정 전진 우측 벡터 사용
-	_vec3 m_vInputForward;
-	_vec3 m_vInputRight;
-	_vec3 m_vPlayerPos;
+	_vec3 m_vInputForward = { 0.f, 0.f, 1.f };
+	_vec3 m_vInputRight = { 1.f, 0.f, 0.f };
+	_vec3 m_vPlayerPos = {};
+
+	//탈것 인풋
+	//_vec3 m_vInputForward = { 0.f, 0.f, 1.f };
+	//_vec3 m_vInputRight = { 1.f, 0.f, 0.f };
+	//마우스 인풋 누적
+	float m_fRiderYaw = 0.f;
+	float m_fRiderPitch = 0.f;
 
 private:
 	static constexpr _float m_fAttackRange = 20.f;

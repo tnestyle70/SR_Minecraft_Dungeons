@@ -211,12 +211,21 @@ void CRemotePlayer::SetTargetState(float fX, float fY, float fZ,
     m_fTargetZ = fZ;
     m_fTargetRotY = fRotY;
     m_iTargetState = iState;
+
     m_bMoving = (iState == 1);
-    m_bOnDragon = bOnDragon;
-    m_iDragonIdx = iDragonIdx;
     m_fTargetDragonX = fDragonX;
     m_fTargetDragonY = fDragonY;
     m_fTargetDragonZ = fDragonZ;
+
+    //첫 탑승 시 현재 위치 스냅
+    if (!m_bOnDragon && bOnDragon)
+    {
+        m_fCurDragonX = fDragonX;
+        m_fCurDragonY = fDragonY;
+        m_fCurDragonZ = fDragonZ;
+    }
+    m_bOnDragon = bOnDragon;    // 기존 라인 위치 조정 (위 if보다 아래로)
+    m_iDragonIdx = iDragonIdx;
 }
 
 // =====================================================================
@@ -226,11 +235,21 @@ void CRemotePlayer::SetTargetState(float fX, float fY, float fZ,
 void CRemotePlayer::SetDragonState(bool bOnDragon, int iDragonIdx,
     float fRootX, float fRootY, float fRootZ, float /*fRotY*/)
 {
+    //first dragon packet
+    bool bFirstDragon = (!m_bOnDragon && bOnDragon);
+
     m_bOnDragon        = bOnDragon;
     m_iDragonIdx       = iDragonIdx;
     m_fTargetDragonX   = fRootX;
     m_fTargetDragonY   = fRootY;
     m_fTargetDragonZ   = fRootZ;
+    //첫 수신 시 현재 위치 동기화
+    if (bFirstDragon)
+    {
+        m_fCurDragonX = fRootX;
+        m_fCurDragonY = fRootY;
+        m_fCurDragonZ = fRootZ;
+    }
 }
 
 // =====================================================================
@@ -241,6 +260,7 @@ _int CRemotePlayer::Update_GameObject(const _float& fTimeDelta)
     float fT = LERP_SPEED * fTimeDelta;
     if (fT > 1.f) fT = 1.f;
 
+    //Player Lerp
     m_fCurX += (m_fTargetX - m_fCurX) * fT;
     m_fCurY += (m_fTargetY - m_fCurY) * fT;
     m_fCurZ += (m_fTargetZ - m_fCurZ) * fT;
@@ -250,6 +270,14 @@ _int CRemotePlayer::Update_GameObject(const _float& fTimeDelta)
     while (fRotDiff > D3DX_PI) fRotDiff -= D3DX_PI * 2.f;
     while (fRotDiff < -D3DX_PI) fRotDiff += D3DX_PI * 2.f;
     m_fCurRotY += fRotDiff * fT;
+
+    //Dragon position lerp
+    if (m_bOnDragon)
+    {
+        m_fCurDragonX += (m_fTargetDragonX - m_fCurDragonX) * fT;
+        m_fCurDragonY += (m_fTargetDragonY - m_fCurDragonY) * fT;
+        m_fCurDragonZ += (m_fTargetDragonZ - m_fCurDragonZ) * fT;
+    }
 
     if (m_bMoving)
         m_fWalkTime += fTimeDelta * 8.f;

@@ -67,6 +67,10 @@ _uint CLoading::Loading_SquidCoast()
  
 
     //UI - Inventory
+    //Player Dead
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_DeathTexture",
+        Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/weekly_lv2.png"))))
+        return E_FAIL;
     //Slot Frame
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_FrameTexture",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/gear_main_slot.png"))))

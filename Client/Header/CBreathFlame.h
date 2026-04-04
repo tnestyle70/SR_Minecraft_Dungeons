@@ -25,6 +25,8 @@ public:
 
 	bool Is_Active() const { return m_bActive; }
 
+	void Set_BeamLength(float fLength) { m_fBeamLength = fLength; }
+
 private:
 	HRESULT Create_BeamMesh();
 
@@ -34,10 +36,12 @@ private:
 
 	bool    m_bActive      = false;
 	float   m_fBeamRadius  = 1.f;
-	float   m_fBeamLength  = 15.f;
+	float   m_fBeamLength  = 50.f;
+	//원본 크기 기록
+	float m_fMeshDepth = 50.f;
 	float   m_fGrowthTimer = 0.f;
 	float   m_fTime        = 0.f;
-
+	
 	_matrix m_matBeamWorld;
 
 public:

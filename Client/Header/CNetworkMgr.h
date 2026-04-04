@@ -11,6 +11,7 @@
 
 class CRemotePlayer;
 class CPlayerArrow;   // Day 9: 네트워크 화살 시각 객체
+class CVoidFlame;
 class CNetworkPlayer; // Day 9: 로컬 플레이어 HP 갱신용
 
 // =====================================================================
@@ -62,10 +63,16 @@ public:
         float fDirX, float fDirY, float fDirZ,
         float fCharge, bool bFirework);
 
+    //Send Void Flame Event
+    void SendFlame(float fPosX, float fPosY, float fPosZ,
+        float fDirX, float fDirY, float fDirZ,
+        float fDamage);
+
     void SendDamage(int iTargetPlayerId, float fDamage);
 
     // ── 상태 조회 ─────────────────────────────────────────────────────
     int  GetMyPlayerId()  const { return m_iMyPlayerId; }
+    const char* GetMyNick()      const { return m_szMyNick; }   
     bool IsLoggedIn()     const { return m_iMyPlayerId != -1; }
 
     // ImGui 디버그 패널용
@@ -88,6 +95,7 @@ private:
     void On_Despawn    (const PKT_S2C_Despawn*         pPkt);
     void On_Snapshot   (const PKT_S2C_StateSnapshot*   pPkt);
     void On_Arrow      (const PKT_S2C_Arrow*           pPkt); // S2C_ARROW
+    void On_Flame(const PKT_S2C_Flame* pPkt); //S2C_Flame
     void On_DragonSync (const PKT_S2C_DragonSync*      pPkt); // S2C_DRAGON_SYNC
     void On_Damage     (const PKT_S2C_Damage*          pPkt);
 
@@ -103,6 +111,7 @@ private:
 
     // ── 게임 상태 ─────────────────────────────────────────────────────
     int     m_iMyPlayerId = -1;
+    char    m_szMyNick[32] = {};
     int     m_iSequence = 0;
 
     LPDIRECT3DDEVICE9             m_pGraphicDev = nullptr;
@@ -110,6 +119,7 @@ private:
 
     // Day 9: 네트워크 화살 (원격 플레이어가 발사한 시각 전용 화살)
     std::vector<CPlayerArrow*>    m_vecNetArrows;
+    vector<CVoidFlame*> m_vecNetFlames;
     CNetworkPlayer* m_pLocalPlayer = nullptr;  // 피격 HP 갱신용
 };
 

@@ -59,7 +59,7 @@ private:
 protected:
 	virtual void	Key_Input(const _float& fTimeDelta);
 	_vec3			Picking_OnBlock();
-	_float m_fMoveSpeed = 20.f;
+	_float m_fMoveSpeed = 40.f;
 	_bool	m_bMoving;		// 이동 중 여부
 	_vec3 m_vTargetPos;
 	_bool  m_bHasTarget = false;

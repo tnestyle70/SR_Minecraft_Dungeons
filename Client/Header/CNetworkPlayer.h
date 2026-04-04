@@ -10,9 +10,7 @@
 #include "CVoidFlame.h"
 #include "CDynamicCamera.h"
 
-class CMonster;
-class CRedStoneGolem;
-class CAncientGuardian;
+class CEnderDragon;
 
 class CNetworkPlayer : public CGameObject
 {
@@ -33,6 +31,8 @@ private:
 	void			Set_OnTerrain();
 	//_vec3			Picking_OnTerrain();
 	_vec3			Picking_OnBlock();
+	bool Picking_OnDragon();
+
 	void			Render_Part(BODYPART ePart, _float fAngleX, _float fAngleY, _float fAngleZ,
 		const _matrix& matRootWorld, Engine::CTexture* pTex = nullptr, CPlayerBody* pBuf = nullptr);
 
@@ -120,7 +120,6 @@ public:
 	void Set_MeleeDmg(float fDmg) { m_fMeleeDmg = fDmg; }
 	void Set_BowDmg(float fDmg) { m_fBowDmg = fDmg; }
 
-
 	void Set_Armor(ARMOR_TYPE eType) { m_eArmorType = eType; }
 	ARMOR_TYPE Get_ArmorType() const { return m_eArmorType; }
 
@@ -131,15 +130,12 @@ public:
 	void Add_TNT(CTNT* pTNT) { m_vecTNTs.push_back(pTNT); }
 	const vector<CTNT*>& Get_TNTs() const { return m_vecTNTs; }
 
-	//보스 추가함수
-	void Set_Boss(CRedStoneGolem* pBoss) { m_pTargetBoss = pBoss; }
-
-	void Set_Guardian(CAncientGuardian* pGuardian) { m_pTargetGuardian = pGuardian; }
 
 	CTransform* Get_Transform() { return m_pTransformCom; }
 
 	void Equip(eEquipType eType);
 	void UnEquip(eEquipType eType);
+
 private:
 	CPlayerBody* m_pBufferCom[PART_END];
 	CPlayerBody* m_pArmorBufferCom[PART_END] = {};
@@ -173,7 +169,6 @@ private:
 	float m_fVelocityY = 0.f;
 	bool m_bOnGround = false;
 
-
 	//구르기
 	bool   m_bRolling = false;
 	float  m_fRollTime = 0.f;
@@ -196,12 +191,9 @@ private:
 	bool  m_bHit = false;
 	float m_fHitTime = 0.f;
 	static constexpr float m_fHitDuration = 0.5f;
-	//몬스터 공격타겟
-	CMonster* m_pTargetMonster = nullptr;
-	//레드스톤골렘 타겟
-	CRedStoneGolem* m_pTargetBoss = nullptr;
-	//가디언 타겟
-	CAncientGuardian* m_pTargetGuardian = nullptr;
+	// ender dragon aim target
+	CEnderDragon* m_pTargetDragon = nullptr;
+	int           m_iTargetSpineIdx = -1;
 
 private: //중력 적용과 충돌시 위치값 보정
 	void Apply_Gravity(const _float& fTimeDelta);

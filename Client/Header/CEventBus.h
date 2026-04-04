@@ -11,6 +11,7 @@ enum class eEventType
 	MONSTER_DEAD, //몬스터 처치
 	MISSION_ACCEPT, //미션 수락
 	MISSION_COMPLETE, //미션 완료
+	BOSS_DEAD,
 	GAME_EVENT_END
 };
 

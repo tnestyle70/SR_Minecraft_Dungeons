@@ -38,7 +38,7 @@ public:
 
 	virtual _int	Update_GameObject(const _float& fTimeDelta);
 	virtual void	LateUpdate_GameObject(const _float& fTimeDelta);
-	virtual void	Render_GameObject() {}
+	virtual void	Render_GameObject();
 
 private:
 	_int Update_ActionCam(const _float& fTimeDelta);
@@ -69,7 +69,7 @@ private: //Cam Way Point
 	bool m_bActionCam = false;
 
 	eActionCamType m_eType = eActionCamType::CAMTYPE_END;
-	
+
 public:
 	static CDynamicCamera* Create(LPDIRECT3DDEVICE9 pGraphicDev,
 									const _vec3* pEye,
@@ -91,18 +91,34 @@ public:
 
 	void Set_DragonCam(bool bDragonCam) { m_bDragonCam = bDragonCam; }
 
+	void Set_DragonDir(const _vec3& vDir) { m_vDragonDir = vDir; }
+
+	//NetworkPlayer가 마우스 델타값 넘겨줌
+	void Set_FreeLook(bool bLook) { m_bFreeLook = bLook; }
+	void Set_FreeLookYaw(float fYaw) { m_fFreeCamYaw += fYaw; }
+	void Set_FreeLookPitch(float fPitch) { m_fFreeCamPitch += fPitch; }
+
 private:
 	Engine::CTransform* m_pTargetTransform = nullptr;
 
 	_vec3 m_vFollowOffset = { -12.f, 20.f, -12.f };
 
 	//드래곤 카메라 오프셋
-	_vec3  m_vDragonOffset = { 0.f, 6.f, -15.f };
+	_vec3  m_vDragonOffset = { 0.f, 32.5f, -50.f };
+	//드래곤 카메라 방향
+	_vec3 m_vDragonDir = {0.f, 0.f, 1.f};
+	//드래곤 카메라 감도
+	_vec3 m_vSmoothDragonDir = {0.f, 0.f, 1.f};
 	bool m_bDragonCam = false;
 	float m_fCamBlend = 0.f;
 
 	//자유카메라 <-> 고정카메라
 	bool m_bFollowMode = true;
 	bool m_bF2Check = false;
+
+	//와우 시점 자유 카메라
+	float m_fFreeCamYaw = 0.f; //수평 공전 오프셋
+	float m_fFreeCamPitch = 0.f;
+	bool m_bFreeLook = false; //좌클릭 누르고 있는 동안 true
 };
 

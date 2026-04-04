@@ -31,11 +31,19 @@ struct DragonFlight
 	_float fLiftCoeff = 2.8f;         // lift coefficient (upward)
 	_float fDragCoeff = 0.55f;        // drag coefficient (opposing velocity)
 	_float fThrustForce = 320.f;      // downstroke thrust per flap
-	_float fMaxSpeed = 38.f;          // maximum velocity
+	_float fMaxSpeed = 45.f;          // maximum velocity
 	_float fBankFactor = 3.f;         // turn -> banking sensitivity
 	_float fMaxBankAngle = D3DX_PI * 0.38f;
 	_float fRestitution = 0.4f;       // collision restitution (0=perfectly inelastic, 1=perfectly elastic)
 	_vec3 vAccumForce;                 // accumulated force per frame
+};
+
+enum class eCirclePhase
+{
+	PHASE_VOIDFLAME,
+	PHASE_BEAM,
+	PHASE_TAIL,
+	PHASE_END
 };
 
 // Dragon Update Flow:
@@ -79,8 +87,11 @@ public:
 	bool  Is_NetworkControlled()  const { return m_bNetworkControlled; }
 	void  Force_RootPos(const _vec3& vPos);
 
+	const vector<CVoidFlame*>& Get_Flames() const { return m_vecVoidFlames; }
+
 	// Dragon-dragon collision accessors
 	CCollider* Get_SpineCollider(_int i) const { return (i >= 0 && i < ENDER_DRAGON_SPINE_COUNT) ? m_pSpineCollider[i] : nullptr; }
+
 	_vec3 Get_Velocity() const { return m_vVelocity; }
 	void  Add_Impulse(const _vec3& vImpulse) { m_vVelocity += vImpulse; }
 	_float Get_Mass() const { return m_Flight.fMass; }
@@ -95,9 +106,13 @@ public:
 	bool Is_Dead() { return m_bDead; }
 
 	CCollider** Get_SpineCollider() { return m_pSpineCollider; }
+	CCollider** Get_TailCollider() { return m_pTailCollider; }
+	CCollider** Get_WingRCollider() { return m_pWingLCollider; }
 
 private:
 	void Check_Hit();
+
+	void Check_PlayerAttack();
 
 private:
 	CNetworkPlayer* m_pPlayer = nullptr;
@@ -176,7 +191,7 @@ private:
 	void Compute_BoneMatrix(DRAGON_BONE& bone);
 	void Update_ChainMatrices(DRAGON_BONE* pChain, _int iCount);
 	void Render_Chain(DRAGON_BONE* pChain, _int iCount);
-
+	
 	// Physics Dynamics
 	void Accumulate_Forces(const _float& fTimeDelta);
 	// F = ma -> velocity -> position integration
@@ -200,8 +215,8 @@ private:
 	// Movement
 	_vec3 m_vMoveTarget = { 0.f, 0.f, 0.f };   // target position
 	_vec3 m_vVelocity = { 0.f, 0.f, 0.f };     // root velocity (lerp acceleration)
-	_float m_fMoveSpeed = 28.f;                  // max move speed
-
+	_float m_fMoveSpeed = 18.f;                  // max move speed
+	
 	// Wing flapping
 	_float m_fWingTimer = 0.f;                   // accumulated time
 	_float m_fWingSpeed = 3.2f;                  // flap frequency (rad/sec)
@@ -230,16 +245,26 @@ private:
 	_float m_fDetectThreshold = 0.0f;   // required dwell time for CIRCLE transition
 	_float m_fIdleCurlBlend   = 0.f;    // curl blend (0=spread, 1=fully curled)
 	
-	// CIRCLE: orbit + VoidFlame/Beam alternating attack
+	// CIRCLE: orbit + VoidFlame/Beam/Tail Attack 공격 패턴
 	_float m_fCircleAttackTimer  = 0.f;   // current attack phase timer
-	_float m_fVoidFlameDuration  = 3.0f;  // VoidFlame phase duration
-	_float m_fBeamDuration       = 3.0f;  // Beam phase duration
-	_bool  m_bCirclePhaseIsBeam  = false; // current phase (false=VoidFlame, true=Beam)
-
+	_float m_fVoidFlameDuration  = 4.0f;  // 화염포 발사 지속 시간 
+	_float m_fBeamDuration       = 2.0f;  // 빔 지속 시간 2초
+	_float m_fTailAttackDuration = 3.f; //꼬리 공격 지속 시간
+	
+	//enum으로 Circle Dive 페이즈 관리
+	eCirclePhase m_eCirclePhase = eCirclePhase::PHASE_VOIDFLAME;
+	
 	// TAIL_ATTACK: rush + tail attack
-	_float m_fTailRushSpeed      = 45.f;  // rush speed
+	_float m_fTailRushSpeed      = 200.f;  // rush speed
 	_bool  m_bTailHitApplied     = false; // prevent duplicate hits
+	_vec3 m_vTailRushTarget = {};
 
+	// 화염포 관련 변수 
+	_float m_fBreathTimer = 0.f;   // time until next CVoidFlame spawn
+	_float m_fBreathDuration = 0.5f; //화염포 발사 간격!!! 4초 기준 8발 발사
+	_float m_fBreathDmgPerSec = 0.01f;
+	_float m_fBreathConeDeg = 20.f;
+	
 	// Input
 	_bool  m_bManualControl = false;
 	_vec3  m_vInputForward = { 0.f, 0.f, 1.f };
@@ -247,33 +272,27 @@ private:
 	_vec3  m_vPlayerPos = { 0.f, 0.f, 0.f };
 
 	// HP
-	_float m_fHP    = 100.f;
-	_float m_fMaxHP = 100.f;
+	_float m_fHP    = 10.f;
+	_float m_fMaxHP = 10.f;
 
 	//처음 스폰 위치
 	_vec3 m_vSpawnPos = {};
 
-	// BREATH state parameters (overwritten after JSON load)
-	_float m_fBreathTimer       = 0.f;   // time until next CVoidFlame spawn
-	_float m_fBreathDuration    = 3.5f;
-	_float m_fBreathDmgPerSec   = 8.f;
-	_float m_fBreathConeDeg     = 20.f;
-
 	// CIRCLE_DIVE state parameters (overwritten after JSON load)
 	_float m_fCircleAngle     = 0.f;   // orbit angle
-	_float m_fCircleRadius    = 30.f;
-	_float m_fDiveSpeed       = 42.f;
+	_float m_fCircleRadius    = 60.f;
+	_float m_fDiveSpeed       = 52.f;
 	_float m_fBankMultiplier  = 1.6f;
-
+	
 	// Spine/Tail/Wing AABB colliders
 	CCollider* m_pSpineCollider[ENDER_DRAGON_SPINE_COUNT] = {};
 	CCollider* m_pTailCollider[ENDER_DRAGON_TAIL_COUNT]   = {};
 	CCollider* m_pWingLCollider[ENDER_DRAGON_WING_COUNT]  = {};
-
+	
 	// Breath flame management
 	bool m_bBreathFiring = false;
-	std::vector<class CVoidFlame*> m_vecBreathFlames;
-
+	vector<CVoidFlame*> m_vecVoidFlames;
+	
 	// JSON-based transition rules
 	struct TransitionRule
 	{
@@ -290,7 +309,6 @@ private:
 private:
 	static constexpr _float m_fAttackRange = 20.f;
 	static constexpr _float m_fAttackDuration = 6.f;
-	static constexpr _float m_fTailAttackDuration = 3.f;
 	static constexpr _float m_fTailHPRatio = 0.5f;
 	static constexpr _int m_iPatrolCount = 4;
 
