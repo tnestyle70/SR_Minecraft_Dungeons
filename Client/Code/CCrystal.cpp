@@ -2,6 +2,16 @@
 #include "CCrystal.h"
 #include "CRenderer.h"
 
+const CRYSTAL_PART_DESC CCrystal::s_Desc[CRYSTAL_END] =
+{
+	{ 20.f / 20.f, { 0.000f,  0.000f,  0.000f } },  // CRYSTAL_8x20  (norm = offset / scale)
+	{ 14.f / 20.f, { 0.464f, -0.264f,  0.000f } },  // CRYSTAL_5x14
+	{ 11.f / 20.f, {-0.545f, -0.364f,  0.000f } },  // CRYSTAL_4x11
+	{ 15.f / 20.f, { 0.000f, -0.213f,  0.373f } },  // CRYSTAL_3x15
+	{ 13.f / 20.f, { 0.000f, -0.308f, -0.308f } },  // CRYSTAL_2x13
+	{  5.f / 20.f, {-0.800f, -1.200f, -1.120f } },  // CRYSTAL_3x5
+};
+
 CCrystal::CCrystal(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
 	, m_pTransformCom(nullptr)
@@ -22,8 +32,7 @@ HRESULT CCrystal::Ready_GameObject()
 
 	m_pTransformCom->Set_Pos(0.f, 10.f, 0.f);
 
-	Set_PartsOffset();
-	Set_WorldScale();
+	Set_CrystalScale(5.f);
 	Set_PartsParent();
 
 	return S_OK;
@@ -105,35 +114,30 @@ HRESULT CCrystal::Add_Component()
 	return S_OK;
 }
 
-void CCrystal::Set_PartsOffset()
-{
-	_vec3 vRootPos;
-
-	m_pTransformCom->Get_Info(INFO_POS, &vRootPos);
-
-	m_pParts[CRYSTAL_8x20]->Get_Transform()->Set_Pos(vRootPos.x, vRootPos.y, vRootPos.z);
-	m_pParts[CRYSTAL_5x14]->Get_Transform()->Set_Pos(vRootPos.x + 0.325f, vRootPos.y - 0.185f, vRootPos.z);
-	m_pParts[CRYSTAL_4x11]->Get_Transform()->Set_Pos(vRootPos.x - 0.3f, vRootPos.y - 0.2f, vRootPos.z);
-	m_pParts[CRYSTAL_3x15]->Get_Transform()->Set_Pos(vRootPos.x, vRootPos.y - 0.16f, vRootPos.z + 0.28f);
-	m_pParts[CRYSTAL_2x13]->Get_Transform()->Set_Pos(vRootPos.x, vRootPos.y - 0.2f, vRootPos.z - 0.2f);
-	m_pParts[CRYSTAL_3x5]->Get_Transform()->Set_Pos(vRootPos.x - 0.2f, vRootPos.y - 0.3f, vRootPos.z - 0.28f);
-}
-
-void CCrystal::Set_WorldScale()
-{
-	m_pParts[CRYSTAL_8x20]->Get_Transform()->Set_Scale(20.f / 20.f);
-	m_pParts[CRYSTAL_5x14]->Get_Transform()->Set_Scale(14.f / 20.f);
-	m_pParts[CRYSTAL_4x11]->Get_Transform()->Set_Scale(11.f / 20.f);
-	m_pParts[CRYSTAL_3x15]->Get_Transform()->Set_Scale(15.f / 20.f);
-	m_pParts[CRYSTAL_2x13]->Get_Transform()->Set_Scale(13.f / 20.f);
-	m_pParts[CRYSTAL_3x5]->Get_Transform()->Set_Scale(5.f / 20.f);
-}
-
 void CCrystal::Set_PartsParent()
 {
 	for (_int i = 0; i < CRYSTAL_END; ++i)
 	{
 		m_pParts[i]->Get_Transform()->Set_Parent(m_pTransformCom);
+	}
+}
+
+void CCrystal::Set_CrystalScale(_float fScale)
+{
+	_vec3 vRootPos;
+	m_pTransformCom->Get_Info(INFO_POS, &vRootPos);
+
+	for (_int i = 0; i < CRYSTAL_END; ++i)
+	{
+		_float fPartScale = s_Desc[i].fScaleRatio * fScale;
+		const _vec3& vNorm = s_Desc[i].vNormOffset;
+
+		m_pParts[i]->Get_Transform()->Set_Scale(fPartScale);
+		m_pParts[i]->Get_Transform()->Set_Pos(
+			vRootPos.x + vNorm.x * fPartScale,
+			vRootPos.y + vNorm.y * fPartScale,
+			vRootPos.z + vNorm.z * fPartScale
+		);
 	}
 }
 

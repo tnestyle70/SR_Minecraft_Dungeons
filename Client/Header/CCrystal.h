@@ -2,6 +2,12 @@
 #include "CGameObject.h"
 #include "CCrystalPart.h"
 
+struct CRYSTAL_PART_DESC
+{
+	_float fScaleRatio;   // scale / 20.f
+	_vec3  vNormOffset;   // 스케일 1.0 기준 오프셋
+};
+
 class CCrystal : public CGameObject
 {
 private:
@@ -16,10 +22,11 @@ public:
 
 private:
 	HRESULT Add_Component();
-
-	void Set_PartsOffset();
-	void Set_WorldScale();
 	void Set_PartsParent();
+	void Set_CrystalScale(_float fScale);
+
+private:
+	static const CRYSTAL_PART_DESC s_Desc[CRYSTAL_END];
 
 private:
 	CCrystalPart* m_pParts[CRYSTAL_END];

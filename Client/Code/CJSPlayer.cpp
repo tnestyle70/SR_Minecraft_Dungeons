@@ -177,6 +177,26 @@ void CJSPlayer::Check_Collect()
 	CJSChunkMgr::GetInstance()->Check_Collect(vPos);
 }
 
+void CJSPlayer::Check_WallCollision()
+{
+	_vec3 vPos, vLook;
+
+	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+	m_pTransformCom->Get_Info(INFO_LOOK, &vLook);
+
+	_vec3 vCheckPos = vPos + vLook * 0.5f;
+
+	_matrix matCheck;
+
+	D3DXMatrixTranslation(&matCheck, vCheckPos.x, vCheckPos.y, vCheckPos.z);
+	m_pColliderCom->Update_Collider(&matCheck);
+
+	if (CJSChunkMgr::GetInstance()->Check_WallCollision(m_pColliderCom))
+	{
+
+	}
+}
+
 void CJSPlayer::Key_Input(const _float& fTimeDelta)
 {
 	_vec3 vPos;

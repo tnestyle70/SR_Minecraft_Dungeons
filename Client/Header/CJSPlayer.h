@@ -23,6 +23,7 @@ private:
 	void Jump(const _float& fTimeDelta);
 	void Falling();
 	void Check_Collect();
+	void Check_WallCollision();
 
 public:
 	static CJSPlayer* Create(LPDIRECT3DDEVICE9 pGraphicDev);
