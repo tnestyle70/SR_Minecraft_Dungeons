@@ -57,7 +57,7 @@ private:
     //레벨링
     _int     m_iLevel = 1;
     _int     m_iExp = 0;
-    _int     m_iMaxExp = 1.f;
+    _int     m_iMaxExp = 5.f;
     _bool    m_bLevelUp = false;
     _int     m_iMaxLevel = 18;
 
@@ -79,7 +79,7 @@ private:
     // 번개
     _bool    m_bLightning = false;
     _float   m_fLightningTimer = 0.f;
-    _float   m_fLightningInterval = 4.f;
+    _float   m_fLightningInterval = 3.f;
 
     // 번개 이펙트
     Engine::CRcTex* m_pThunderBufferCom = nullptr;
