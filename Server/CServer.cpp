@@ -210,6 +210,10 @@ void CServer::RecvThread()
                 case C2S_DAMAGE:
                     HandleDamage(pSession, reinterpret_cast<const PKT_C2S_Damage*>(pHdr));
                     break;
+                case C2S_ENDER_DRAGON_DAMAGE:
+                    HandleEnderDragonDamage(pSession,
+                        reinterpret_cast<const PKT_C2S_EnderDragonDamage*>(pHdr));
+                    break;
                 default:
                     LOG_WARN("Session %d unknown packet type: %d", pSession->GetSessionId(), pHdr->wType);
                     break;
@@ -385,8 +389,6 @@ void CServer::HandleDragonSync(CSession* pSession, const PKT_C2S_DragonSync* pPk
     CSessionMgr::GetInstance()->BroadcastToLoggedIn(&out, sizeof(out), pSession->GetSessionId());
 }
 
-// (HandleAttack 제거 — HandleArrow로 대체됨)
-
 void CServer::HandleDamage(CSession * pSession, const PKT_C2S_Damage * pPkt)
 {
     if (!pSession->IsLoggedIn()) return;
@@ -398,6 +400,19 @@ void CServer::HandleDamage(CSession * pSession, const PKT_C2S_Damage * pPkt)
     out.iAttackerPlayerId = pSession->GetPlayerId();
 
     CSessionMgr::GetInstance()->BroadcastToLoggedIn(&out, sizeof(out));
+}
+
+void CServer::HandleEnderDragonDamage(CSession* pSession, const PKT_C2S_EnderDragonDamage* pPkt)
+{
+    auto& d = m_gameLoop.GetEnderDragon(); 
+    if (d.bDead) return;
+
+    d.iHP -= pPkt->iDamage;
+    if (d.iHP <= 0)
+    {
+        d.iHP = 0;
+        d.bDead = true;
+    }
 }
 
 // =====================================================================

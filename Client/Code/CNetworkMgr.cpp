@@ -356,6 +356,9 @@ void CNetworkMgr::ProcessPacket(const PKT_HEADER* pHdr)
     case S2C_DRAGON_SYNC:
         On_DragonSync(reinterpret_cast<const PKT_S2C_DragonSync*>(pHdr));
         break;
+    case S2C_ENDER_DRAGON_SYNC:
+        On_EnderDragonSync(reinterpret_cast<const PKT_S2C_EnderDragonSync*>(pHdr));
+        break;
     case S2C_DAMAGE:
         On_Damage(reinterpret_cast<const PKT_S2C_Damage*>(pHdr));
         break;
@@ -538,6 +541,33 @@ void CNetworkMgr::SendDamage(int iTargetPlayerId, float fDamage)
     pkt.fDamage = fDamage;
 
     Send(&pkt, sizeof(pkt));
+}
+
+void CNetworkMgr::SendEnderDragonDamage(int iDamage)
+{
+    PKT_C2S_EnderDragonDamage pkt = {};
+    FillHeader(pkt, C2S_ENDER_DRAGON_DAMAGE);
+    pkt.iDamage = iDamage;
+    Send(&pkt, sizeof(pkt));
+}
+
+void CNetworkMgr::On_EnderDragonSync(const PKT_S2C_EnderDragonSync * pPkt)
+{
+    m_EnderDragonSync.fRootX = pPkt->fRootX;
+    m_EnderDragonSync.fRootY = pPkt->fRootY;
+    m_EnderDragonSync.fRootZ = pPkt->fRootZ;
+    m_EnderDragonSync.fDirX = pPkt->fDirX;
+    m_EnderDragonSync.fDirZ = pPkt->fDirZ;
+    m_EnderDragonSync.iState = pPkt->iState;
+    m_EnderDragonSync.iHP = pPkt->iHP;
+    m_EnderDragonSync.iMaxHP = pPkt->iMaxHP;
+    m_EnderDragonSync.iTargetPlayerId = pPkt->iTargetPlayerId;
+    m_EnderDragonSync.fTargetX = pPkt->fTargetX;
+    m_EnderDragonSync.fTargetY = pPkt->fTargetY;
+    m_EnderDragonSync.fTargetZ = pPkt->fTargetZ;
+    m_EnderDragonSync.fStateTimer = pPkt->fStateTimer;
+    m_EnderDragonSync.bDead = pPkt->bDead;
+    m_EnderDragonSync.bUpdated = true;
 }
 
 // =====================================================================

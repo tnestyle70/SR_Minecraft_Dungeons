@@ -72,13 +72,22 @@ _int CNetworkStage::Update_Scene(const _float& fTimeDelta)
 		if (!pRemote) continue;
 
 		int idx = pRemote->Get_DragonIdx();
-		if (!pRemote->Is_OnDragon() || idx < 0 || idx >= 4 || !m_pDragon[idx])
+		if (idx < 0 || idx >= 4 || !m_pDragon[idx])
 			continue;
-
-		// 원격 제어 모드 설정 + 위치 강제 이동
-		bRemoteOccupied[idx] = true;
-		m_pDragon[idx]->Set_NetworkControlled(true);
-		m_pDragon[idx]->Force_RootPos(pRemote->Get_DragonPos());
+		
+		if (pRemote->Is_OnDragon())
+		{
+			// 원격 제어 모드 설정 + 위치 강제 이동
+			bRemoteOccupied[idx] = true;
+			m_pDragon[idx]->Set_NetworkControlled(true);
+			m_pDragon[idx]->Force_RootPos(pRemote->Get_DragonPos());
+		}
+		else
+		{
+			//하차 직후 : 마지막 위치 한 번 적용 후 로컬 복귀
+			m_pDragon[idx]->Force_RootPos(pRemote->Get_DragonPos());
+			m_pDragon[idx]->Set_NetworkControlled(false);
+		}
 	}
 
 	// 원격 점유되지 않은 드래곤은 로컬 입력 가능 상태로 복원
@@ -320,7 +329,7 @@ void CNetworkStage::Render_Scene()
 			pRemote->Get_Collider()->Render_Collider();
 	}
 
-	Render_LightPanel();
+	//Render_LightPanel();
 
 	if (m_pDynamicCamera)
 		m_pDynamicCamera->Render_GameObject();

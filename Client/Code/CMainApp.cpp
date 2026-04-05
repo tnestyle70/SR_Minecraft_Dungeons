@@ -83,14 +83,14 @@ void CMainApp::LateUpdate_MainApp(const float& fTimeDelta)
     fTime += fTimeDelta;
     iFrame++;
 
-    if (fTime >= 1.f)
-    {
-        TCHAR szFPS[64];
-        wsprintf(szFPS, L"FPS: %d", iFrame);
-        SetWindowText(g_hWnd, szFPS);
-        fTime = 0.f;
-        iFrame = 0;
-    }
+    //if (fTime >= 1.f)
+    //{
+    //    TCHAR szFPS[64];
+    //    wsprintf(szFPS, L"FPS: %d", iFrame);
+    //    SetWindowText(g_hWnd, szFPS);
+    //    fTime = 0.f;
+    //    iFrame = 0;
+    //}
 }
 
 void CMainApp::Render_MainApp()

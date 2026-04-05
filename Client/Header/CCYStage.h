@@ -3,7 +3,8 @@
 #include "CCYCamera.h"
 #include "CCYPlayer.h"
 #include "CTorch.h"
-#include "CEventBus.h"
+#include "CEventBus.h" 
+#include "CCYGuardian.h"
 #include <vector>
 #include <algorithm>
 #include <set>
@@ -59,7 +60,9 @@ private:
     set<int> m_setOpenedGroups; 
 
     bool m_bPrevAtkColliding = false; 
-    bool m_bPrevPlayerHit = false;
+    bool m_bPrevPlayerHit = false; 
+
+    CCYGuardian* m_pCYGuardian = nullptr;
 
 public:
     static CCYStage* Create(LPDIRECT3DDEVICE9 pGraphicDev);

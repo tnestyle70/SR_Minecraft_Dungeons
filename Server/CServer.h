@@ -28,6 +28,9 @@ private:
     void HandleFlame(CSession* pSession, const PKT_C2S_Flame* pPkt);
     void HandleDragonSync (CSession* pSession, const PKT_C2S_DragonSync*  pPkt); // C2S_DRAGON_SYNC
     void HandleDamage     (CSession* pSession, const PKT_C2S_Damage*      pPkt);
+    //EnderDragon
+    void HandleEnderDragonDamage(CSession* pSession, 
+        const PKT_C2S_EnderDragonDamage* pPkt);
 
     // 세션 종료 공통 처리: 스폰 해제 + Despawn 브로드캐스트 + OnDisconnect
     void HandleDisconnect(int iSessId, int iPlayerId, const char* szNickname);

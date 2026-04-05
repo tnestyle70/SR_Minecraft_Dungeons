@@ -21,6 +21,21 @@ class CNetworkPlayer; // Day 9: 로컬 플레이어 HP 갱신용
 //  - CRemotePlayer 생성 / 제거 / 갱신
 //  - CNetworkStage 에서만 Update / Render 호출
 // =====================================================================
+
+// 엔더드래곤 동기화 데이터 (클라이언트 보관)
+struct EnderDragonSyncData
+{
+    float fRootX, fRootY, fRootZ;
+    float fDirX, fDirZ;
+    int   iState;
+    int   iHP, iMaxHP;
+    int   iTargetPlayerId;
+    float fTargetX, fTargetY, fTargetZ;
+    float fStateTimer;
+    bool  bDead;
+    bool  bUpdated = false;  // 이번 프레임에 수신됐는지
+};
+
 class CNetworkMgr
 {
 private:
@@ -70,6 +85,11 @@ public:
 
     void SendDamage(int iTargetPlayerId, float fDamage);
 
+    //송신
+    void SendEnderDragonDamage(int iDamage);
+    //수신
+    void On_EnderDragonSync(const PKT_S2C_EnderDragonSync* pPkt);
+    
     // ── 상태 조회 ─────────────────────────────────────────────────────
     int  GetMyPlayerId()  const { return m_iMyPlayerId; }
     const char* GetMyNick()      const { return m_szMyNick; }   
@@ -84,6 +104,9 @@ public:
 
     // Day 9: 로컬 플레이어 등록 (피격 HP 갱신용)
     void SetLocalPlayer(CNetworkPlayer* pPlayer) { m_pLocalPlayer = pPlayer; }
+
+    const EnderDragonSyncData& GetEnderDragonSync() const { return m_EnderDragonSync; }
+    void ConsumeEnderDragonSync() { m_EnderDragonSync.bUpdated = false; }
 
 private:
     // ── 수신 / 파싱 ───────────────────────────────────────────────────
@@ -113,6 +136,9 @@ private:
     int     m_iMyPlayerId = -1;
     char    m_szMyNick[32] = {};
     int     m_iSequence = 0;
+
+    //엔더드래곤 상태
+    EnderDragonSyncData m_EnderDragonSync;
 
     LPDIRECT3DDEVICE9             m_pGraphicDev = nullptr;
     std::map<int, CRemotePlayer*> m_mapRemote;  // playerId → CRemotePlayer*

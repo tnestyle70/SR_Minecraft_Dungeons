@@ -3,6 +3,7 @@
 #include "CAGBody.h"
 #include "CBeam.h"
 #include "CBiomine.h"
+ 
 
 enum class EPufferFishState
 {
@@ -13,7 +14,9 @@ enum class EPufferFishState
 };
 
 class CAncientGuardian : public CDLCBoss
-{
+{ 
+ friend class CCYGuardian;
+
 private:
     explicit CAncientGuardian(LPDIRECT3DDEVICE9 pGraphicDev);
     virtual ~CAncientGuardian();

@@ -154,6 +154,7 @@ _int CTGStage::Update_Scene(const _float& fTimeDelta)
 				CInventoryMgr::GetInstance()->Clear_Player();
 				CTJSpawnMgr::GetInstance()->Clear();
 				CBlockMgr::GetInstance()->ClearBlocks();
+
 				if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP)))
 				{
 					MSG_BOX("Scene Change Failed");

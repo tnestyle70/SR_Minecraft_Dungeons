@@ -357,7 +357,6 @@
     <ClCompile Include="..\Code\CJSBaseChunk.cpp">
       <Filter>02. GameObject\17. JS</Filter>
     </ClCompile>
-
     <ClCompile Include="..\Code\CJSObstacle.cpp">
       <Filter>02. GameObject\17. JS</Filter>
     </ClCompile>
@@ -375,6 +374,9 @@
     </ClCompile>
     <ClCompile Include="..\Code\CTJBoss.cpp">
       <Filter>02. GameObject\18. TJ</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Code\CCYGuardian.cpp">
+      <Filter>01. Scene\01. Stage\06. CY</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -756,6 +758,9 @@
     </ClInclude>
     <ClInclude Include="..\Header\CTJBoss.h">
       <Filter>02. GameObject\18. TJ</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CCYGuardian.h">
+      <Filter>01. Scene\01. Stage\06. CY</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

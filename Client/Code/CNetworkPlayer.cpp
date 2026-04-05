@@ -12,8 +12,8 @@
 #include <cstdio>
 #include "CEnderDragon.h"
 #include "CDamageMgr.h"
-#include "CCursorMgr.h"
 #include "CSoundMgr.h"
+#include "CRemotePlayer.h"
 
 CNetworkPlayer::CNetworkPlayer(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CGameObject(pGraphicDev)
@@ -201,6 +201,8 @@ _int CNetworkPlayer::Update_GameObject(const _float& fTimeDelta)
 
 void CNetworkPlayer::LateUpdate_GameObject(const _float& fTimeDelta)
 {
+	if (Is_Dead())
+		return;
 	Key_Input(fTimeDelta);
 	CGameObject::LateUpdate_GameObject(fTimeDelta);
 }
@@ -653,9 +655,31 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 			_vec3 vPos;
 			m_pTransformCom->Get_Info(INFO_POS, &vPos);
 
-			// ender dragon spine aim (recalculated every frame)
 			bool bAimed = false;
-			if (m_pTargetDragon && m_iTargetSpineIdx >= 0)
+			//remote player aim 설정
+			if (m_pTargetRemotePlayer)
+			{
+				CCollider* pRemoteCollider = m_pTargetRemotePlayer->Get_Collider();
+				if (pRemoteCollider)
+				{
+					AABB tAABB = pRemoteCollider->Get_AABB();
+					_vec3 vCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
+					_vec3 vDir = vCenter - vPos;
+					//쓰레기 값 방지용 조건
+					if (D3DXVec3Length(&vDir) > 0.1f)
+					{
+						D3DXVec3Normalize(&vDir, &vDir);
+						m_vBowDir = vDir;
+						_vec3 vDirH = { vDir.x, 0.f, vDir.z };
+						if (D3DXVec3Length(&vDirH) > 0.01f)
+							m_pTransformCom->m_vAngle.y = D3DXToDegree(atan2f(vDirH.x, vDirH.z)) + 180.f;
+						bAimed = true;
+					}
+				}
+			}
+
+			// ender dragon spine aim 
+			if (!bAimed && m_pTargetDragon && m_iTargetSpineIdx >= 0)
 			{
 				CCollider* pDrgCol = m_pTargetDragon->Get_SpineCollider(m_iTargetSpineIdx);
 				if (pDrgCol)
@@ -732,8 +756,14 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 		m_bRKeyPrev = false;
 	}
 
-	if(CCursorMgr::GetInstance()->IsMouseInClient())
-		Picking_OnDragon();
+	if (CCursorMgr::GetInstance()->IsMouseInClient())
+	{
+		//remote player 먼저 체크
+		if (!Picking_OnRemotePlayer())
+		{
+			Picking_OnDragon();
+		}
+	}
 
 	// T key: fire void flame
 	m_pTargetDragon = CDamageMgr::GetInstance()->Get_EnderDragon();
@@ -748,8 +778,25 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 			_vec3 vDir = { 0.f, 0.f, 0.f };
 			bool bAimed = false;
 
+			//remoteplayer aim
+			if (m_pTargetRemotePlayer)
+			{
+				CCollider* pRemoteCollider = m_pTargetRemotePlayer->Get_Collider();
+				if (pRemoteCollider)
+				{
+					AABB tAABB = pRemoteCollider->Get_AABB();
+					_vec3 vCenter = (tAABB.vMin + tAABB.vMax) * 0.5f;
+					vDir = vCenter - vPos;
+					if (D3DXVec3Length(&vDir) > 0.1f)
+					{
+						D3DXVec3Normalize(&vDir, &vDir);
+						bAimed = true;
+					}
+				}
+			}
+
 			// dragon spine target (recalculated from current position)
-			if (m_pTargetDragon && m_iTargetSpineIdx >= 0)
+			if (!bAimed && m_pTargetDragon && m_iTargetSpineIdx >= 0)
 			{
 				CCollider* pDrgCol = m_pTargetDragon->Get_SpineCollider(m_iTargetSpineIdx);
 				if (pDrgCol)
@@ -817,7 +864,7 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 	if (!m_bRiding && GetAsyncKeyState(VK_LBUTTON) & 0x8000 &&
 		CCursorMgr::GetInstance()->IsMouseInClient())
 	{
-		if (!Picking_OnDragon())
+		if (!Picking_OnRemotePlayer() && !Picking_OnDragon())
 		{
 			_vec3 vPickPos = Picking_OnBlock();
 			_vec3 vPos;
@@ -907,7 +954,6 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 			m_bMoving = false;
 		}
 	}
-
 
 
 	// 구르기
@@ -1074,6 +1120,30 @@ bool CNetworkPlayer::Picking_OnDragon()
 		}
 	}
 
+	return false;
+}
+
+bool CNetworkPlayer::Picking_OnRemotePlayer()
+{
+	//remote player 피킹 여부 확인
+	_vec3 vRayOrigin, vRayDir;
+	CCursorMgr::GetInstance()->GetPickingRay(vRayOrigin, vRayDir);
+
+	for (auto& [id, pRemotePlayer] : CNetworkMgr::GetInstance()->GetRemoteMap())
+	{
+		if (!pRemotePlayer)
+			continue;
+		CCollider* pCollider = pRemotePlayer->Get_Collider();
+		if (!pCollider)
+			continue;
+		if (pCollider->IntersectRay(vRayOrigin, vRayDir))
+		{
+			m_pTargetRemotePlayer = pRemotePlayer;
+			CCursorMgr::GetInstance()->SetCursorState(eCursorState::ENEMY_HOVER);
+			return true;
+		}
+	}
+	m_pTargetRemotePlayer = nullptr;
 	return false;
 }
 
@@ -1361,6 +1431,52 @@ void CNetworkPlayer::UnEquip(eEquipType eType)
 	}
 }
 
+void CNetworkPlayer::Set_Respawned()
+{
+	//타이머 끝나고, 플레이어와 만약에 드래곤이 있을 경우 해당 드래곤의 위치도 이동 시킨다.
+	//상호참조? 
+
+	m_fHp = m_fMaxHp;
+	m_bDead = false;
+	m_pTargetRemotePlayer = nullptr;
+
+	//스폰 위치로 이동
+	_vec3 vSpawnPos = {0.f, 5.f, 0.f};
+	m_pTransformCom->Set_Pos(vSpawnPos.x, vSpawnPos.y, vSpawnPos.z);
+	
+	//드래곤이 존재할 경우 드래곤도 해당 위치로 이동 시키기
+	if (m_bRiding && m_pMountedDragon)
+	{
+		m_pMountedDragon->Force_RootPos(vSpawnPos);
+		//드래곤 하차시 새로운 위치를 서버로 전송 시키기
+		//어떤 드래곤인지 인덱스로 찾기
+		int iDragonIndex = -1;
+		for (int i = 0; i < m_iDragonCount; ++i)
+		{
+			if (m_pDragonList[i] == m_pMountedDragon)
+			{
+				iDragonIndex = i;
+				break;
+			}
+		}
+		if (iDragonIndex >= 0)
+		{
+			//해당 인덱스의 드래곤 위치와 하차 서버로 전송
+			CNetworkMgr::GetInstance()->SendDragonSync(
+				iDragonIndex, vSpawnPos.x, vSpawnPos.y, vSpawnPos.z,
+				0.f, false);
+		}
+
+		m_pMountedDragon->Set_Ridden(false);
+		m_bRiding = false;
+		m_pMountedDragon = nullptr;
+		if (m_pDynamicCamera)
+			m_pDynamicCamera->Set_DragonCam(false);  //  카메라도 복귀
+	}
+
+	return;
+}
+
 void CNetworkPlayer::Apply_Gravity(const _float& fTimeDelta)
 {
 	if (m_bOnGround)
@@ -1446,13 +1562,18 @@ void CNetworkPlayer::Resolve_BlockCollision()
 
 void CNetworkPlayer::Hit(float fDamage)
 {
-	//if (m_bHit)  // 이미 피격 중이면 무시
-	//	return;
+	if (m_bDead) 
+		return;
 
 	m_bHit = true;
 	m_fHitTime = 0.f;
 	m_fHp -= fDamage;
-	if (m_fHp < 0.f) m_fHp = 0.f;
+	if (m_fHp < 0.f)
+	{
+		m_fHp = 0.f;
+		m_bDead = true;
+		CSoundMgr::GetInstance()->PlayEffect(L"Effect/Player_Dead.wav", 1.f);
+	}
 }
 
 void CNetworkPlayer::Roll_Update(const _float& fTimeDelta)
