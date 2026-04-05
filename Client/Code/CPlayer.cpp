@@ -54,8 +54,8 @@ HRESULT CPlayer::Ready_GameObject()
 		return E_FAIL;
 	
 	//m_pTransformCom->Set_Pos(0.f, 10.f, 0.f);
-	m_pTransformCom->Set_Pos(48.f, 9.f, 97.f);
-	//m_pTransformCom->Set_Pos(-48.f, 1.f, -163.f);
+	//m_pTransformCom->Set_Pos(48.f, 9.f, 97.f);
+	m_pTransformCom->Set_Pos(-48.f, 1.f, -163.f);
 	
 	m_eArmorType = ARMOR_BARDSGARD;
 	
@@ -1288,13 +1288,12 @@ void CPlayer::Combat_Input(const _float& fTimeDelta)
 				pArrow->Set_Firework(m_bFireworkArrow);
 				m_vecArrows.push_back(pArrow);
 			}
-			m_fBowCooldown = 1.f;
+			m_fBowCooldown = 0.5f;
 			m_fCharge = 0.f;
 			m_bCharging = false;
 			m_bFireworkArrow = false;
 		}
 	}
-
 
 
 	if (GetAsyncKeyState('R') & 0x8000)
