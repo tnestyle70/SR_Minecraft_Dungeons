@@ -201,6 +201,7 @@
     <ClInclude Include="..\Header\CJSChunkMgr.h" />
     <ClInclude Include="..\Header\CJSCornerChunk.h" />
     <ClInclude Include="..\Header\CJSEmerald.h" />
+    <ClInclude Include="..\Header\CJSMonster.h" />
     <ClInclude Include="..\Header\CJSObstacle.h" />
     <ClInclude Include="..\Header\CJSPlayer.h" />
     <ClInclude Include="..\Header\CJSScoreMgr.h" />
@@ -336,6 +337,7 @@
     <ClCompile Include="..\Code\CJSChunkMgr.cpp" />
     <ClCompile Include="..\Code\CJSCornerChunk.cpp" />
     <ClCompile Include="..\Code\CJSEmerald.cpp" />
+    <ClCompile Include="..\Code\CJSMonster.cpp" />
     <ClCompile Include="..\Code\CJSObstacle.cpp" />
     <ClCompile Include="..\Code\CJSPlayer.cpp" />
     <ClCompile Include="..\Code\CJSScoreMgr.cpp" />
