@@ -18,11 +18,19 @@ public://스테이지에서 생성시에 매니저 호출해서 TriggerBox 컨�
 	void AddTriggerBox(CGameObject* pGameObject);
 	void Clear();
 	bool IsSceneChanged() { return m_bSceneChanged; }
-	void SetSceneChanged(bool changed) { m_bSceneChanged = changed; }
+	void SetSceneChanged(bool changed) { m_bSceneChanged = changed; } 
+
+	int Get_TriggeredID() { return m_iTriggeredID; }  
+
 private:
 	//스테이지 넘어갈 때 TriggerBox Container 비워주기
 	vector<CTriggerBox*> m_vecTriggerBox;
-	bool m_bSceneChanged = false;
+	bool m_bSceneChanged = false; 
+
+
+public:
+	
+	int  m_iTriggeredID = 0;  // ← 추가
 public:
 	void SetPlayerCollider(CCollider* pCollider) { m_pPlayerCollider = pCollider; }
 private:

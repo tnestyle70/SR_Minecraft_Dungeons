@@ -36,7 +36,7 @@ protected:
 	int  m_iHp = 0;
 	int  m_iMaxHp = 0;
 	float m_fMoveSpeed = 3.f;
-	float m_fDetectRange = 10.f; 
+	float m_fDetectRange = 30.f; 
 
 	// 사망 완료 플래그 - 파생 클래스에서 true 설정
 	bool  m_bDeadDone = false;

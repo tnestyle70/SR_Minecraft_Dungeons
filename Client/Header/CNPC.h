@@ -8,7 +8,13 @@
 enum class eNPCType
 {
     NPC_MONSTER,
-    NPC_SKELETON,
+    NPC_SKELETON, 
+    NPC_MiNiGame1,
+    NPC_MiNiGame2,
+    NPC_MiNiGame3,
+    NPC_MiNiGame4, 
+    NPC_MiNiGame5,
+    NPC_MiNiGame6,
     NPC_END
 };
 
