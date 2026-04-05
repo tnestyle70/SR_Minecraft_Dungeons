@@ -211,7 +211,7 @@ private:
 	//구르기
 	_float m_fRollDuration = 0.5f;   
 	_float m_fRollSpeed = 22.f;   
-	_float m_fRollCoolMax = 3.f;    
+	_float m_fRollCoolMax = 3.f;
 
 
 	//=======FootPrint Effect Variable=======
