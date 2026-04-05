@@ -31,6 +31,8 @@ public:
 
 private:
 	CJSWaterPlane* m_pWaterPlane = nullptr;
+	_float m_fGameOverTimer = 0.f;
+	_float m_fGameOverDelay = 2.f;  // 2초 후 씬 전환
 
 private:
 	virtual void Free();
