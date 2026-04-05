@@ -32,7 +32,7 @@ HRESULT CMonster::Ready_GameObject(_vec3& vPos)
 {
     if (FAILED(Add_Component()))
         return E_FAIL;
-
+    
     switch (m_eType)
     {
     case EMonsterType::ZOMBIE:
