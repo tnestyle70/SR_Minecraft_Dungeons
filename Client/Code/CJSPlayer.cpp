@@ -24,7 +24,7 @@ HRESULT CJSPlayer::Ready_GameObject()
 	if (FAILED(Add_Component()))
 		return E_FAIL;
 
-	m_pTransformCom->Set_Pos(0.f, 2.f, 0.f);
+	m_pTransformCom->Set_Pos(0.f, 3.f, 0.f);
 
 	if (FAILED(Ready_BodyParts()))
 		return E_FAIL;
@@ -49,6 +49,14 @@ _int CJSPlayer::Update_GameObject(const _float& fTimeDelta)
 	Advance(fTimeDelta);
 	Check_WallCollision();
 	Check_Collect();
+
+	if (!CJSScoreMgr::GetInstance()->Is_GameOver())
+	{
+		if (m_bJump && !m_bFalling)
+			Update_JumpAnimation(fTimeDelta);
+		else if (!m_bJump)
+			Update_RunAnimation(fTimeDelta);
+	}
 
 	Update_BodyParts(fTimeDelta);
 
@@ -92,7 +100,7 @@ HRESULT CJSPlayer::Add_Component()
 	// Texture
 
 	// Collider
-	m_pColliderCom = CJSCollider::Create(m_pGraphicDev, { 0.f, 0.5f, 0.f }, { 1.f, 2.f, 1.f });
+	m_pColliderCom = CJSCollider::Create(m_pGraphicDev, { 0.f, 0.f, 0.f }, { 1.f, 3.f, 1.f });
 
 	if (!m_pColliderCom)
 		return E_FAIL;
@@ -212,10 +220,10 @@ HRESULT CJSPlayer::Ready_BodyParts()
 {
 	// ¸Ó¸®
 	PartDesc headDesc;
-	headDesc.vOffset = { 0.f, 0.75f, 0.f };
-	headDesc.fSizeX = 0.5f;
-	headDesc.fSizeY = 0.5f;
-	headDesc.fSizeZ = 0.5f;
+	headDesc.vOffset = { 0.f, 1.125f, 0.f };   // 0.75 * 1.5
+	headDesc.fSizeX = 0.75f;
+	headDesc.fSizeY = 0.75f;
+	headDesc.fSizeZ = 0.75f;
 	headDesc.front = { 0.12500f, 0.12500f, 0.25000f, 0.25000f };
 	headDesc.back = { 0.37500f, 0.12500f, 0.50000f, 0.25000f };
 	headDesc.left = { 0.00000f, 0.12500f, 0.12500f, 0.25000f };
@@ -228,9 +236,9 @@ HRESULT CJSPlayer::Ready_BodyParts()
 	// ¸öÅë
 	PartDesc bodyDesc;
 	bodyDesc.vOffset = { 0.f, 0.f, 0.f };
-	bodyDesc.fSizeX = 0.5f;
-	bodyDesc.fSizeY = 0.75f;
-	bodyDesc.fSizeZ = 0.3f;
+	bodyDesc.fSizeX = 0.75f;
+	bodyDesc.fSizeY = 1.125f;
+	bodyDesc.fSizeZ = 0.45f;
 	bodyDesc.front = { 0.31250f, 0.31250f, 0.43750f, 0.50000f };
 	bodyDesc.back = { 0.50000f, 0.31250f, 0.62500f, 0.50000f };
 	bodyDesc.left = { 0.25000f, 0.31250f, 0.31250f, 0.50000f };
@@ -242,10 +250,10 @@ HRESULT CJSPlayer::Ready_BodyParts()
 
 	// ¿ÞÆÈ
 	PartDesc armLDesc;
-	armLDesc.vOffset = { -0.4f, 0.f, 0.f };
-	armLDesc.fSizeX = 0.3f;
-	armLDesc.fSizeY = 0.75f;
-	armLDesc.fSizeZ = 0.3f;
+	armLDesc.vOffset = { -0.6f, 0.f, 0.f };
+	armLDesc.fSizeX = 0.45f;
+	armLDesc.fSizeY = 1.125f;
+	armLDesc.fSizeZ = 0.45f;
 	armLDesc.front = { 0.68750f, 0.31250f, 0.75000f, 0.50000f };
 	armLDesc.back = { 0.81250f, 0.31250f, 0.87500f, 0.50000f };
 	armLDesc.left = { 0.62500f, 0.31250f, 0.68750f, 0.50000f };
@@ -257,16 +265,16 @@ HRESULT CJSPlayer::Ready_BodyParts()
 
 	// ¿À¸¥ÆÈ (¿ÞÆÈÀÌ¶û UV µ¿ÀÏ, ¿ÀÇÁ¼Â¸¸ ¹Ý´ë)
 	PartDesc armRDesc = armLDesc;
-	armRDesc.vOffset = { 0.4f, 0.f, 0.f };
+	armRDesc.vOffset = { 0.6f, 0.f, 0.f };
 	m_pArmR = CJSBodyPart::Create(m_pGraphicDev, m_pTransformCom, armRDesc);
 	if (!m_pArmR) return E_FAIL;
 
 	// ¿Þ´Ù¸®
 	PartDesc legLDesc;
-	legLDesc.vOffset = { -0.15f, -0.75f, 0.f };
-	legLDesc.fSizeX = 0.3f;
-	legLDesc.fSizeY = 0.75f;
-	legLDesc.fSizeZ = 0.3f;
+	legLDesc.vOffset = { -0.225f, -1.125f, 0.f };
+	legLDesc.fSizeX = 0.45f;
+	legLDesc.fSizeY = 1.125f;
+	legLDesc.fSizeZ = 0.45f;
 	legLDesc.front = { 0.06250f, 0.31250f, 0.12500f, 0.50000f };
 	legLDesc.back = { 0.18750f, 0.31250f, 0.25000f, 0.50000f };
 	legLDesc.left = { 0.00000f, 0.31250f, 0.06250f, 0.50000f };
@@ -278,7 +286,7 @@ HRESULT CJSPlayer::Ready_BodyParts()
 
 	// ¿À¸¥´Ù¸® (¿Þ´Ù¸®¶û UV µ¿ÀÏ, ¿ÀÇÁ¼Â¸¸ ¹Ý´ë)
 	PartDesc legRDesc = legLDesc;
-	legRDesc.vOffset = { 0.15f, -0.75f, 0.f };
+	legRDesc.vOffset = { 0.225f, -1.125f, 0.f };
 	m_pLegR = CJSBodyPart::Create(m_pGraphicDev, m_pTransformCom, legRDesc);
 	if (!m_pLegR) return E_FAIL;
 
@@ -303,6 +311,42 @@ void CJSPlayer::LateUpdate_BodyParts(const _float& fTimeDelta)
 	if (m_pArmR)  m_pArmR->LateUpdate_GameObject(fTimeDelta);
 	if (m_pLegL)  m_pLegL->LateUpdate_GameObject(fTimeDelta);
 	if (m_pLegR)  m_pLegR->LateUpdate_GameObject(fTimeDelta);
+}
+
+void CJSPlayer::Update_RunAnimation(const _float& fTimeDelta)
+{
+	m_fAnimTime += fTimeDelta * m_fAnimSpeed;
+
+	// »çÀÎÆÄ·Î ¾ÕµÚ Èçµé±â
+	_float fSwing = sinf(m_fAnimTime) * 60.f;
+
+	// ÆÈÀº ´Ù¸®¶û ¹Ý´ë·Î
+	if (m_pArmL)  m_pArmL->Get_Transform()->Set_Rotation(ROT_X, fSwing);
+	if (m_pArmR)  m_pArmR->Get_Transform()->Set_Rotation(ROT_X, -fSwing);
+	if (m_pLegL)  m_pLegL->Get_Transform()->Set_Rotation(ROT_X, -fSwing);
+	if (m_pLegR)  m_pLegR->Get_Transform()->Set_Rotation(ROT_X, fSwing);
+}
+
+void CJSPlayer::Update_JumpAnimation(const _float& fTimeDelta)
+{
+	m_fJumpAnimTime += fTimeDelta;
+
+	if (m_fJumpAnimTime <= m_fJumpDuration)
+	{
+		// ¿Ã¶ó°¡´Â Áß
+		if (m_pArmL) m_pArmL->Get_Transform()->Set_Rotation(ROT_X, -100.f);
+		if (m_pArmR) m_pArmR->Get_Transform()->Set_Rotation(ROT_X, -100.f);
+		if (m_pLegL) m_pLegL->Get_Transform()->Set_Rotation(ROT_X, 20.f);
+		if (m_pLegR) m_pLegR->Get_Transform()->Set_Rotation(ROT_X, -20.f);
+	}
+	else
+	{
+		// ³»·Á¿À´Â Áß
+		if (m_pArmL) m_pArmL->Get_Transform()->Set_Rotation(ROT_X, 40.f);
+		if (m_pArmR) m_pArmR->Get_Transform()->Set_Rotation(ROT_X, 40.f);
+		if (m_pLegL) m_pLegL->Get_Transform()->Set_Rotation(ROT_X, -10.f);
+		if (m_pLegR) m_pLegR->Get_Transform()->Set_Rotation(ROT_X, 10.f);
+	}
 }
 	
 void CJSPlayer::Key_Input(const _float& fTimeDelta)
@@ -378,6 +422,7 @@ void CJSPlayer::Key_Input(const _float& fTimeDelta)
 	{
 		m_fVelocityY = m_fJumpPower;
 		m_bJump = true;
+		m_fJumpAnimTime = 0.f;
 
 		CSoundMgr::GetInstance()->PlayEffect(L"JS/2-04.-Grunt-Jump.wav", 0.8f);
 	}
@@ -388,7 +433,7 @@ void CJSPlayer::Key_Input(const _float& fTimeDelta)
 		{
 			m_bSlide = true;
 			Safe_Release(m_pColliderCom);
-			m_pColliderCom = CJSCollider::Create(m_pGraphicDev, { 0.f, 0.f, 0.f }, m_vSlideColSize);
+			m_pColliderCom = CJSCollider::Create(m_pGraphicDev, { 0.f, -1.f, 0.f }, m_vSlideColSize);
 			m_mapComponent[ID_DYNAMIC].erase(L"Com_Collider");
 			m_mapComponent[ID_DYNAMIC].insert({ L"Com_Collider", m_pColliderCom });
 		}
@@ -399,7 +444,7 @@ void CJSPlayer::Key_Input(const _float& fTimeDelta)
 		{
 			m_bSlide = false;
 			Safe_Release(m_pColliderCom);
-			m_pColliderCom = CJSCollider::Create(m_pGraphicDev, { 0.f, 0.5f, 0.f }, m_vNormalColSize);
+			m_pColliderCom = CJSCollider::Create(m_pGraphicDev, { 0.f, 0.0f, 0.f }, m_vNormalColSize);
 			m_mapComponent[ID_DYNAMIC].erase(L"Com_Collider");
 			m_mapComponent[ID_DYNAMIC].insert({ L"Com_Collider", m_pColliderCom });
 		}

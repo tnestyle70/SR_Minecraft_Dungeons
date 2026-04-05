@@ -23,7 +23,8 @@
 #include "CNormalCubeTex.h"
 #include "CCYCamera.h"
 #include "CDamageMgr.h"
-#include "CSoundMgr.h"
+#include "CSoundMgr.h" 
+
 
 CCYStage::CCYStage(LPDIRECT3DDEVICE9 pGraphicDev)
     : CScene(pGraphicDev)
@@ -113,11 +114,40 @@ _int CCYStage::Update_Scene(const _float& fTimeDelta)
         {
             if (m_setIronBarTriggered.find(i) != m_setIronBarTriggered.end()) continue;
             _vec3 vDiff = vIronBarPos[i] - vCamEye;
-            vDiff.y = 0.f;
-            if (D3DXVec3Length(&vDiff) < 3.f)
+           
+            if (D3DXVec3Length(&vDiff) < 5.f)
             {
                 CIronBarMgr::GetInstance()->Close(i + 1);
                 m_setIronBarTriggered.insert(i);
+
+                if (i == 5)
+                {
+                    if (m_pCYGuardian)
+                    {
+                        m_pCYGuardian->SetActive(true);
+                        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_IDLE.wav", 0.8f);
+                    }
+                } 
+                if (i == 6)
+                { 
+
+                    m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, TRUE);
+                    m_pGraphicDev->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(255, 255, 255));
+
+                    CRenderer::GetInstance()->Clear_RenderGroup();
+                    CTriggerBoxMgr::GetInstance()->Clear();
+                    CIronBarMgr::GetInstance()->Clear();
+                    CMonsterMgr::GetInstance()->Clear();
+                    CParticleMgr::GetInstance()->Clear_Emitters();
+                    CInventoryMgr::GetInstance()->Clear_Player();
+                    CBlockMgr::GetInstance()->ClearBlocks();
+                    Safe_Release(m_pCYGuardian);
+                    m_pCYGuardian = nullptr;
+                    m_vecTorches.clear();  // 횃불 클리어
+                    CSoundMgr::GetInstance()->StopSound(SOUND_BGM);  // BGM 정지
+                    CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP);
+                    return iExit;
+                }
             }
         }
     }
@@ -126,7 +156,6 @@ _int CCYStage::Update_Scene(const _float& fTimeDelta)
     CTriggerBoxMgr::GetInstance()->Update(fTimeDelta);
     CIronBarMgr::GetInstance()->Update(fTimeDelta);
 
-   
     _vec3 vCamEye = m_pCYCamera->Get_Eye();
     for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
     {
@@ -139,7 +168,13 @@ _int CCYStage::Update_Scene(const _float& fTimeDelta)
 
     CMonsterMgr::GetInstance()->Update(fTimeDelta);
 
-    // 근접 공격
+    if (m_pCYGuardian && m_pCYGuardian->IsActive())
+    {
+        m_pCYGuardian->Set_TargetPos(vCamEye);
+        m_pCYGuardian->Update_GameObject(fTimeDelta);
+    }
+
+    // 근접 공격 vs 몬스터
     if (m_pCYPlayer && m_pCYPlayer->Get_AtkColliderActive())
     {
         CCollider* pAtkCol = m_pCYPlayer->Get_AtkCollider();
@@ -168,13 +203,27 @@ _int CCYStage::Update_Scene(const _float& fTimeDelta)
                     }
                 }
             }
+
+            // 근접 공격 vs 가디언
+            if (m_pCYGuardian && m_pCYGuardian->IsActive())
+            {
+                CCollider* pGuardianCol = dynamic_cast<CCollider*>
+                    (m_pCYGuardian->Get_Component(ID_STATIC, L"Com_Collider"));
+                if (pGuardianCol && pAtkCol->IsColliding(pGuardianCol->Get_AABB()))
+                {
+                    bHit = true;
+                    if (!m_bPrevAtkColliding)
+                        m_pCYGuardian->Take_Damage(10);
+                }
+            }
+
             m_bPrevAtkColliding = bHit;
         }
     }
     else
         m_bPrevAtkColliding = false;
 
-    // 화살 충돌
+    // 화살 충돌 vs 몬스터
     for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
     {
         for (auto* pMonster : pair.second.vecMonsters)
@@ -196,6 +245,28 @@ _int CCYStage::Update_Scene(const _float& fTimeDelta)
                         pMonster->SetActive(false);
                         Add_Time(3.f);
                     }
+                    pArrow->Set_Dead();
+                    break;
+                }
+            }
+        }
+    }
+
+    // 화살 충돌 vs 가디언
+    if (m_pCYGuardian && m_pCYGuardian->IsActive())
+    {
+        CCollider* pGuardianCol = dynamic_cast<CCollider*>
+            (m_pCYGuardian->Get_Component(ID_STATIC, L"Com_Collider"));
+        if (pGuardianCol)
+        {
+            for (auto& pArrow : m_pCYPlayer->Get_Arrows())
+            {
+                if (!pArrow || pArrow->Is_Dead()) continue;
+                CCollider* pArrowCol = pArrow->Get_Collider();
+                if (!pArrowCol) continue;
+                if (pGuardianCol->IsColliding(pArrowCol->Get_AABB()))
+                {
+                    m_pCYGuardian->Take_Damage((int)pArrow->Get_Damage());
                     pArrow->Set_Dead();
                     break;
                 }
@@ -270,7 +341,12 @@ void CCYStage::LateUpdate_Scene(const _float& fTimeDelta)
     CScene::LateUpdate_Scene(fTimeDelta);
     CTriggerBoxMgr::GetInstance()->LateUpdate(fTimeDelta);
     CIronBarMgr::GetInstance()->LateUpdate(fTimeDelta);
-    CMonsterMgr::GetInstance()->LateUpdate(fTimeDelta);
+    CMonsterMgr::GetInstance()->LateUpdate(fTimeDelta); 
+
+    if (m_pCYGuardian && m_pCYGuardian->IsActive())
+    {
+        m_pCYGuardian->LateUpdate_GameObject(fTimeDelta);
+    }
 }
 
 void CCYStage::Render_Scene()
@@ -295,7 +371,12 @@ void CCYStage::Render_Scene()
     m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE);
 
     CIronBarMgr::GetInstance()->Render();
-    CMonsterMgr::GetInstance()->Render();
+    CMonsterMgr::GetInstance()->Render(); 
+
+    if (m_pCYGuardian && m_pCYGuardian->IsActive())
+    {
+        m_pCYGuardian->Render_GameObject();
+    }
 
     for (auto* pTorch : m_vecTorches)
         pTorch->Render_GameObject();
@@ -510,7 +591,11 @@ HRESULT CCYStage::Ready_StageData(const _tchar* szPath)
             }
         }
         fclose(pObjFile);
-    }
+    } 
+
+    m_pCYGuardian = CCYGuardian::Create(m_pGraphicDev, { -2.f, -27.f, 93.f });
+    if (m_pCYGuardian)
+        m_pCYGuardian->Set_Hp(200);  // 체력 설정 - 원하는 값으로 조절
 
     return S_OK;
 }
@@ -579,7 +664,7 @@ void CCYStage::Free()
         m_pFont->Release();
         m_pFont = nullptr;
     }
-
+    Safe_Release(m_pCYGuardian);
     CDamageMgr::GetInstance()->Clear_Boss();
     m_vecTorches.clear();
     CScene::Free();

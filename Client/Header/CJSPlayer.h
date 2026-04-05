@@ -30,6 +30,8 @@ private:
 	HRESULT Ready_BodyParts();
 	void	Update_BodyParts(const _float& fTimeDelta);
 	void	LateUpdate_BodyParts(const _float& fTimeDelta);
+	void	Update_RunAnimation(const _float& fTimeDelta);
+	void	Update_JumpAnimation(const _float& fTimeDelta);
 
 public:
 	static CJSPlayer* Create(LPDIRECT3DDEVICE9 pGraphicDev);
@@ -51,15 +53,21 @@ private:
 	_float  m_fGravity = 2.f;     // 중력
 	_float  m_fVelocityY = 0.f;      // 현재 Y 속도
 	_bool   m_bJump = false;    // 점프 중 여부s
-	_float  m_fGroundY = 2.f;      // 바닥 Y 위치
+	_float  m_fGroundY = 3.f;      // 바닥 Y 위치
 	_bool	m_bFalling = false;
 
 	_bool	m_bRotated = false;
 	_float  m_fTotalDistance = 0.f;  // 총 이동 거리 누적
 
 	_bool   m_bSlide = false;
-	_vec3   m_vNormalColSize = { 1.f, 2.f, 1.f };   // 기본 콜라이더 크기
-	_vec3   m_vSlideColSize = { 1.f, 0.8f, 1.f };  // 슬라이드 콜라이더 크기
+	_vec3   m_vNormalColSize = { 1.f, 3.f, 1.f };   // 기본 콜라이더 크기
+	_vec3   m_vSlideColSize = { 1.f, 1.f, 1.f };  // 슬라이드 콜라이더 크기
+
+	_float m_fAnimTime = 0.f;
+	_float m_fAnimSpeed = 10.f;  // 애니메이션 속도
+
+	_float m_fJumpAnimTime = 0.f;
+	_float m_fJumpDuration = 0.5f;  // 올라가는 모션 지속 시간
 
 private:
 	CJSBodyPart* m_pHead = nullptr;

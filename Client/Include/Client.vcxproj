@@ -150,6 +150,7 @@
     <ClInclude Include="..\Header\CAncientGuardianUV.h" />
     <ClInclude Include="..\Header\Carrow.h" />
     <ClInclude Include="..\Header\CBackGround.h" />
+    <ClInclude Include="..\Header\CCYGuardian.h" />
     <ClInclude Include="..\Header\CCYMonster.h" />
     <ClInclude Include="..\Header\CJSBaseChunk.h" />
     <ClInclude Include="..\Header\CBatchBuffer.h" />
@@ -284,6 +285,7 @@
     <ClCompile Include="..\Code\CAncientGuardian.cpp" />
     <ClCompile Include="..\Code\Carrow.cpp" />
     <ClCompile Include="..\Code\CBackGround.cpp" />
+    <ClCompile Include="..\Code\CCYGuardian.cpp" />
     <ClCompile Include="..\Code\CCYMonster.cpp" />
     <ClCompile Include="..\Code\CJSBaseChunk.cpp" />
     <ClCompile Include="..\Code\CBatchBuffer.cpp" />

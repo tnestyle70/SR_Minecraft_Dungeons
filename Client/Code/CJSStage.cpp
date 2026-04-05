@@ -12,7 +12,6 @@
 #include "CJSScoreMgr.h"
 #include "CJSSkyBox.h"
 #include "CJSWaterPlane.h"
-#include "CScreenfx.h"
 
 CJSStage::CJSStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -48,21 +47,32 @@ HRESULT CJSStage::Ready_Scene()
 
 _int CJSStage::Update_Scene(const _float& fTimeDelta)
 {
+	_int iExit = CScene::Update_Scene(fTimeDelta);
+
 	_vec3 vPlayerPos;
 	CTransform* pPlayerTrans = dynamic_cast<CTransform*>(CManagement::GetInstance()->Get_Component(ID_DYNAMIC, L"GameLogic_Layer", L"JSPlayer", L"Com_Transform"));
 	pPlayerTrans->Get_Info(INFO_POS, &vPlayerPos);
 
 	if (m_pWaterPlane)
-	{
 		m_pWaterPlane->Set_PlayerPos(vPlayerPos);
+
+	// 게임오버 체크
+	if (CJSScoreMgr::GetInstance()->Is_GameOver())
+	{
+		m_fGameOverTimer += fTimeDelta;
+		if (m_fGameOverTimer >= m_fGameOverDelay)
+		{
+			if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP)))
+			{
+				MSG_BOX("Scene Change Failed");
+				return -1;
+			}
+			return iExit;
+		}
 	}
 
-	_int iExit = CScene::Update_Scene(fTimeDelta);
-
 	CJSChunkMgr::GetInstance()->Update_Manager(fTimeDelta, vPlayerPos);
-
 	Clear_DeadObject(L"Environment_Layer", fTimeDelta);
-
 	return iExit;
 }
 
@@ -234,9 +244,7 @@ void CJSStage::Free()
 {
 	m_pGraphicDev->SetRenderState(D3DRS_FOGENABLE, FALSE);
 
-	if (m_pWaterPlane)
-		Safe_Release(m_pWaterPlane);
-
+	CSoundMgr::GetInstance()->StopAll();
 	CJSScoreMgr::DestroyInstance();
 	CJSChunkMgr::DestroyInstance();
 	CScene::Free();

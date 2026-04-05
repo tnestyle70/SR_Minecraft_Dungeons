@@ -28,7 +28,8 @@ public:
 	bool IsTriggered() { return m_bTriggered; }
 	void SetTrigger(bool bTriggered) { m_bTriggered = bTriggered; }
 	void CheckCollide(CCollider* pCollider);
-	bool IsSceneChanged() { return m_bSceneChanged; }
+	bool IsSceneChanged() { return m_bSceneChanged; } 
+	int  Get_TriggerID() { return m_iTriggerID; }  
 private:
 	HRESULT Add_Component();
 private:

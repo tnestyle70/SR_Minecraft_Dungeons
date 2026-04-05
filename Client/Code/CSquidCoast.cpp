@@ -197,7 +197,27 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 			return -1;
 		}
 		return iExit;
+	}  
+	//CAMP
+	if (GetAsyncKeyState(VK_F8) & 0x8000)
+	{
+		CRenderer::GetInstance()->Clear_RenderGroup();
+		CTriggerBoxMgr::GetInstance()->Clear();
+		CIronBarMgr::GetInstance()->Clear();
+		CMonsterMgr::GetInstance()->Clear();
+		CParticleMgr::GetInstance()->Clear_Emitters();
+		CInventoryMgr::GetInstance()->Clear_Player();
+		CDamageMgr::GetInstance()->Clear_Boss();
+		CEnvironmentMgr::GetInstance()->Clear_Boxes();
+		CBlockMgr::GetInstance()->ClearBlocks();
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP)))
+		{
+			MSG_BOX("TG Stage Create Failed");
+			return -1;
+		}
+		return iExit;
 	}
+
 
 	if (GetAsyncKeyState('J') & 0x8000)
 	{

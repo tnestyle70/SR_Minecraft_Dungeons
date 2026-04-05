@@ -17,6 +17,7 @@
 #include "CAncientGuardian.h"
 #include "CHUD.h"
 #include "CInventoryMgr.h"
+#include "CNPC.h"
 
 CCamp::CCamp(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -63,7 +64,36 @@ _int CCamp::Update_Scene(const _float& fTimeDelta)
 
 	CIronBarMgr::GetInstance()->Update(fTimeDelta);
 
-	CMonsterMgr::GetInstance()->Update(fTimeDelta);
+	CMonsterMgr::GetInstance()->Update(fTimeDelta); 
+
+	if (CTriggerBoxMgr::GetInstance()->IsSceneChanged())
+	{
+		CTriggerBoxMgr::GetInstance()->SetSceneChanged(false);
+		CRenderer::GetInstance()->Clear_RenderGroup();
+		CTriggerBoxMgr::GetInstance()->Clear();
+		CIronBarMgr::GetInstance()->Clear();
+		CMonsterMgr::GetInstance()->Clear();
+		CParticleMgr::GetInstance()->Clear_Emitters();
+		CInventoryMgr::GetInstance()->Clear_Player();
+
+		eSceneType eNext = eSceneType::SCENE_CAMP_PLAY;
+		int iID = CTriggerBoxMgr::GetInstance()->Get_TriggeredID();
+
+		switch (iID)
+		{
+		case 1: eNext = eSceneType::SCENE_NETWORK; break;  // GB
+		case 2: eNext = eSceneType::SCENE_JS;      break;  // JS
+		case 3: eNext = eSceneType::SCENE_TJ;      break;  // TG
+		case 4: eNext = eSceneType::SCENE_CY;      break;  // CY
+		}
+
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eNext)))
+		{
+			MSG_BOX("Scene Change Failed");
+			return -1;
+		}
+		return iExit;
+	}
 
 	if (GetAsyncKeyState(VK_RETURN) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
 	{
@@ -113,7 +143,7 @@ void CCamp::Render_Scene()
 		CInventoryMgr::GetInstance()->Render();
 		return;
 	}
-
+	m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE); 
 	CBlockMgr::GetInstance()->Render();
 }
 
@@ -174,9 +204,7 @@ HRESULT CCamp::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 
 	//Player
 	pGameObject = CPlayer::Create(m_pGraphicDev);
-
-	if (!pGameObject)
-		return E_FAIL;
+	if (!pGameObject) return E_FAIL;
 
 	if (FAILED(pLayer->Add_GameObject(L"Player", pGameObject)))
 		return E_FAIL;
@@ -216,7 +244,85 @@ HRESULT CCamp::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	//고정카메라 추가
 	if (m_pDynamicCamera)
 		m_pDynamicCamera->SetFollowTarget(
-			dynamic_cast<Engine::CTransform*>(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform")));
+			dynamic_cast<Engine::CTransform*>(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform"))); 
+
+
+	CDialogueBox* pDialogueBox = CDialogueBox::Create(m_pGraphicDev);
+	if (!pDialogueBox) return E_FAIL;
+	if (FAILED(pLayer->Add_GameObject(L"DialogueBox", pDialogueBox))) return E_FAIL;
+	pGameObject = CNPC::Create(m_pGraphicDev, _vec3(-35.f, 2.f, 29.f));
+	if (!pGameObject) return E_FAIL; 
+	if(FAILED(pLayer->Add_GameObject(L"NPC3", pGameObject))) return E_FAIL;
+	CNPC* pNPC3 = dynamic_cast<CNPC*>(pGameObject);
+	if (pNPC3 && pPlayer)
+	{
+		pPlayer->Add_NPC(pNPC3);
+		pNPC3->Set_NPCType(eNPCType::NPC_MiNiGame1);
+		pNPC3->Set_DialogueBox(pDialogueBox);
+	}
+	pGameObject = CNPC::Create(m_pGraphicDev, _vec3(-35.f, 2.f, 29.f));
+	if (!pGameObject) return E_FAIL;
+	if (FAILED(pLayer->Add_GameObject(L"NPC3", pGameObject))) return E_FAIL;
+
+
+
+	pGameObject = CNPC::Create(m_pGraphicDev, _vec3(-5.f, 2.f, 29.f));
+	if (!pGameObject) return E_FAIL;
+	if (FAILED(pLayer->Add_GameObject(L"NPC4", pGameObject))) return E_FAIL;
+	CNPC* pNPC4 = dynamic_cast<CNPC*>(pGameObject);
+	if (pNPC4 && pPlayer)
+	{
+		pPlayer->Add_NPC(pNPC4);
+		pNPC4->Set_NPCType(eNPCType::NPC_MiNiGame2);
+		pNPC4->Set_DialogueBox(pDialogueBox);
+	}
+
+	pGameObject = CNPC::Create(m_pGraphicDev, _vec3(24.f, 2.f, 29.f));
+	if (!pGameObject) return E_FAIL;
+	if (FAILED(pLayer->Add_GameObject(L"NPC5", pGameObject))) return E_FAIL;
+	CNPC* pNPC5 = dynamic_cast<CNPC*>(pGameObject);
+	if (pNPC5 && pPlayer)
+	{
+		pPlayer->Add_NPC(pNPC5);
+		pNPC5->Set_NPCType(eNPCType::NPC_MiNiGame3);
+		pNPC5->Set_DialogueBox(pDialogueBox);
+	}
+
+	pGameObject = CNPC::Create(m_pGraphicDev, _vec3(13.f, 2.f, -28.f));
+	if (!pGameObject) return E_FAIL;
+	if (FAILED(pLayer->Add_GameObject(L"NPC6", pGameObject))) return E_FAIL;
+	CNPC* pNPC6 = dynamic_cast<CNPC*>(pGameObject);
+	if (pNPC6 && pPlayer)
+	{ 
+		pNPC6->Get_Transform()->m_vAngle.y = 180.f;
+		pPlayer->Add_NPC(pNPC6);
+		pNPC6->Set_NPCType(eNPCType::NPC_MiNiGame4);
+		pNPC6->Set_DialogueBox(pDialogueBox);
+	} 
+
+	pGameObject = CNPC::Create(m_pGraphicDev, _vec3(-16.f, 2.f, -28.f));
+	if (!pGameObject) return E_FAIL;
+	if (FAILED(pLayer->Add_GameObject(L"NPC7", pGameObject))) return E_FAIL;
+	CNPC* pNPC7 = dynamic_cast<CNPC*>(pGameObject);
+	if (pNPC7 && pPlayer)
+	{ 
+		pNPC7->Get_Transform()->m_vAngle.y = 180.f;
+		pPlayer->Add_NPC(pNPC7);
+		pNPC7->Set_NPCType(eNPCType::NPC_MiNiGame5);
+		pNPC7->Set_DialogueBox(pDialogueBox);
+	} 
+
+	pGameObject = CNPC::Create(m_pGraphicDev, _vec3(-45.f, 2.f, -28.f));
+	if (!pGameObject) return E_FAIL;
+	if (FAILED(pLayer->Add_GameObject(L"NPC8", pGameObject))) return E_FAIL;
+	CNPC* pNPC8 = dynamic_cast<CNPC*>(pGameObject);
+	if (pNPC8 && pPlayer)
+	{ 
+		pNPC8->Get_Transform()->m_vAngle.y = 180.f;
+		pPlayer->Add_NPC(pNPC8);
+		pNPC8->Set_NPCType(eNPCType::NPC_MiNiGame6);
+		pNPC8->Set_DialogueBox(pDialogueBox);
+	}
 
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
@@ -249,6 +355,7 @@ HRESULT CCamp::Ready_UI_Layer(const _tchar* pLayerTag)
 
 HRESULT CCamp::Ready_Light()
 {
+	m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE);
 	return S_OK;
 }
 
@@ -269,7 +376,7 @@ HRESULT CCamp::Ready_StageData(const _tchar* szPath)
 	}
 
 	CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_BATCH); // 먼저 모드 설정
-
+	CBlockMgr::GetInstance()->ClearBlocks();
 	CBlockMgr::GetInstance()->LoadBlocks(pFile);
 
 	// 2. 몬스터 - map에 안 담고 레이어에 바로 추가
