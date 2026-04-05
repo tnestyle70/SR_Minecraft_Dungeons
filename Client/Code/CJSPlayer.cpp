@@ -52,7 +52,9 @@ _int CJSPlayer::Update_GameObject(const _float& fTimeDelta)
 
 	if (!CJSScoreMgr::GetInstance()->Is_GameOver())
 	{
-		if (m_bJump && !m_bFalling)
+		if (m_bSlide)
+			Update_SlideAnimation();
+		else if (m_bJump && !m_bFalling)
 			Update_JumpAnimation(fTimeDelta);
 		else if (!m_bJump)
 			Update_RunAnimation(fTimeDelta);
@@ -347,6 +349,23 @@ void CJSPlayer::Update_JumpAnimation(const _float& fTimeDelta)
 		if (m_pLegL) m_pLegL->Get_Transform()->Set_Rotation(ROT_X, -10.f);
 		if (m_pLegR) m_pLegR->Get_Transform()->Set_Rotation(ROT_X, 10.f);
 	}
+}
+
+void CJSPlayer::Update_SlideAnimation()
+{
+	if (!m_bSlide) return;
+
+	// ¸öÅë ¾ÕÀ¸·Î ´¯È÷±â
+	if (m_pBody) m_pBody->Get_Transform()->Set_Rotation(ROT_X, 80.f);
+	if (m_pHead) m_pHead->Get_Transform()->Set_Rotation(ROT_X, 80.f);
+
+	// ÆÈ À§·Î »¸±â
+	if (m_pArmL) m_pArmL->Get_Transform()->Set_Rotation(ROT_X, -150.f);
+	if (m_pArmR) m_pArmR->Get_Transform()->Set_Rotation(ROT_X, -150.f);
+
+	// ´Ù¸® »¸±â
+	if (m_pLegL) m_pLegL->Get_Transform()->Set_Rotation(ROT_X, 80.f);
+	if (m_pLegR) m_pLegR->Get_Transform()->Set_Rotation(ROT_X, 80.f);
 }
 	
 void CJSPlayer::Key_Input(const _float& fTimeDelta)
