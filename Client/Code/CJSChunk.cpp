@@ -149,7 +149,7 @@ HRESULT CJSChunk::Ready_Emerald(_vec3 vChunkPos)
 
 HRESULT CJSChunk::Ready_Emerald_Line(_vec3 vChunkPos)
 {
-    for (_int z = 0; z < TILE_Z; z += 2)
+    for (_int z = 2; z < TILE_Z - 2; z += 2)
     {
         _vec3 vPos = Calc_TilePos(vChunkPos, 2, z);
 
@@ -246,26 +246,61 @@ HRESULT CJSChunk::Ready_Obstacle(_vec3 vChunkPos)
     if (m_eChunkType != CHUNK_FULL)
         return S_OK;
 
-    if (rand() % 10 >= 1)
+    if (rand() % 10 >= 2)
         return S_OK;
 
     m_bHasObstacle = true;
 
-    _int iObstacleZ = TILE_Z / 2;
+    // 랜덤으로 불 or 아치
+    if (rand() % 2 == 0)
+    {
+        // 불 장애물
+        _int iObstacleZ = TILE_Z / 2;
+        for (_int x = 1; x <= 3; ++x)
+        {
+            _vec3 vPos = Calc_TilePos(vChunkPos, x, iObstacleZ);
+            vPos.y = vChunkPos.y + 2.5f;
+
+            CJSObstacle* pObstacle = CJSObstacle::Create(m_pGraphicDev, vPos);
+            if (!pObstacle) return E_FAIL;
+
+            m_pLayer->Add_GameObject(L"Obstacle", pObstacle);
+            m_vecObstacle.push_back(pObstacle);
+        }
+    }
+    else
+    {
+        // 아치 장애물
+        if (FAILED(Ready_Arch(vChunkPos)))
+            return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+HRESULT CJSChunk::Ready_Arch(_vec3 vChunkPos)
+{
+    _int iMidZ = TILE_Z / 2;
+    _float fArchY = TILE_SIZE * 2.f;
 
     for (_int x = 1; x <= 3; ++x)
     {
-        _vec3 vPos = Calc_TilePos(vChunkPos, x, iObstacleZ);
-        vPos.y = vChunkPos.y + 2.5f;
+        for (_int y = 0; y <= 1; ++y)
+        {
+            _vec3 vTilePos = Calc_TilePos(vChunkPos, x, iMidZ);
+            vTilePos.y = vChunkPos.y + fArchY + y * TILE_SIZE;
 
-        CJSObstacle* pObstacle = CJSObstacle::Create(m_pGraphicDev, vPos);
-        if (pObstacle == nullptr)
-            return E_FAIL;
+            CJSTile* pTile = CJSTile::Create(m_pGraphicDev, vTilePos, TILE_NORMAL);
+            if (!pTile) return E_FAIL;
 
-        m_pLayer->Add_GameObject(L"Obstacle", pObstacle);
-        m_vecObstacle.push_back(pObstacle);
+            m_pLayer->Add_GameObject(L"Tile", pTile);
+            m_vecWall.push_back(pTile);
+
+            CJSCollider* pCol = CJSCollider::Create(m_pGraphicDev, vTilePos, { TILE_SIZE, TILE_SIZE, TILE_SIZE });
+            if (pCol)
+                m_vecArchCol.push_back(pCol);
+        }
     }
-
     return S_OK;
 }
 
@@ -446,6 +481,10 @@ void CJSChunk::Free()
     for (auto& pObstacle : m_vecObstacle)
         pObstacle->Set_Dead();
     m_vecObstacle.clear();
+
+    for (auto& pCol : m_vecArchCol)
+        Safe_Release(pCol);
+    m_vecArchCol.clear();
 
     if (m_pLeftWallCol)
         Safe_Release(m_pLeftWallCol);

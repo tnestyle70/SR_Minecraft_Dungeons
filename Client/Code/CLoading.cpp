@@ -227,6 +227,16 @@ _uint CLoading::Loading_SquidCoast()
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/mob/steve_real.png"))))
         return E_FAIL;
 
+    // TempleRun UI
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSUITexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/JS/JSUI.png"))))
+        return E_FAIL;
+
+    // TempleRun Monster
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSMonster",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/mob/zombie_villager/zombie_villager.png"))))
+        return E_FAIL;
+
     //오징어 해안 로딩 텍스쳐`
     //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SquidCoastLoadingTexture",
     //    Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Logo/Loading_Screen_Squid_Coast.png"))))

@@ -38,6 +38,11 @@ private:
 	_float  m_fShakeMax = 0.5f;   // 쉐이킹 지속 시간
 	_float  m_fShakeStrength = 3.f;  // 쉐이킹 강도
 
+	_float m_fTargetEyeY = 8.f;   // 목표 Y
+	_float m_fNormalEyeY = 8.f;   // 기본 Y
+	_float m_fSlideEyeY = 3.f;   // 슬라이드 Y
+	_bool m_bWasSliding = false;
+
 public:
 	static CJSCamera* Create(LPDIRECT3DDEVICE9 pGraphicDev,
 		const _vec3* pEye,

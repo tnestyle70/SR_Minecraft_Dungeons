@@ -16,11 +16,21 @@ CJSScoreUI::~CJSScoreUI()
 
 HRESULT CJSScoreUI::Ready_GameObject()
 {
+    //if (FAILED(Add_Component()))
+    //    return E_FAIL;
+
     if (FAILED(CFontMgr::GetInstance()->Ready_Font(
         m_pGraphicDev,
         L"Font_Score",
         L"Minecraft",
         20, 40, 700)))
+        return E_FAIL;
+
+    if (FAILED(CFontMgr::GetInstance()->Ready_Font(
+        m_pGraphicDev,
+        L"Font_Countdown",
+        L"Minecraft",
+        60, 120, 700)))
         return E_FAIL;
 
     return S_OK;
@@ -42,6 +52,28 @@ void CJSScoreUI::LateUpdate_GameObject(const _float& fTimeDelta)
 
 void CJSScoreUI::Render_GameObject()
 {
+    //Render_Overlay();
+
+    JSGAMESTAGE eStage = CJSScoreMgr::GetInstance()->Get_Stage();
+
+    if (eStage == JSSTAGE_COUNTDOWN)
+    {
+        _int iCount = CJSScoreMgr::GetInstance()->Get_Countdown();
+        TCHAR szCount[8];
+
+        if (iCount > 0)
+            wsprintf(szCount, L"%d", iCount);
+        else
+            wsprintf(szCount, L"GO!");
+
+        _vec2 vPos = { WINCX * 0.5f - 20.f, WINCY * 0.5f - 40.f };
+        CFontMgr::GetInstance()->Render_Font(L"Font_Countdown", szCount, &vPos, D3DXCOLOR(1.f, 1.f, 0.f, 1.f));
+        return;
+    }
+
+    if (eStage != JSSTAGE_PLAY)
+        return;
+
     m_iScore = CJSScoreMgr::GetInstance()->Get_Score();
     m_fDistance = CJSScoreMgr::GetInstance()->Get_Distance();
     m_fSpeed = CJSScoreMgr::GetInstance()->Get_Speed();
@@ -60,13 +92,61 @@ void CJSScoreUI::Render_GameObject()
     wsprintf(szSpeed, L"Speed: %d", (_int)m_fSpeed);
     _vec2 vSpeedPos = { 10.f, 110.f };
     CFontMgr::GetInstance()->Render_Font(L"Font_Score", szSpeed, &vSpeedPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
-
-    //TCHAR szDir[64];
-    //const TCHAR* dirNames[] = { L"FORWARD", L"LEFT", L"RIGHT", L"BACKWARD" };
-    //wsprintf(szDir, L"Dir: %s", dirNames[CJSChunkMgr::GetInstance()->Get_CurrentDir()]);
-    //_vec2 vDirPos = { 10.f, 170.f };
-    //CFontMgr::GetInstance()->Render_Font(L"Font_Score", szDir, &vDirPos, D3DXCOLOR(1.f, 1.f, 0.f, 1.f));
 }
+
+//HRESULT CJSScoreUI::Add_Component()
+//{
+//    CComponent* pComponent = nullptr;
+//
+//    pComponent = m_pBufferCom = dynamic_cast<CRcTex*>(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_RcTex"));
+//
+//    if (!pComponent)
+//        return E_FAIL;
+//
+//    m_mapComponent[ID_STATIC].insert({ L"Com_Buffer", pComponent });
+//
+//    pComponent = m_pTextureCom = dynamic_cast<CTexture*>(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_JSUITexture"));
+//
+//    if (!pComponent)
+//        return E_FAIL;
+//
+//    m_mapComponent[ID_STATIC].insert({ L"Com_Texture", pComponent });
+//
+//    return S_OK;
+//}
+
+//void CJSScoreUI::Render_Overlay()
+//{
+//    // 뷰/프로젝션 행렬 저장
+//    _matrix matViewOld, matProjOld;
+//    m_pGraphicDev->GetTransform(D3DTS_VIEW, &matViewOld);
+//    m_pGraphicDev->GetTransform(D3DTS_PROJECTION, &matProjOld);
+//
+//    // 직교 투영으로 변경
+//    _matrix matView, matProj;
+//    D3DXMatrixIdentity(&matView);
+//    D3DXMatrixOrthoLH(&matProj, (_float)WINCX, (_float)WINCY, 0.f, 1.f);
+//    m_pGraphicDev->SetTransform(D3DTS_VIEW, &matView);
+//    m_pGraphicDev->SetTransform(D3DTS_PROJECTION, &matProj);
+//
+//    // 화면 전체 크기로 스케일
+//    _matrix matWorld;
+//    D3DXMatrixScaling(&matWorld, (_float)WINCX * 0.5f, (_float)WINCY * 0.5f, 1.f);
+//    m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+//
+//    m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+//    m_pGraphicDev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+//    m_pGraphicDev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+//
+//    m_pTextureCom->Set_Texture(0);
+//    m_pBufferCom->Render_Buffer();
+//
+//    m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+//
+//    // 원래 행렬 복구
+//    m_pGraphicDev->SetTransform(D3DTS_VIEW, &matViewOld);
+//    m_pGraphicDev->SetTransform(D3DTS_PROJECTION, &matProjOld);
+//}
 
 CJSScoreUI* CJSScoreUI::Create(LPDIRECT3DDEVICE9 pGraphicDev)
 {

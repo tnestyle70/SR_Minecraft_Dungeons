@@ -17,6 +17,7 @@ CJSBodyPart::~CJSBodyPart()
 HRESULT CJSBodyPart::Ready_GameObject(CTransform* pParent, const PartDesc& desc)
 {
     m_vOffset = desc.vOffset;
+    m_pTexProto = desc.pTexProto;
 
     if (FAILED(Add_Component()))
         return E_FAIL;
@@ -70,7 +71,7 @@ HRESULT CJSBodyPart::Add_Component()
 
     // Texture
     pComponent = m_pTextureCom = dynamic_cast<CTexture*>(
-        CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_JSPlayerTexture"));
+        CProtoMgr::GetInstance()->Clone_Prototype(m_pTexProto));
     if (!pComponent) return E_FAIL;
     m_mapComponent[ID_STATIC].insert({ L"Com_Texture", pComponent });
 
