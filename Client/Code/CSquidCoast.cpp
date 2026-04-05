@@ -127,7 +127,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		CDamageMgr::GetInstance()->Clear_Boss();
 		CEnvironmentMgr::GetInstance()->Clear_Boxes();
 
-		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP)))
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_NETWORK)))
 		{
 			MSG_BOX("Camp Create Failed");
 			return -1;
@@ -361,7 +361,7 @@ HRESULT CSquidCoast::Ready_Environment_Layer(const _tchar* pLayerTag)
 	if (!pDynamicCam)
 		return E_FAIL;
 
-	//pDynamicCam->SetActionCam(eActionCamType::SQUID_COAST);
+	pDynamicCam->SetActionCam(eActionCamType::SQUID_COAST);
 
 	if (!pGameObject)
 		return E_FAIL;
@@ -393,7 +393,7 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	CGameObject* pGameObject = nullptr;
-
+	
 	//Player
 	pGameObject = CPlayer::Create(m_pGraphicDev);
 
@@ -404,7 +404,21 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	CPlayer* pPlayer = dynamic_cast<CPlayer*>(pGameObject); 
+
 	m_pPlayer = pPlayer;
+
+	CTransform* pPlayerTransform = m_pPlayer->Get_Transform();
+
+	pPlayerTransform->Set_Pos(-48.f, 1.f, -163.f);
+	pPlayerTransform->Update_Component(0.016f);
+
+	//고정 카메라 추가
+	if (m_pDynamicCamera)
+	{
+		m_pDynamicCamera->SetFollowTarget(
+			dynamic_cast<Engine::CTransform*>(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform")));
+		m_pDynamicCamera->SnapToTarget();
+	}
 
 	//JumpingTrap
 	CJumpingTrapMgr::GetInstance()->Ready_JumpingTrapMgr();
@@ -480,40 +494,6 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	}
 	CTriggerBoxMgr::GetInstance()->SetPlayerCollider(pCollider);
 	CMonsterMgr::GetInstance()->SetPlayer(pPlayer);
-	
-	//고정 카메라 추가
-	if (m_pDynamicCamera)
-		m_pDynamicCamera->SetFollowTarget(
-			dynamic_cast<Engine::CTransform*>(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform")));
-
-	//Object
-	//pGameObject = CBox::Create(m_pGraphicDev);
-
-	//if (!pGameObject)
-	//	return E_FAIL;
-
-	//if (FAILED(pLayer->Add_GameObject(L"Box", pGameObject)))
-	//	return E_FAIL;
-
-	//pGameObject = CCrystal::Create(m_pGraphicDev);
-
-	//if (!pGameObject)
-	//	return E_FAIL;
-
-	//if (FAILED(pLayer->Add_GameObject(L"Crystal", pGameObject)))
-	//	return E_FAIL;
-
-	//m_mapLayer.insert({ pLayerTag, pLayer });
-
-	//pGameObject = CEnderEye::Create(m_pGraphicDev);
-
-	//if (!pGameObject)
-	//	return E_FAIL;
-
-	//if (FAILED(pLayer->Add_GameObject(L"EnderEye", pGameObject)))
-	//	return E_FAIL;
-
-	//m_mapLayer.insert({ pLayerTag, pLayer });
 		
 	//Boss
 	pGameObject = CRedStoneGolem::Create(m_pGraphicDev);
@@ -535,24 +515,6 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		if (pPlayer)
 			pPlayer->Set_Boss(pGolem);
 	}
-
-	m_mapLayer.insert({ pLayerTag, pLayer });
-
-	////Ancient Guardian
-	//pGameObject = CAncientGuardian::Create(m_pGraphicDev, _vec3(42.f, 9.f, 229.f));
-	//if (!pGameObject)
-	//	return E_FAIL;
-	//
-	//CAncientGuardian* pGuardian = dynamic_cast<CAncientGuardian*>(pGameObject);
-	//if (pGuardian && pPlayer)
-	//{
-	//	pPlayer->Set_Guardian(pGuardian);
-	//	CDamageMgr::GetInstance()->Set_Guardian(pGuardian);
-	//	CMonsterMgr::GetInstance()->AddGuardian(pGuardian);
-	//}
-	//
-	//if (FAILED(pLayer->Add_GameObject(L"AncientGuardian", pGameObject)))
-	//	return E_FAIL;
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
 

@@ -66,16 +66,15 @@ private:
 
 private:
 	//플레이어 정보
-
 	float m_fHp = 100.f;
 	float m_fMaxHp = 100.f;
 	float m_fMeleeDmg = 10.f;
 	float m_fBowDmg = 15.f;
-	float m_fMoveSpeed = 30.f;
-
+	float m_fMoveSpeed = 20.f;
+	
 	ARMOR_TYPE m_eArmorType = ARMOR_NONE;
 	_matrix m_matPartWorld[PART_END];
-
+	
 	//공격모션
 	int   m_iComboStep = 0;      // 0=대기, 1=우→좌, 2=좌→우, 3=찌르기
 	float m_fAtkTime = 0.f;    // 현재 공격 경과 시간

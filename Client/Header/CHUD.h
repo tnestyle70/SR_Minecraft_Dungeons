@@ -37,6 +37,8 @@ public:
 	void Set_NetworkPlayer(CNetworkPlayer* pPlayer) { m_pNetworkPlayer = pPlayer; }
 	void Clear_Player() { m_pPlayer = nullptr; m_pNetworkPlayer = nullptr; }
 
+	void ShowScore(bool bShow) { m_bShowScore = bShow; }
+
 private:
 	HRESULT			Add_Component();
 	//UI 렌더링 설정
@@ -54,6 +56,8 @@ private:
 	void Render_MissionComplete();
 	//죽음
 	void Render_Death();
+	//킬 데스 스코어
+	void Render_Score();
 
 private:
 	Engine::CRcTex* m_pBufferCom = nullptr;
@@ -134,6 +138,11 @@ private:
 	float m_fMissionCoolTime = 0.f;
 	float m_fMissionDuration = 1.f;
 
+	//킬 데스 관리 
+	int m_iKillCount = 0;
+	int m_iDeathCount = 0;
+	bool m_bShowScore = false;
+	
 	//원본 행렬 저장
 	_matrix m_matOriginView;
 	_matrix m_matOriginProj;

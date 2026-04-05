@@ -54,8 +54,8 @@ HRESULT CPlayer::Ready_GameObject()
 		return E_FAIL;
 	
 	//m_pTransformCom->Set_Pos(0.f, 10.f, 0.f);
-	//m_pTransformCom->Set_Pos(48.f, 9.f, 97.f);
-	m_pTransformCom->Set_Pos(-48.f, 1.f, -163.f);
+	m_pTransformCom->Set_Pos(48.f, 9.f, 97.f);
+	//m_pTransformCom->Set_Pos(-48.f, 1.f, -163.f);
 	
 	m_eArmorType = ARMOR_BARDSGARD;
 	

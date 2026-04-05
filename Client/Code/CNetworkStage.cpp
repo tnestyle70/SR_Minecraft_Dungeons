@@ -25,7 +25,7 @@
 #include "CLightMgr.h"
 #include "CSoundMgr.h"
 #include "CDamageMgr.h"
-#include "CMonsterMgr.h"
+#include "CCursorMgr.h"
 
 CNetworkStage::CNetworkStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -54,11 +54,15 @@ HRESULT CNetworkStage::Ready_Scene()
 
 	CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_GBStage.wav", 1.f);
 
+	CCursorMgr::GetInstance()->SetCursorState(eCursorState::DEFAULT);
+
 	return S_OK;
 }
 
 _int CNetworkStage::Update_Scene(const _float& fTimeDelta)
 {
+	CCursorMgr::GetInstance()->SetCursorState(eCursorState::DEFAULT);
+
 	_int iExit = CScene::Update_Scene(fTimeDelta);
 
 	// ── 네트워크 수신 + 원격 플레이어 업데이트 ──────────────────────────
@@ -361,7 +365,7 @@ HRESULT CNetworkStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 	if (!pDynamicCam)
 		return E_FAIL;
 	
-	pDynamicCam->SetActionCam(eActionCamType::GB_STAGE);
+	//pDynamicCam->SetActionCam(eActionCamType::GB_STAGE);
 	
 	//카메라 오프셋 설정
 	_vec3 vOffset = { -12.f, 30.f, -12.f };
@@ -474,12 +478,13 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	if (pPlayer)
 	{
 		pHUD->Set_NetworkPlayer(pPlayer);
+		pHUD->ShowScore(true);
 	}
 	else
 	{
 		return E_FAIL;
 	}
-
+	
 	//TriggerBoxMgr
 	//CNetworkPlayer* pPlayer = dynamic_cast<CNetworkPlayer*>(pGameObject);
 	CCollider* pCollider = pPlayer
@@ -518,9 +523,8 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	//char szNick[32];
 	//sprintf_s(szNick, sizeof(szNick), "Player%u", GetCurrentProcessId() % 10000);
 	//CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.61", 9000, szNick);
-	CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.61", 9000, "pending");
+	CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.155", 9000, "pending");
 	//CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "10.78.171.237", 9000, "pending");
-
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
 

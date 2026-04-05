@@ -34,7 +34,7 @@ private:
 	D3DXQUATERNION m_qFrom; //보간 시작점
 	D3DXQUATERNION m_qTo; //보간 목표점
 
-	float m_fBlendTime = 0.5f; //한 번 회전에 걸리는 시간
+	float m_fBlendTime = 0.6f; //한 번 회전에 걸리는 시간
 	float m_fBlendAcc = 0.f; //경과 시간 누적
 	bool m_bRotating = false; //현재 회전 중인지 아닌지 판단
 	float m_fIdleAcc = 0.15f; //멈춤 대기 시간 누적

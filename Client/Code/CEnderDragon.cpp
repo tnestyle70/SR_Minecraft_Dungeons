@@ -16,6 +16,7 @@
 #include "CFontMgr.h"
 #include "CNetworkMgr.h"
 #include "CSoundMgr.h"
+#include "CEventBus.h"
 
 using json = nlohmann::json;
 
@@ -137,17 +138,34 @@ _int CEnderDragon::Update_GameObject(const _float& fTimeDelta)
 		if (!m_bDeadSoundPlayed)
 		{
 			CSoundMgr::GetInstance()->PlayEffect(L"Effect/Ender_Dead2.wav", 1.f);
-			//Dissolve();
 			m_bDeadSoundPlayed = true;
-			return -1;
+			m_bDissolving = true;
+			m_fDissolveAmt = 0.f;
+		}
+		if (m_bDissolving)
+		{
+			const _float dt = min(fTimeDelta, 0.05f);
+			m_fDissolveAmt += dt / m_fDissolveDuration;
+			if (m_fDissolveAmt >= 1.f)
+			{
+				m_fDissolveAmt = 1.f;
+				return -1;  // fully dissolved → remove
+			}
+
+			// Keep rendering (Render_GameObject will use dissolve shader)
+			CRenderer::GetInstance()->Add_RenderGroup(RENDER_NONALPHA, this);
+			return 0;
 		}
 		return -1;
 	}
+	//드래곤 공격 이전 데미지 체크
+	bool bWasAlive = (m_pPlayer && !m_pPlayer->Is_Dead());
+
 	//데미지 체크
 	Check_Hit();
 	//플레이어 공격 이후 데미지 들어가기 체크
 	Check_PlayerAttack();
-	
+
 	// Clamp fTimeDelta: prevent first-frame spike during scene load
 	const _float dt = min(fTimeDelta, 0.05f);
 
@@ -168,6 +186,15 @@ _int CEnderDragon::Update_GameObject(const _float& fTimeDelta)
 	default: break;
 	}
 
+	//공격 이후 플레이어 사망 여부 판단
+	if (bWasAlive && m_pPlayer->Is_Dead())
+	{
+		FGameEvent event;
+		event.eType = eEventType::PLAYER_DEAD;
+		event.iValue = -1;
+		CEventBus::GetInstance()->Publish(event);
+	}
+
 	// ── Evaluate JSON-based state transitions ─────────────────────────────────
 	//Evaluate_Transitions();
 
@@ -183,10 +210,10 @@ _int CEnderDragon::Update_GameObject(const _float& fTimeDelta)
 	// ── Update bone colliders + player collision ───────────────────────────────
 	Update_BoneColliders();
 	Check_BodyCollision();
-
+	
 	// ── Chain solving (after Spine[0] position finalized) ────────────────────────────
 	Solve_FollowLeader(m_Spine, ENDER_DRAGON_SPINE_COUNT);
-
+	
 	// Neck root = slightly above Spine[0]
 	m_Neck[0].vPos = m_Spine[0].vPos + _vec3(0.f, 0.5f, 0.f);
 
@@ -287,12 +314,29 @@ void CEnderDragon::LateUpdate_GameObject(const _float& fTimeDelta)
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Render_GameObject()
 {
-	if (m_bDead)
+	if (m_bDead && !m_bDissolving)
 		return;
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
 	m_pGraphicDev->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
 
 	if (m_pTextureCom) m_pTextureCom->Set_Texture(0);
+
+	// ── Dissolve shader begin ──
+	ID3DXEffect* pFX = nullptr;
+	if (m_bDissolving)
+	{
+		pFX = CScreenFX::GetInstance()->Get_Effect();
+		if (pFX)
+		{
+			pFX->SetTexture("NoiseMap", CScreenFX::GetInstance()->Get_NoiseTex());
+			pFX->SetFloat("fDissolveAmt", m_fDissolveAmt);
+			pFX->SetTechnique("TechDragonDissolve");
+
+			UINT numPasses = 0;
+			pFX->Begin(&numPasses, 0);
+			pFX->BeginPass(0);
+		}
+	}
 
 	Render_Chain(m_Spine, ENDER_DRAGON_SPINE_COUNT);
 	Render_Chain(m_Neck, ENDER_DRAGON_NECK_COUNT);
@@ -310,16 +354,24 @@ void CEnderDragon::Render_GameObject()
 	Render_Chain(m_WingR, ENDER_DRAGON_WING_COUNT);
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
 
-	// Breath flame rendering
-	for (auto& pFlame : m_vecVoidFlames)
+	// ── Dissolve shader end ──
+	if (pFX && m_bDissolving)
 	{
-		if (pFlame && !pFlame->Is_Dead())
-			pFlame->Render_GameObject();
+		pFX->EndPass();
+		pFX->End();
 	}
 
-	// 3D beam breath
-	if (CBreathFlame::GetInstance()->Is_Active())
-		CBreathFlame::GetInstance()->Render();
+	// ── Flame/Beam (dissolving 중에는 스킵) ──
+	if (!m_bDissolving)
+	{
+		for (auto& pFlame : m_vecVoidFlames)
+		{
+			if (pFlame && !pFlame->Is_Dead())
+				pFlame->Render_GameObject();
+		}
+		if (CBreathFlame::GetInstance()->Is_Active())
+			CBreathFlame::GetInstance()->Render();
+	}
 
 	// ImGui debug panel
 	//Render_DebugPanel();
@@ -477,11 +529,11 @@ void CEnderDragon::Update_IDLE(const _float& fTimeDelta)
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_Attack(const _float& fTimeDelta)
 {
-	if (m_fDisEngageRange < DistToPlayer())
-	{
-		Transition_State(eEnderDragonState::IDLE);
-		return;
-	}
+	//if (m_fDisEngageRange < DistToPlayer())
+	//{
+	//	Transition_State(eEnderDragonState::IDLE);
+	//	return;
+	//}
 
 	//CTransform* pTransform = m_pPlayer->Get_Transform();
 	//if (pTransform) pTransform->Get_Info(INFO_POS, &m_vPlayerPos);
@@ -509,11 +561,11 @@ void CEnderDragon::Update_Attack(const _float& fTimeDelta)
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_BREATH(const _float& fTimeDelta)
 {
-	if (m_fDisEngageRange < DistToPlayer())
-	{
-		Transition_State(eEnderDragonState::IDLE);
-		return;
-	}
+	//if (m_fDisEngageRange < DistToPlayer())
+	//{
+	//	Transition_State(eEnderDragonState::IDLE);
+	//	return;
+	//}
 
 	// Update player position
 	//CComponent* pCom = CManagement::GetInstance()->Get_Component(
@@ -844,11 +896,11 @@ void CEnderDragon::Update_TailAttack(const _float& fTimeDelta)
 	}
 	
 	// ── Time expired -> return to CIRCLE ──
-	if (m_fStateTimer >= m_fTailAttackDuration)
-	{
-		Transition_State(eEnderDragonState::CIRCLE_DIVE);
-		return;
-	}
+	//if (m_fStateTimer >= m_fTailAttackDuration)
+	//{
+	//	Transition_State(eEnderDragonState::CIRCLE_DIVE);
+	//	return;
+	//}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1244,8 +1296,19 @@ void CEnderDragon::Transition_State(eEnderDragonState eNext)
 		m_fWingSpeed = 7.0f;
 		m_fWingAmp = D3DX_PI * 0.55f;
 		m_bTailHitApplied = false;
+
+		//Calculate Rush Target
+		_vec3 vRushDir = m_vPlayerPos - m_Spine[0].vPos;
+		vRushDir.y = 0.f;
+		_float fLen = D3DXVec3Length(&vRushDir);
+		if (fLen > 0.1f)
+			D3DXVec3Normalize(&vRushDir, &vRushDir);
+		else
+			vRushDir = m_Spine[0].vDir;
+
+		m_vTailRushTarget = m_vPlayerPos + vRushDir * m_fCircleRadius * 10.f;
+		m_vTailRushTarget.y = m_vPlayerPos.y + 2.f;
 		break;
-	default: break;
 	}
 }
 
@@ -1481,6 +1544,10 @@ void CEnderDragon::ApplyServerSync()
 	m_iMaxHP = sync.iMaxHP;
 	m_bDead = sync.bDead;
 
+	// 타겟 위치 동기화 (모든 FSM 함수에서 사용)
+	m_vPlayerPos = _vec3(sync.fTargetX, sync.fTargetY, sync.fTargetZ);
+	m_iServerTargetId = sync.iTargetPlayerId;
+
 	// FSM 상태 전환 (서버가 다른 상태를 지시하면 강제 전환)
 	eEnderDragonState eServerState = static_cast<eEnderDragonState>(sync.iState);
 	if (m_eState != eServerState)
@@ -1488,9 +1555,8 @@ void CEnderDragon::ApplyServerSync()
 		Transition_State(eServerState);
 	}
 
-	// 타겟 위치 동기화 (모든 FSM 함수에서 사용)
-	m_vPlayerPos = _vec3(sync.fTargetX, sync.fTargetY, sync.fTargetZ);
-	m_iServerTargetId = sync.iTargetPlayerId;
+	//서버 타이머 동기화
+	m_fStateTimer = sync.fStateTimer;
 
 	// 소비 처리: 같은 데이터로 반복 전환 방지
 	CNetworkMgr::GetInstance()->ConsumeEnderDragonSync();

@@ -37,6 +37,9 @@ public:
     ID3DXEffect* Get_Effect() const { return m_pEffect; }
     IDirect3DTexture9* Get_NoiseTex() const { return m_pNoiseTex; }
 
+    ID3DXEffect* Get_Effect() { return m_pEffect; }
+    IDirect3DTexture9* Get_NoiseTex() { return m_pNoiseTex; }
+
 private:
     HRESULT Create_RenderTarget(_uint iW, _uint iH);
     HRESULT Create_DepthBuffer(_uint iW, _uint iH);

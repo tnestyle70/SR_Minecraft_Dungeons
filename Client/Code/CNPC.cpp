@@ -119,19 +119,17 @@ void CNPC::Interact()
     if (!m_pDialogueBox)
         return;
 
+    if (m_pDialogueBox->Is_Visible())
+        return;
+
     if (!m_bSoundPlay)
     {
         CSoundMgr::GetInstance()->PlayEffect(L"Effect/Effect_NPC.wav", 1.f);
         m_bSoundPlay = true;
     }
 
-    if (m_pDialogueBox->Is_Visible())
-    {
-        m_pDialogueBox->Hide();
-        return;
-    }
-
     FGameEvent event;
+
     switch (m_eType)
     {
     case eNPCType::NPC_MONSTER:

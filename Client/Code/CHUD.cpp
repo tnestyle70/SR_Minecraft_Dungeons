@@ -29,13 +29,13 @@ HRESULT CHUD::Ready_GameObject()
 	if (FAILED(Add_Component()))
 		return E_FAIL;
 
-	//하트 위치 사이즈 지정
-	m_fX = 595.f; m_fY = 622.f;
-	m_fW = 90.f; m_fH = 80.f;
-
+	//빈하트 위치 사이즈 지정
+	m_fX = 590.f; m_fY = 616.f;
+	m_fW = 104.f; m_fH = 92.f;
+	
 	//포션 쿨타임 위치 사이즈 지정
-	m_fPosionX = 690.f; m_fPosionY = 694.f;
-	m_fPosionW = 53.f; m_fPosionH = 65.f;
+	m_fPosionX = 696.f; m_fPosionY = 694.f;
+	m_fPosionW = 48.f; m_fPosionH = 62.f;
 
 	//미션 완료 텍스트
 	m_fMissionComX = 470.f; m_fMissionComY = 80.f;
@@ -91,7 +91,18 @@ HRESULT CHUD::Ready_GameObject()
 			case eMissionType::MISSION_NPC2:   m_bMissionNPC2 = true; break;
 			}
 		});
-	
+	//킬 데스 이벤트 버스 등록
+	CEventBus::GetInstance()->Subscribe(eEventType::PLAYER_KILL, this,
+		[this](const FGameEvent& event)
+		{
+			m_iKillCount += 1;
+		});
+	CEventBus::GetInstance()->Subscribe(eEventType::PLAYER_DEAD, this,
+		[this](const FGameEvent& event)
+		{
+			m_iDeathCount += 1;
+		});
+
 	return S_OK;
 }
 
@@ -261,6 +272,7 @@ void CHUD::Render_GameObject()
 	Render_Mission();
 	Render_MissionComplete();
 	Render_Death();
+	Render_Score();
 	
 	//Empty Heart 비율에 따른 렌더
 	if (fDamageRatio > 0.f)
@@ -619,6 +631,26 @@ void CHUD::Render_Death()
 		L"Font_Minecraft", countdownBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 }
 
+void CHUD::Render_Score()
+{
+	if (!m_bShowScore)
+		return;
+	//킬
+	_tchar scoreBuf[32];
+	_vec2 vPos = { 20.f, 20.f };
+	swprintf_s(scoreBuf, L"Kill : %d", m_iKillCount);
+	
+	CFontMgr::GetInstance()->Render_Font(
+		L"Font_Minecraft", scoreBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+
+	//데스 
+	vPos.y += 30.f;
+	swprintf_s(scoreBuf, L"Death : %d", m_iDeathCount);
+
+	CFontMgr::GetInstance()->Render_Font(
+		L"Font_Minecraft", scoreBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+}
+
 HRESULT CHUD::Add_Component()
 {
 	Engine::CComponent* pComponent = nullptr;
@@ -763,6 +795,8 @@ void CHUD::Free()
 	CEventBus::GetInstance()->Unsubscribe(eEventType::MONSTER_DEAD, this);
 	CEventBus::GetInstance()->Unsubscribe(eEventType::MISSION_COMPLETE, this);
 	CEventBus::GetInstance()->Unsubscribe(eEventType::MISSION_ACCEPT, this);
-	
+	CEventBus::GetInstance()->Unsubscribe(eEventType::PLAYER_KILL, this);
+	CEventBus::GetInstance()->Unsubscribe(eEventType::PLAYER_DEAD, this);
+
 	CGameObject::Free();
 }
