@@ -32,7 +32,7 @@ HRESULT CMonster::Ready_GameObject(_vec3& vPos)
 {
     if (FAILED(Add_Component()))
         return E_FAIL;
-
+    
     switch (m_eType)
     {
     case EMonsterType::ZOMBIE:
@@ -138,7 +138,7 @@ _int CMonster::Update_GameObject(const _float& fTimeDelta)
     if (m_eType == EMonsterType::CREEPER && !m_bExploded)
     {
         if (pAnim && pAnim->Get_State() == EMonsterState::ATTACK
-            && pAnim->Get_StateTime() >= 5.f)
+            && pAnim->Get_StateTime() >= 2.f)
         {
             _vec3 vPos;
             m_pTransformCom->Get_Info(INFO_POS, &vPos);

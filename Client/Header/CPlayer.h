@@ -10,7 +10,7 @@
 
 class CMonster;
 class CRedStoneGolem;
-class CAncientGuardian; 
+class CAncientGuardian;
 class CEnderEye;
 
 enum BODYPART
@@ -37,13 +37,13 @@ protected:
 	explicit CPlayer(LPDIRECT3DDEVICE9 pGraphicDev);
 	explicit CPlayer(const CGameObject& rhs);
 	virtual ~CPlayer();
-
+	
 public:
 	virtual			HRESULT		Ready_GameObject();
 	virtual			_int		Update_GameObject(const _float& fTimeDelta);
 	virtual			void		LateUpdate_GameObject(const _float& fTimeDelta);
 	virtual			void		Render_GameObject();
-
+	
 private:
 	HRESULT			Add_Component();
 
@@ -59,7 +59,7 @@ private:
 protected:
 	virtual void	Key_Input(const _float& fTimeDelta);
 	_vec3			Picking_OnBlock();
-	_float m_fMoveSpeed = 40.f;
+	_float m_fMoveSpeed = 20.f;
 	_bool	m_bMoving;		// 이동 중 여부
 	_vec3 m_vTargetPos;
 	_bool  m_bHasTarget = false;
@@ -206,12 +206,12 @@ private:
 	//점핑 트랩 발사 방향
 	_vec3 m_vLaunchVelocity = _vec3(0.f, 0.f, 0.f); 
 	_bool m_bOnGround = false;
-
-
+	
 	//구르기
 	_float m_fRollDuration = 0.5f;   
 	_float m_fRollSpeed = 22.f;   
-	_float m_fRollCoolMax = 3.f;    
+	_float m_fRollCoolMax = 1.f;    
+
 
 
 	//=======FootPrint Effect Variable=======

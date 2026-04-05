@@ -381,6 +381,9 @@
     <ClCompile Include="..\Code\CJSMonster.cpp">
       <Filter>02. GameObject\17. JS</Filter>
     </ClCompile>
+    <ClCompile Include="..\Code\CTJMagnet.cpp">
+      <Filter>02. GameObject</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Header\StageData.h" />
@@ -767,6 +770,9 @@
     </ClInclude>
     <ClInclude Include="..\Header\CJSMonster.h">
       <Filter>02. GameObject\17. JS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Header\CTJMagnet.h">
+      <Filter>02. GameObject</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

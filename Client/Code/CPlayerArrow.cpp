@@ -12,7 +12,7 @@ CPlayerArrow::CPlayerArrow(LPDIRECT3DDEVICE9 pGraphicDev)
     , m_pTextureCom(nullptr)
     , m_pColliderCom(nullptr)
     , m_vDir{}
-    , m_fSpeed(20.f)
+    , m_fSpeed(30.f)
     , m_fDamage(0.f)
     , m_fLifeTime(0.f)
     , m_bDead(false)
@@ -139,8 +139,8 @@ void CPlayerArrow::Render_GameObject()
         return;
 
     _matrix matScale, matRotX90, matRotY, matTrans, matWorld;
-    D3DXMatrixScaling(&matScale, 0.3f, 0.1f, 0.3f);
-    D3DXMatrixRotationX(&matRotX90, D3DXToRadian(90.f));  // 평면으로 눕히기
+    D3DXMatrixScaling(&matScale, 0.7f, 0.7f, 0.7f);
+    D3DXMatrixRotationX(&matRotX90, D3DXToRadian(45.f));  // 평면으로 눕히기
     D3DXMatrixRotationY(&matRotY, fAngleY + D3DXToRadian(-60.f)); // 틀어져있는 이미지 1자로 세우기 
     D3DXMatrixTranslation(&matTrans, vPos.x, vPos.y, vPos.z);
 
@@ -158,7 +158,7 @@ void CPlayerArrow::Render_GameObject()
     m_pGraphicDev->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
     m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
     m_pGraphicDev->SetTexture(0, nullptr);
-    m_pColliderCom->Render_Collider();
+   // m_pColliderCom->Render_Collider();
 }
 
 CPlayerArrow* CPlayerArrow::Create(LPDIRECT3DDEVICE9 pGraphicDev,

@@ -3,7 +3,7 @@
 #include "CMonster.h"
 #include "CMonsterMgr.h"
 #include "CTJExpOrb.h"
-
+#include "CTJMagnet.h"
 
 class CTJPlayer;
 class CPlayer;
@@ -29,7 +29,8 @@ public:
     void Set_TJPlayer(CTJPlayer* pPlayer) { m_pTJPlayer = pPlayer; }
     void Set_SpawnInterval(float f) { m_fSpawnInterval = f; }
     void Stop_Spawn() { m_bSpawnStop = true; }
-
+    vector<CTJExpOrb*>& Get_ExpOrbs() { return m_vecExpOrbs; }
+    void Render_Magnet();
 private:
     LPDIRECT3DDEVICE9 m_pGraphicDev = nullptr;
     CPlayer* m_pPlayer = nullptr;
@@ -43,6 +44,8 @@ private:
     CTJPlayer* m_pTJPlayer = nullptr;
     vector<CMonster*> m_vecDeadMonsters;
     bool m_bSpawnStop = false;
+    vector<CTJMagnet*> m_vecMagnets;
+
 private:
     virtual void Free();
 };

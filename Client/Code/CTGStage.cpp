@@ -217,12 +217,16 @@ void CTGStage::Render_Scene()
 	if (CInventoryMgr::GetInstance()->IsActive())
 	{
 		CInventoryMgr::GetInstance()->Render();
+
 		return;
 	}
 
 	CBlockMgr::GetInstance()->Render();
 
 	CParticleMgr::GetInstance()->Render();
+
+	CTJSpawnMgr::GetInstance()->Render_Magnet();
+
 	//문 렌더링
 	if (m_bDoorSpawned && m_pDoorBufferCom && m_pDoorTextureCom)
 	{
