@@ -12,7 +12,7 @@ CPlayerArrow::CPlayerArrow(LPDIRECT3DDEVICE9 pGraphicDev)
     , m_pTextureCom(nullptr)
     , m_pColliderCom(nullptr)
     , m_vDir{}
-    , m_fSpeed(30.f)
+    , m_fSpeed(50.f)
     , m_fDamage(0.f)
     , m_fLifeTime(0.f)
     , m_bDead(false)
@@ -137,7 +137,7 @@ void CPlayerArrow::Render_GameObject()
 
     if (nullptr == m_pTextureCom)
         return;
-
+    
     _matrix matScale, matRotX90, matRotY, matTrans, matWorld;
     D3DXMatrixScaling(&matScale, 0.7f, 0.7f, 0.7f);
     D3DXMatrixRotationX(&matRotX90, D3DXToRadian(45.f));  // 평면으로 눕히기

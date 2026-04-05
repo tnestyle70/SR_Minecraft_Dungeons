@@ -214,6 +214,9 @@ void CServer::RecvThread()
                     HandleEnderDragonDamage(pSession,
                         reinterpret_cast<const PKT_C2S_EnderDragonDamage*>(pHdr));
                     break;
+                case C2S_PLAYER_DEAD:
+                    HandlePlayerDead(pSession, reinterpret_cast<const PKT_C2S_PlayerDead*>(pHdr));
+                    break;
                 default:
                     LOG_WARN("Session %d unknown packet type: %d", pSession->GetSessionId(), pHdr->wType);
                     break;
@@ -413,6 +416,19 @@ void CServer::HandleEnderDragonDamage(CSession* pSession, const PKT_C2S_EnderDra
         d.iHP = 0;
         d.bDead = true;
     }
+}
+
+void CServer::HandlePlayerDead(CSession* pSession, const PKT_C2S_PlayerDead* pPkt)
+{
+    if (!pSession->IsLoggedIn())
+        return;
+    
+    PKT_S2C_PlayerDead out = {};
+    FillHeader(out, S2C_PLAYER_DEAD);
+    out.iVictimPlayerId = pSession->GetPlayerId();
+    out.iKillerPlayerId = pPkt->iKillPlayerId;
+
+    CSessionMgr::GetInstance()->BroadcastToLoggedIn(&out, sizeof(out));
 }
 
 // =====================================================================

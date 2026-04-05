@@ -31,6 +31,9 @@ private:
     //EnderDragon
     void HandleEnderDragonDamage(CSession* pSession, 
         const PKT_C2S_EnderDragonDamage* pPkt);
+    //PlayerDead
+    void HandlePlayerDead(CSession* pSession,
+        const PKT_C2S_PlayerDead* pPkt);
 
     // 세션 종료 공통 처리: 스폰 해제 + Despawn 브로드캐스트 + OnDisconnect
     void HandleDisconnect(int iSessId, int iPlayerId, const char* szNickname);

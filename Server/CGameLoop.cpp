@@ -168,6 +168,19 @@ void CGameLoop::UpdateEnderDragon(float fDt)
             }
         }
     }
+    // After target position update (line 170), before position warp
+    if (iNearest >= 0)
+    {
+        float fdx = dragon.fTargetX - dragon.fX;
+        float fdz = dragon.fTargetZ - dragon.fZ;
+        float flen = sqrtf(fdx * fdx + fdz * fdz);
+        if (flen > 0.1f)
+        {
+            dragon.fDirX = fdx / flen;
+            dragon.fDirZ = fdz / flen;
+        }
+    }
+
    //dist to target
     if (dragon.iState != 0 && iNearest >= 0)  
     {
@@ -198,19 +211,6 @@ void CGameLoop::UpdateEnderDragon(float fDt)
             dragon.fStateTimer = 0.f;
         }
 
-        else if (dragon.iHP <= dragon.iMaxHP / 2 && dragon.fStateTimer > 6.f)
-        {
-            dragon.iState = 4; // TAIL_ATTACK
-            dragon.fStateTimer = 0.f;
-        }
-        break;
-
-    case 4: // TAIL_ATTACK
-        if (dragon.fStateTimer > 6.f)
-        {
-            dragon.iState = 3; // → CIRCLE_DIVE
-            dragon.fStateTimer = 0.f;
-        }
         break;
     }
 }

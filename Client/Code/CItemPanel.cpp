@@ -68,8 +68,8 @@ void CItemPanel::Render_GameObject()
 
 	EndUIRender();
 
-	_vec2 vNamePos = {800.f, 100.f};
-	_vec2 vDescPos = {800.f, 150.f};
+	_vec2 vNamePos = {900.f, 100.f};
+	_vec2 vDescPos = {900.f, 150.f};
 
 	const _tchar* szName = nullptr;
 	const _tchar* szDesc = nullptr;
@@ -78,7 +78,7 @@ void CItemPanel::Render_GameObject()
 	{
 	case eEquipType::MELEE:
 		szName = L"Iron Sword";
-		szDesc = L"Damage : 1";
+		szDesc = L"Damage : 10";
 		break;
 	case eEquipType::ARMOR:
 		szName = L"Robe";
@@ -86,7 +86,7 @@ void CItemPanel::Render_GameObject()
 		break;
 	case eEquipType::RANGED:
 		szName = L"Bow";
-		szDesc = L"Damage : 1";
+		szDesc = L"Damage : 10";
 		break;
 	default:
 		break;

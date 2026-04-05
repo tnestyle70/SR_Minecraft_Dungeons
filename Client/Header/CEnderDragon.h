@@ -257,7 +257,7 @@ private:
 	_float m_fCircleAttackTimer  = 0.f;   // current attack phase timer
 	_float m_fVoidFlameDuration  = 4.0f;  // 화염포 발사 지속 시간 
 	_float m_fBeamDuration       = 2.0f;  // 빔 지속 시간 2초
-	_float m_fTailAttackDuration = 3.f; //꼬리 공격 지속 시간
+	_float m_fTailAttackDuration = 2.f; //꼬리 공격 지속 시간
 	
 	//enum으로 Circle Dive 페이즈 관리
 	eCirclePhase m_eCirclePhase = eCirclePhase::PHASE_VOIDFLAME;
@@ -319,6 +319,11 @@ private:
 	static constexpr _float m_fAttackDuration = 6.f;
 	static constexpr _float m_fTailHPRatio = 0.5f;
 	static constexpr _int m_iPatrolCount = 4;
+
+	//Dissolve
+	float m_fDissolveAmt = 0.f;
+	float m_fDissolveDuration = 2.5f;
+	bool m_bDissolving = false;
 
 public:
 	static CEnderDragon* Create(LPDIRECT3DDEVICE9 pGraphicDev);

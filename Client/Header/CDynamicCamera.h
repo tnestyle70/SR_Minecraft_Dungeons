@@ -53,6 +53,9 @@ public:
 
 	void SetFollowOffset(_vec3 vOffset) { m_vFollowOffset = vOffset; }
 
+	//바로 플레이어 시점으로 스냅
+	void SnapToTarget();
+
 private:
 	void Set_SquidCoastActionCam();
 	void Set_GBStageActionCam();

@@ -266,6 +266,7 @@ _vec3 CCollider::Resolve(const AABB& other) const
 
 void CCollider::Render_Collider()
 {
+	/*
 	//디버깅용 콜라이더 렌더링
 	if (!m_pDebugMesh)
 	{
@@ -302,6 +303,7 @@ void CCollider::Render_Collider()
 	//_matrix matIdentity;
 	//D3DXMatrixIdentity(&matIdentity);
 	//m_pGraphicDev->SetTransform(D3DTS_WORLD, &matIdentity);
+	*/
 }
 
 void CCollider::Render_OBB()
