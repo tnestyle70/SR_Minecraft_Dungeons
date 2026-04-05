@@ -541,8 +541,8 @@ void CTJPlayer::Apply_Ability(ETJAbility eAbility)
 
     case ETJAbility::LIGHTNING:
         m_bLightning = true;
-        if (iLevel == 2) m_fLightningInterval = 3.f;
-        if (iLevel == 3) m_fLightningInterval = 2.f;
+        if (iLevel == 2) m_fLightningInterval = 2.f;
+        if (iLevel == 3) m_fLightningInterval = 0.5f;
         break;
 
     case ETJAbility::FIRE_TRAIL:
