@@ -37,22 +37,22 @@ HRESULT CMonster::Ready_GameObject(_vec3& vPos)
     {
     case EMonsterType::ZOMBIE:
         m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
-        m_iHp = 2;
+        m_iHp = 20;
         m_iAtkDamage = 10;
         break;
     case EMonsterType::SKELETON:
         m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
-        m_iHp = 2;
+        m_iHp = 20;
         m_iAtkDamage = 10;
         break;
     case EMonsterType::CREEPER:
         m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
-        m_iHp = 2;
+        m_iHp = 20;
         m_iAtkDamage = 10;
         break;
     case EMonsterType::SPIDER:
         m_pTransformCom->Set_Pos(vPos.x, vPos.y, vPos.z);
-        m_iHp = 2;
+        m_iHp = 20;
         m_iAtkDamage = 10;
         break;
     }
@@ -524,6 +524,12 @@ void CMonster::Take_Damage(int iDamage)
             fDist = D3DXVec3Length(&(vPlayerPos - vMyPos));
         }
     }
+    else if (m_bHasTarget)
+    {
+        _vec3 vMyPos;
+        m_pTransformCom->Get_Info(INFO_POS, &vMyPos);
+        fDist = D3DXVec3Length(&(m_vTargetPos - vMyPos));
+    }
 
     CMonsterAnim* pAnim = dynamic_cast<CMonsterAnim*>(m_pBodyCom->Get_Anim());
     if (!pAnim) return;
@@ -577,7 +583,6 @@ void CMonster::Take_Damage(int iDamage)
         }
     }
 }
-
 void CMonster::Update_Arrow(const _float& fTimeDelta)
 {
     for (auto* pArrow : m_vecArrows)

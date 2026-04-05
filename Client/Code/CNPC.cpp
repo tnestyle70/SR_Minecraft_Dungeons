@@ -118,20 +118,7 @@ void CNPC::Interact()
 {
     if (!m_pDialogueBox)
         return;
-    FGameEvent event;
-    switch (m_eType)
-    {
-    case eNPCType::NPC_MONSTER:
-        event.eType = eEventType::MISSION_ACCEPT;
-        event.iValue = 0; 
-        CEventBus::GetInstance()->Publish(event);
-        break;
-    case eNPCType::NPC_SKELETON:
-        event.eType = eEventType::MISSION_ACCEPT;
-        event.iValue = 1; 
-        CEventBus::GetInstance()->Publish(event);
-        break;
-    }
+
     if (!m_bSoundPlay)
     {
         CSoundMgr::GetInstance()->PlayEffect(L"Effect/Effect_NPC.wav", 1.f);
@@ -139,9 +126,52 @@ void CNPC::Interact()
     }
 
     if (m_pDialogueBox->Is_Visible())
+    {
         m_pDialogueBox->Hide();
-    else
+        return;
+    }
+
+    FGameEvent event;
+    switch (m_eType)
+    {
+    case eNPCType::NPC_MONSTER:
+        event.eType = eEventType::MISSION_ACCEPT;
+        event.iValue = 0;
+        CEventBus::GetInstance()->Publish(event);
         m_pDialogueBox->Show(L"Knight", L"어서오게, 여행자여! 마침 몬스터들 때문에 골머리를 썩고 있었다네");
+        break;
+
+    case eNPCType::NPC_SKELETON:
+        event.eType = eEventType::MISSION_ACCEPT;
+        event.iValue = 1;
+        CEventBus::GetInstance()->Publish(event);
+        m_pDialogueBox->Show(L"Knight", L"어서오게, 여행자여! 마침 몬스터들 때문에 골머리를 썩고 있었다네");
+        break;
+
+    case eNPCType::NPC_MiNiGame1:
+        m_pDialogueBox->Show(L"NPC", L"어서오게 여행자여! 미니게임인 드래곤 레이드에 도전해보겠는가?");
+        break;
+
+    case eNPCType::NPC_MiNiGame2:
+        m_pDialogueBox->Show(L"NPC", L"어서오게 여행자여! 미니게임인 템플런에 도전해보겠는가?");
+        break;
+
+    case eNPCType::NPC_MiNiGame3:
+        m_pDialogueBox->Show(L"NPC", L"어서오게 여행자여! 미니게임인 쥬신특공대에 도전해보겠는가?");
+        break;
+
+    case eNPCType::NPC_MiNiGame4:
+        m_pDialogueBox->Show(L"NPC", L"어서오게 여행자여! 미니게임인 뮬랫 매드잭에 도전해보겠는가?");
+        break;
+
+    case eNPCType::NPC_MiNiGame5:
+        m_pDialogueBox->Show(L"NPC", L"왜... 내 주식만 떨어지는가... ");
+        break;
+
+    case eNPCType::NPC_MiNiGame6:
+        m_pDialogueBox->Show(L"NPC", L"난...틀렸어 돌아가 ");
+        break;
+    }
 }
 
 bool CNPC::Is_Interactable(const _vec3& vPlayerPos, const _vec3& vPickPos)

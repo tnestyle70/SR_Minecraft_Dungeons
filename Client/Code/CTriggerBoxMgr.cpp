@@ -34,9 +34,9 @@ _int CTriggerBoxMgr::Update(const _float& fTimeDelta)
 		if (pTriggerBox->IsSceneChanged())
 		{
 			m_bSceneChanged = true;
+			m_iTriggeredID = pTriggerBox->Get_TriggerID();  // ← 추가
 		}
 		pTriggerBox->Update_GameObject(fTimeDelta);
-
 		pTriggerBox->CheckCollide(m_pPlayerCollider);
 	}
 
