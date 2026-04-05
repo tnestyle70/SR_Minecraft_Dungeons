@@ -83,8 +83,6 @@ public:
 private:
 	virtual void		Free();
 
-
-
 //플레이어에게 카메라 고정
 public:
 	void SetFollowTarget(Engine::CTransform* pTransform) { m_pTargetTransform = pTransform; }

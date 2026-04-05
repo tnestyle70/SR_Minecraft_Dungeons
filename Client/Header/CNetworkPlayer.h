@@ -11,6 +11,7 @@
 #include "CDynamicCamera.h"
 
 class CEnderDragon;
+class CRemotePlayer;
 
 class CNetworkPlayer : public CGameObject
 {
@@ -32,6 +33,7 @@ private:
 	//_vec3			Picking_OnTerrain();
 	_vec3			Picking_OnBlock();
 	bool Picking_OnDragon();
+	bool Picking_OnRemotePlayer();
 
 	void			Render_Part(BODYPART ePart, _float fAngleX, _float fAngleY, _float fAngleZ,
 		const _matrix& matRootWorld, Engine::CTexture* pTex = nullptr, CPlayerBody* pBuf = nullptr);
@@ -59,6 +61,8 @@ private:
 	bool     m_bRiding = false;
 	bool     m_bGKeyPrev = false;
 	static constexpr float m_fMountRange = 20.f;
+
+	CRemotePlayer* m_pTargetRemotePlayer = nullptr;
 
 private:
 	//플레이어 정보
@@ -136,7 +140,14 @@ public:
 	void Equip(eEquipType eType);
 	void UnEquip(eEquipType eType);
 
+	bool Is_Dead() { return m_fHp <= 0.f; }
+	void Set_Respawned();
+	
 private:
+	//사망, 리스폰
+	bool m_bDead = false;
+	bool m_bRespawned = false;
+	
 	CPlayerBody* m_pBufferCom[PART_END];
 	CPlayerBody* m_pArmorBufferCom[PART_END] = {};
 	Engine::CTransform* m_pTransformCom;
@@ -191,6 +202,7 @@ private:
 	bool  m_bHit = false;
 	float m_fHitTime = 0.f;
 	static constexpr float m_fHitDuration = 0.5f;
+
 	// ender dragon aim target
 	CEnderDragon* m_pTargetDragon = nullptr;
 	int           m_iTargetSpineIdx = -1;

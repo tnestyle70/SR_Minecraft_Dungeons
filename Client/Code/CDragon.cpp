@@ -809,6 +809,32 @@ void CDragon::Force_RootPos(const _vec3& vPos)
 	m_Spine[0].vPos = vPos;
 	m_vMoveTarget = vPos;
 	// 0 0 0 설정시 관성을 없애버림
+	//리스폰시 강제로 되돌아가는 거 막아줌
+	m_vVelocity = _vec3(0.f, 0.f, 0.f);
+	
+	//모든 뼈 체인을 강제로 이동 시켜버려서 Solve_FollowLeader가 다시 끌어오는 것을 막아줌
+	//이동 차이 계산
+	//_vec3 vDelta = vPos - m_Spine[0].vPos;
+
+	//// 모든 Spine 뼈를 동일한 델타만큼 이동
+	//for (int i = 0; i < DRAGON_SPINE_COUNT; ++i)
+	//	m_Spine[i].vPos += vDelta;
+
+	//// Neck, Head, Tail, Wing도 동일하게 이동
+	//for (int i = 0; i < DRAGON_NECK_COUNT; ++i)
+	//	m_Neck[i].vPos += vDelta;
+	//m_Head.vPos += vDelta;
+
+	//for (int i = 0; i < DRAGON_TAIL_COUNT; ++i)
+	//	m_Tail[i].vPos += vDelta;
+
+	//for (int i = 0; i < DRAGON_WING_COUNT; ++i)
+	//{
+	//	m_WingL[i].vPos += vDelta;
+	//	m_WingR[i].vPos += vDelta;
+	//}
+
+	//m_vMoveTarget = vPos;
 	//m_vVelocity = _vec3(0.f, 0.f, 0.f);
 }
 

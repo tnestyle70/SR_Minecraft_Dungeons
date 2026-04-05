@@ -467,6 +467,7 @@ CDynamicCamera* CDynamicCamera::Create(LPDIRECT3DDEVICE9 pGraphicDev,
 // ─────────────────────────────────────────────────────────────────────────────
 void CDynamicCamera::Render_GameObject()
 {
+    /*
     ImGui::Begin("Camera Debug");
 
     ImGui::Text("-- Follow Offset --");
@@ -487,6 +488,7 @@ void CDynamicCamera::Render_GameObject()
     ImGui::Text("Mode: %s", m_bFollowMode ? "Follow" : "Free");
 
     ImGui::End();
+    */
 }
 
 void CDynamicCamera::Free()

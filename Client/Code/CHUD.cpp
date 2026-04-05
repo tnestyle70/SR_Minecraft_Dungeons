@@ -99,6 +99,8 @@ _int CHUD::Update_GameObject(const _float& fTimeDelta)
 {
 	_int iExit = CGameObject::Update_GameObject(fTimeDelta);
 
+	Update_Dead(fTimeDelta);
+
 	Use_Posion(fTimeDelta);
 
 	Update_Missison(fTimeDelta);
@@ -111,6 +113,31 @@ _int CHUD::Update_GameObject(const _float& fTimeDelta)
 void CHUD::LateUpdate_GameObject(const _float& fTimeDelta)
 {
 	CGameObject::LateUpdate_GameObject(fTimeDelta);
+}
+
+void CHUD::Update_Dead(const _float fTimeDelta)
+{
+	if (!m_pNetworkPlayer)
+		return;
+
+	bool bPlayerDead = m_pNetworkPlayer->Is_Dead();
+	//살아있다가 죽음 감지
+	if (bPlayerDead && !m_bDeath)
+	{
+		m_bDeath = true;
+		m_fDeathCooltime = 0.f;
+	}
+
+	if (m_bDeath)
+	{
+		m_fDeathCooltime += fTimeDelta;
+		if (m_fDeathCooltime >= m_fDeathDuration)
+		{
+			m_bDeath = false;
+			m_fDeathCooltime = 0.f;
+			m_pNetworkPlayer->Set_Respawned();
+		}
+	}
 }
 
 void CHUD::Update_Missison(const _float fTimeDelta)
@@ -233,7 +260,8 @@ void CHUD::Render_GameObject()
 	Render_CurrencyCount(); 
 	Render_Mission();
 	Render_MissionComplete();
-
+	Render_Death();
+	
 	//Empty Heart 비율에 따른 렌더
 	if (fDamageRatio > 0.f)
 	{
@@ -533,7 +561,62 @@ void CHUD::Render_MissionComplete()
 
 void CHUD::Render_Death()
 {
-	
+	if (!m_bDeath)
+		return;
+	//검정 반투명 배경 깔기
+	_matrix matBackground;
+	D3DXMatrixTransformation2D(&matBackground,
+		nullptr, 0.f, //클라이언트 사이즈에 대한 death의 비율
+		&_vec2(1.f, 1.f),
+		nullptr, 0.f,
+		&_vec2(0.f, 0.f));
+	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matBackground);
+
+	_matrix matTexBG;
+	D3DXMatrixScaling(&matTexBG, 1.f, 1.f, 1.f);
+	m_pGraphicDev->SetTransform(D3DTS_TEXTURE0, &matTexBG);
+	m_pGraphicDev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+
+	m_pDeathBackground->Set_Texture(0);
+	m_pBufferCom->Render_Buffer();
+
+	//사망 텍스쳐 띄우기
+	float fNDCX = (m_fDeathX + m_fDeathW * 0.5f) / (WINCX * 0.5f) - 1.f;
+	float fNDCY = 1.f - (m_fDeathY + m_fDeathH * 0.5f) / (WINCY * 0.5f);
+
+	_matrix matWorld;
+	D3DXMatrixTransformation2D(&matWorld,
+		nullptr, 0.f, //클라이언트 사이즈에 대한 death의 비율
+		&_vec2(m_fDeathW / WINCX, m_fDeathH / WINCY),
+		nullptr, 0.f,
+		&_vec2(fNDCX, fNDCY));
+	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+
+	_matrix matTexture;
+	D3DXMatrixScaling(&matTexture, 1.f, 1.f, 1.f);
+	m_pGraphicDev->SetTransform(D3DTS_TEXTURE0, &matTexture);
+	m_pGraphicDev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+
+	m_pDeath->Set_Texture(0);
+	m_pBufferCom->Render_Buffer();
+
+	//Respawn 카운트 다운 텍스트
+	float fRemaining = m_fDeathDuration - m_fDeathCooltime;
+	int iCountDown = (int)ceilf(fRemaining);
+	if (iCountDown < 1)
+		iCountDown = 1;
+	if (iCountDown > 5)
+		iCountDown = 5;
+
+
+	//리스폰 카운트 다운
+	_tchar countdownBuf[32];
+	swprintf_s(countdownBuf, L"Respawn %d", iCountDown);
+
+	_vec2 vPos = { (float)(WINCX / 2 - 60), (float)(WINCY / 2 + 80) };
+
+	CFontMgr::GetInstance()->Render_Font(
+		L"Font_Minecraft", countdownBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 }
 
 HRESULT CHUD::Add_Component()
@@ -647,6 +730,15 @@ HRESULT CHUD::Add_Component()
 		return E_FAIL;
 
 	m_mapComponent[ID_STATIC].insert({ L"Com_DeathTexture", pComponent });
+
+	//Death Background
+	pComponent = m_pDeathBackground = dynamic_cast<CTexture*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_PosionCoolDown"));
+
+	if (nullptr == pComponent)
+		return E_FAIL;
+
+	m_mapComponent[ID_STATIC].insert({ L"Com_DeathBackgroundTexture", pComponent });
 	
 	return S_OK;
 }
