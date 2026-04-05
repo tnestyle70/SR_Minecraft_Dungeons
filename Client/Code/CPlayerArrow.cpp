@@ -12,7 +12,7 @@ CPlayerArrow::CPlayerArrow(LPDIRECT3DDEVICE9 pGraphicDev)
     , m_pTextureCom(nullptr)
     , m_pColliderCom(nullptr)
     , m_vDir{}
-    , m_fSpeed(20.f)
+    , m_fSpeed(30.f)
     , m_fDamage(0.f)
     , m_fLifeTime(0.f)
     , m_bDead(false)
