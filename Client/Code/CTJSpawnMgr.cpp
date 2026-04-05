@@ -56,43 +56,43 @@ void CTJSpawnMgr::Update(const _float& fTimeDelta)
                 }
             }
         }
-    }
 
-    // 구슬 업데이트 및 흡수
-    for (auto& pOrb : m_vecExpOrbs)
-        pOrb->Update_GameObject(fTimeDelta);
+        // 구슬 업데이트 및 흡수
+        for (auto& pOrb : m_vecExpOrbs)
+            pOrb->Update_GameObject(fTimeDelta);
 
-    // 구슬 흡수 시 경험치 획득
-    for (auto& pOrb : m_vecExpOrbs)
-    {
-        if (pOrb->Is_Dead() && m_pTJPlayer)
-            m_pTJPlayer->Add_Exp(pOrb->Get_Exp());
-    }
-
-    m_vecExpOrbs.erase(
-        remove_if(m_vecExpOrbs.begin(), m_vecExpOrbs.end(),
-            [](CTJExpOrb* p) {
-                if (p->Is_Dead()) { Safe_Release(p); return true; }
-                return false;
-            }),
-        m_vecExpOrbs.end());
-
-    // Y값 아래 떨어진 몬스터 처리
-    for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
-    {
-        for (auto& pMonster : pair.second.vecMonsters)
+        // 구슬 흡수 시 경험치 획득
+        for (auto& pOrb : m_vecExpOrbs)
         {
-            if (!pMonster->IsActive()) continue;
-            Engine::CTransform* pTrans = dynamic_cast<Engine::CTransform*>(
-                pMonster->Get_Component(ID_DYNAMIC, L"Com_Transform"));
-            if (!pTrans) continue;
-            _vec3 vPos;
-            pTrans->Get_Info(INFO_POS, &vPos);
-            if (vPos.y < -10.f)
-                pMonster->Take_Damage(9999);
+            if (pOrb->Is_Dead() && m_pTJPlayer)
+                m_pTJPlayer->Add_Exp(pOrb->Get_Exp());
+        }
+
+        m_vecExpOrbs.erase(
+            remove_if(m_vecExpOrbs.begin(), m_vecExpOrbs.end(),
+                [](CTJExpOrb* p) {
+                    if (p->Is_Dead()) { Safe_Release(p); return true; }
+                    return false;
+                }),
+            m_vecExpOrbs.end());
+        }
+
+        // Y값 아래 떨어진 몬스터 처리
+        for (auto& pair : CMonsterMgr::GetInstance()->Get_MonsterGroups())
+        {
+            for (auto& pMonster : pair.second.vecMonsters)
+            {
+                if (!pMonster->IsActive()) continue;
+                Engine::CTransform* pTrans = dynamic_cast<Engine::CTransform*>(
+                    pMonster->Get_Component(ID_DYNAMIC, L"Com_Transform"));
+                if (!pTrans) continue;
+                _vec3 vPos;
+                pTrans->Get_Info(INFO_POS, &vPos);
+                if (vPos.y < -10.f)
+                    pMonster->Take_Damage(9999);
+            }
         }
     }
-}
 
 void CTJSpawnMgr::Spawn_Monster()
 {

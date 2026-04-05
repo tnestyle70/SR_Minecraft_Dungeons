@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "CNetworkStage.h"
 #include "COceanTypes.h"
 #include "COcean.h"
@@ -265,7 +265,7 @@ _int CNetworkStage::Update_Scene(const _float& fTimeDelta)
 
 	CIronBarMgr::GetInstance()->Update(fTimeDelta);
 
-	CMonsterMgr::GetInstance()->Update(fTimeDelta);
+	//CMonsterMgr::GetInstance()->Update(fTimeDelta);
 
 	//if (GetAsyncKeyState(VK_RETURN) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
 	//{
@@ -298,7 +298,7 @@ void CNetworkStage::LateUpdate_Scene(const _float& fTimeDelta)
 
 	CIronBarMgr::GetInstance()->LateUpdate(fTimeDelta);
 
-	CMonsterMgr::GetInstance()->LateUpdate(fTimeDelta);
+	//CMonsterMgr::GetInstance()->LateUpdate(fTimeDelta);
 
 	//파도 조작
 	if (m_pOcean)
@@ -518,9 +518,9 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	//char szNick[32];
 	//sprintf_s(szNick, sizeof(szNick), "Player%u", GetCurrentProcessId() % 10000);
 	//CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.61", 9000, szNick);
-
 	CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.61", 9000, "pending");
 	//CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "10.78.171.237", 9000, "pending");
+
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
 

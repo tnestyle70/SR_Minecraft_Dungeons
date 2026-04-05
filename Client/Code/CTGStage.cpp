@@ -384,6 +384,11 @@ HRESULT CTGStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	m_pDoorBufferCom = dynamic_cast<Engine::CRcTex*>
 		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_RcTex"));
 
+	m_pMagnetBufferCom = dynamic_cast<Engine::CRcTex*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_RcTex"));
+	m_pMagnetTextureCom = dynamic_cast<Engine::CTexture*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_MagnetTexture"));
+
 	m_pDoorTextureCom = dynamic_cast<Engine::CTexture*>
 		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_TJDoorTexture"));
 

@@ -213,6 +213,7 @@ private:
 	_float m_fRollCoolMax = 1.f;    
 
 
+
 	//=======FootPrint Effect Variable=======
 	Engine::CParticleEmitter* m_pFootStepEmitter = nullptr;
 	Engine::CParticleEmitter* m_pAttackEmitter = nullptr;
