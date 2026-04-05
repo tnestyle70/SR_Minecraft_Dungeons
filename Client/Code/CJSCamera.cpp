@@ -82,27 +82,7 @@ void CJSCamera::LateUpdate_GameObject(const _float& fTimeDelta)
 
     DEATHTYPE eDeathType = CJSScoreMgr::GetInstance()->Get_DeathType();
 
-    if (eDeathType == DEATH_COLLISION)
-    {
-        if (!m_bShaking)
-            Start_Shake();
-
-        if (m_bShaking)
-        {
-            m_fShakeTime += fTimeDelta;
-            if (m_fShakeTime < m_fShakeMax)
-            {
-                _float fOffsetX = (rand() % 100 / 100.f - 0.5f) * m_fShakeStrength;
-                _float fOffsetY = (rand() % 100 / 100.f - 0.5f) * m_fShakeStrength;
-                m_vEye.x += fOffsetX;
-                m_vEye.y += fOffsetY;
-            }
-            else
-                m_bShaking = false;
-        }
-        return;
-    }
-    else if (eDeathType == DEATH_FALL)
+    if (eDeathType == DEATH_FALL)
     {
         m_vAt.x = m_vPlayerPos.x;
         m_vAt.y = m_vPlayerPos.y;

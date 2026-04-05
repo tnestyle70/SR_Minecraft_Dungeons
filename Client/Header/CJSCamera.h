@@ -21,9 +21,6 @@ public:
 	virtual void	LateUpdate_GameObject(const _float& fTimeDelta);
 	virtual void	Render_GameObject() {}
 
-public:
-	void		Start_Shake() { m_bShaking = true; m_fShakeTime = 0.f; }
-
 private:
 	void		Get_PlayerPos();
 	void		Get_PlayerLook();
@@ -32,11 +29,6 @@ private:
 	_vec3		m_vPlayerPos = { 0.f, 0.f, 0.f };
 	_vec3		m_vPlayerLook =  { 0.f, 0.f, 1.f };
 	_vec3		m_vCamLook = { 0.f, 0.f, -1.f };
-
-	_bool   m_bShaking = false;
-	_float  m_fShakeTime = 0.f;
-	_float  m_fShakeMax = 0.5f;   // 쉐이킹 지속 시간
-	_float  m_fShakeStrength = 3.f;  // 쉐이킹 강도
 
 	_float m_fTargetEyeY = 8.f;   // 목표 Y
 	_float m_fNormalEyeY = 8.f;   // 기본 Y

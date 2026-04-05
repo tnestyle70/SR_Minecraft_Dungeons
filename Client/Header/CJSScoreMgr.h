@@ -27,6 +27,8 @@ public:
     _bool Is_Playing() { return m_eStage == JSSTAGE_PLAY; }
     void Set_Countdown(_int iCount) { m_iCountdown = iCount; }
     _int Get_Countdown() { return m_iCountdown; }
+    void Set_ExitReserved() { m_bExitReserved = true; }
+    _bool Is_ExitReserved() { return m_bExitReserved; }
 
     void Reset() { m_iScore = 0; m_fDistance = 0.f; m_eDeathType = DEATH_NONE; m_eStage = JSSTAGE_INTRO;}
 
@@ -39,6 +41,8 @@ private:
     DEATHTYPE m_eDeathType = DEATH_NONE;
     _bool m_bSlide = false;
     _int    m_iCountdown = 3;
+
+    _bool m_bExitReserved = false;
 
 private:
     virtual void Free();

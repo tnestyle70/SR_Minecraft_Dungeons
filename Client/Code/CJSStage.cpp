@@ -97,19 +97,16 @@ _int CJSStage::Update_Scene(const _float& fTimeDelta)
 			m_bMonsterRemoved = true;
 		}
 
-		if (CJSScoreMgr::GetInstance()->Is_GameOver())
+		if (CJSScoreMgr::GetInstance()->Is_ExitReserved())
 		{
-			m_fGameOverTimer += fTimeDelta;
-			if (m_fGameOverTimer >= m_fGameOverDelay)
+			if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP)))
 			{
-				if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP)))
-				{
-					MSG_BOX("Scene Change Failed");
-					return -1;
-				}
-				return iExit;
+				MSG_BOX("Scene Change Failed");
+				return -1;
 			}
+			return iExit;
 		}
+
 		CJSChunkMgr::GetInstance()->Update_Manager(fTimeDelta, vPlayerPos);
 		Clear_DeadObject(L"Environment_Layer", fTimeDelta);
 		break;

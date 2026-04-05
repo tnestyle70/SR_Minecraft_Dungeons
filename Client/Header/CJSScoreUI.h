@@ -19,15 +19,20 @@ public:
 	void Set_Distance(_float fDistance) { m_fDistance = fDistance; }
 
 private:
-	//HRESULT Add_Component();
+	HRESULT Add_Component();
 	//void Render_Overlay();
+	void Render_Score();
+	void Render_GameOver();
 
 public:
 	static CJSScoreUI* Create(LPDIRECT3DDEVICE9 pGraphicDev);
 
 private:
-	//CRcTex* m_pBufferCom = nullptr;
-	//CTexture* m_pTextureCom = nullptr;
+	CRcTex* m_pEmeraldBuf = nullptr;
+	CTexture* m_pEmeraldTex = nullptr;
+	
+	CRcTex* m_pGameOverBuf = nullptr;
+	CTexture* m_pGameOverTex = nullptr;
 
 	_int m_iScore = 0;
 	_float m_fDistance = 0.f;

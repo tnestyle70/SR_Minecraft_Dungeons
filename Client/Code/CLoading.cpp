@@ -232,6 +232,10 @@ _uint CLoading::Loading_SquidCoast()
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/JS/JSUI.png"))))
         return E_FAIL;
 
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSGameOverTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/JS/JS_GameOver.png"))))
+        return E_FAIL;
+
     // TempleRun Monster
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSMonster",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/mob/zombie_villager/zombie_villager.png"))))
