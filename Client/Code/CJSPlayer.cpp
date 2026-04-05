@@ -355,17 +355,52 @@ void CJSPlayer::Update_SlideAnimation()
 {
 	if (!m_bSlide) return;
 
-	// 몸통 앞으로 눕히기
-	if (m_pBody) m_pBody->Get_Transform()->Set_Rotation(ROT_X, 80.f);
-	if (m_pHead) m_pHead->Get_Transform()->Set_Rotation(ROT_X, 80.f);
+	_vec3 vPos;
+	m_pTransformCom->Get_Info(INFO_POS, &vPos);
+	_float fGroundOffset = vPos.y - 4.f;  // 플레이어 Y 기준
 
-	// 팔 위로 뻗기
-	if (m_pArmL) m_pArmL->Get_Transform()->Set_Rotation(ROT_X, -150.f);
-	if (m_pArmR) m_pArmR->Get_Transform()->Set_Rotation(ROT_X, -150.f);
-
-	// 다리 뻗기
-	if (m_pLegL) m_pLegL->Get_Transform()->Set_Rotation(ROT_X, 80.f);
-	if (m_pLegR) m_pLegR->Get_Transform()->Set_Rotation(ROT_X, 80.f);
+	// 머리 - 원래 Y오프셋 1.125 → Z오프셋으로
+	if (m_pHead)
+	{
+		m_pHead->Get_Transform()->Set_Rotation(ROT_X, -90.f);
+		m_pHead->Get_Transform()->m_vInfo[INFO_POS].y = fGroundOffset;
+		m_pHead->Get_Transform()->m_vInfo[INFO_POS].z = -1.125f;
+	}
+	// 몸통
+	if (m_pBody)
+	{
+		m_pBody->Get_Transform()->Set_Rotation(ROT_X, -90.f);
+		m_pBody->Get_Transform()->m_vInfo[INFO_POS].y = fGroundOffset;
+		m_pBody->Get_Transform()->m_vInfo[INFO_POS].z = 0.f;
+	}
+	// 왼팔
+	if (m_pArmL)
+	{
+		m_pArmL->Get_Transform()->Set_Rotation(ROT_X, -90.f);
+		m_pArmL->Get_Transform()->m_vInfo[INFO_POS].y = fGroundOffset;
+		m_pArmL->Get_Transform()->m_vInfo[INFO_POS].z = 0.f;
+	}
+	// 오른팔
+	if (m_pArmR)
+	{
+		m_pArmR->Get_Transform()->Set_Rotation(ROT_X, -90.f);
+		m_pArmR->Get_Transform()->m_vInfo[INFO_POS].y = fGroundOffset;
+		m_pArmR->Get_Transform()->m_vInfo[INFO_POS].z = 0.f;
+	}
+	// 왼다리 - 원래 Y오프셋 -1.125 → Z오프셋으로
+	if (m_pLegL)
+	{
+		m_pLegL->Get_Transform()->Set_Rotation(ROT_X, -90.f);
+		m_pLegL->Get_Transform()->m_vInfo[INFO_POS].y = fGroundOffset;
+		m_pLegL->Get_Transform()->m_vInfo[INFO_POS].z = 1.125f;
+	}
+	// 오른다리
+	if (m_pLegR)
+	{
+		m_pLegR->Get_Transform()->Set_Rotation(ROT_X, -90.f);
+		m_pLegR->Get_Transform()->m_vInfo[INFO_POS].y = fGroundOffset;
+		m_pLegR->Get_Transform()->m_vInfo[INFO_POS].z = 1.125f;
+	}
 }
 	
 void CJSPlayer::Key_Input(const _float& fTimeDelta)
@@ -462,8 +497,26 @@ void CJSPlayer::Key_Input(const _float& fTimeDelta)
 		if (m_bSlide)
 		{
 			m_bSlide = false;
+
+			// 각도 초기화
+			if (m_pHead) m_pHead->Get_Transform()->Set_Rotation(ROT_X, 0.f);
+			if (m_pBody) m_pBody->Get_Transform()->Set_Rotation(ROT_X, 0.f);
+			if (m_pArmL) m_pArmL->Get_Transform()->Set_Rotation(ROT_X, 0.f);
+			if (m_pArmR) m_pArmR->Get_Transform()->Set_Rotation(ROT_X, 0.f);
+			if (m_pLegL) m_pLegL->Get_Transform()->Set_Rotation(ROT_X, 0.f);
+			if (m_pLegR) m_pLegR->Get_Transform()->Set_Rotation(ROT_X, 0.f);
+
+			// 원래 오프셋 복구
+			if (m_pHead) m_pHead->Get_Transform()->m_vInfo[INFO_POS] = { 0.f,    1.125f,  0.f };
+			if (m_pBody) m_pBody->Get_Transform()->m_vInfo[INFO_POS] = { 0.f,    0.f,     0.f };
+			if (m_pArmL) m_pArmL->Get_Transform()->m_vInfo[INFO_POS] = { -0.6f,  0.f,     0.f };
+			if (m_pArmR) m_pArmR->Get_Transform()->m_vInfo[INFO_POS] = { 0.6f,  0.f,     0.f };
+			if (m_pLegL) m_pLegL->Get_Transform()->m_vInfo[INFO_POS] = { -0.225f, -1.125f, 0.f };
+			if (m_pLegR) m_pLegR->Get_Transform()->m_vInfo[INFO_POS] = { 0.225f, -1.125f, 0.f };
+
+			// 콜라이더 복구
 			Safe_Release(m_pColliderCom);
-			m_pColliderCom = CJSCollider::Create(m_pGraphicDev, { 0.f, 0.0f, 0.f }, m_vNormalColSize);
+			m_pColliderCom = CJSCollider::Create(m_pGraphicDev, { 0.f, 0.f, 0.f }, m_vNormalColSize);
 			m_mapComponent[ID_DYNAMIC].erase(L"Com_Collider");
 			m_mapComponent[ID_DYNAMIC].insert({ L"Com_Collider", m_pColliderCom });
 		}
