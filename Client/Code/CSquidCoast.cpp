@@ -64,6 +64,7 @@ HRESULT CSquidCoast::Ready_Scene()
 		return E_FAIL;
 	 
 	CCMiniMap::GetInstance()->Ready_MiniMap(m_pGraphicDev);
+
 	Ready_StageData(L"../Bin/Data/Stage1.dat");
 
 	Ready_ObjectData("../Bin/Data/Stage1Object.dat");
@@ -93,7 +94,6 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 	CJumpingTrapMgr::GetInstance()->Update(fTimeDelta);
 
 	CParticleMgr::GetInstance()->Update(fTimeDelta); 
-
 
 	//CCMiniMap::GetInstance()->Update(fTimeDelta);
 
@@ -127,7 +127,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		CDamageMgr::GetInstance()->Clear_Boss();
 		CEnvironmentMgr::GetInstance()->Clear_Boxes();
 
-		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_NETWORK)))
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP)))
 		{
 			MSG_BOX("Camp Create Failed");
 			return -1;
@@ -161,7 +161,6 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 
 
 	if (GetAsyncKeyState('L') & 0x8000)
-
 	{
 		CRenderer::GetInstance()->Clear_RenderGroup();
 		CTriggerBoxMgr::GetInstance()->Clear();
