@@ -21,6 +21,7 @@ private:
 public:
     bool Is_Dead() const { return m_bDead; }
     int  Get_Exp() const { return m_iExp; }
+    void Set_AbsorbAll() { m_fAbsorbRange = 99999.f; m_fMoveSpeed = 20.f; }
 
 public:
     static CTJExpOrb* Create(LPDIRECT3DDEVICE9 pGraphicDev, _vec3 vPos, int iExp = 1);

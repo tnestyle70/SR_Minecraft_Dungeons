@@ -5,6 +5,12 @@
 #include "CTJPlayer.h"
 #include "CTJBoss.h"
 
+struct TJMagnet
+{
+	_vec3 vPos;
+	bool bPickedUp = false;
+};
+
 class CTGStage : public CScene
 {
 protected:
@@ -41,4 +47,9 @@ private:
 	bool m_bDoorSpawned = false;
 	_vec3 m_vDoorPos = {};
 	_float m_fDoorTimer = 0.f;
+
+	//자석
+	vector<TJMagnet> m_vecMagnets;
+	Engine::CRcTex* m_pMagnetBufferCom = nullptr;
+	Engine::CTexture* m_pMagnetTextureCom = nullptr;
 };

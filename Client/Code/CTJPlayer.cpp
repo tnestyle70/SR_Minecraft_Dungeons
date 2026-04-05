@@ -504,7 +504,7 @@ void CTJPlayer::Add_Exp(int iExp)
     {
         m_iExp -= m_iMaxExp;
         m_iLevel++;
-        m_iMaxExp = (int)(m_iMaxExp * 1.2f);
+        m_iMaxExp = (int)(m_iMaxExp * 1.1f);
         m_bLevelUp = true;
 
         CTJSpawnMgr::GetInstance()->Set_SpawnInterval(
