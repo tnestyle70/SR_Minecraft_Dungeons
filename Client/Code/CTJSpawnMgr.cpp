@@ -52,6 +52,15 @@ void CTJSpawnMgr::Update(const _float& fTimeDelta)
                         CTJExpOrb* pOrb = CTJExpOrb::Create(m_pGraphicDev, vPos, 1);
                         if (pOrb)
                             m_vecExpOrbs.push_back(pOrb);
+
+                        // 자석 30% 확률 드롭
+                        if (rand() % 10 < 2)
+                        {
+                            vPos.y = 0.5f;
+                            CTJMagnet* pMagnet = CTJMagnet::Create(m_pGraphicDev, vPos);
+                            if (pMagnet)
+                                m_vecMagnets.push_back(pMagnet);
+                        }
                     }
                 }
             }
@@ -60,6 +69,17 @@ void CTJSpawnMgr::Update(const _float& fTimeDelta)
         // 구슬 업데이트 및 흡수
         for (auto& pOrb : m_vecExpOrbs)
             pOrb->Update_GameObject(fTimeDelta);
+
+        // 자석 업데이트
+        for (auto& pMagnet : m_vecMagnets)
+            pMagnet->Update_GameObject(fTimeDelta);
+        m_vecMagnets.erase(
+            remove_if(m_vecMagnets.begin(), m_vecMagnets.end(),
+                [](CTJMagnet* p) {
+                    if (p->Is_Dead()) { Safe_Release(p); return true; }
+                    return false;
+                }),
+            m_vecMagnets.end());
 
         // 구슬 흡수 시 경험치 획득
         for (auto& pOrb : m_vecExpOrbs)
@@ -137,6 +157,12 @@ void CTJSpawnMgr::Spawn_Monster()
     CGameObject* pMonster = CMonster::Create(m_pGraphicDev, eType, vSpawnPos);
     if (pMonster)
         CMonsterMgr::GetInstance()->AddMonster(pMonster, 0, vSpawnPos);
+}
+
+void CTJSpawnMgr::Render_Magnet()
+{
+    for (auto& pMagnet : m_vecMagnets)
+        pMagnet->Render_GameObject();
 }
 
 void CTJSpawnMgr::Clear()

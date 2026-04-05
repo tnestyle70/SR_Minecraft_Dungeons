@@ -217,12 +217,16 @@ void CTGStage::Render_Scene()
 	if (CInventoryMgr::GetInstance()->IsActive())
 	{
 		CInventoryMgr::GetInstance()->Render();
+
 		return;
 	}
 
 	CBlockMgr::GetInstance()->Render();
 
 	CParticleMgr::GetInstance()->Render();
+
+	CTJSpawnMgr::GetInstance()->Render_Magnet();
+
 	//문 렌더링
 	if (m_bDoorSpawned && m_pDoorBufferCom && m_pDoorTextureCom)
 	{
@@ -383,11 +387,6 @@ HRESULT CTGStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	//문 세팅
 	m_pDoorBufferCom = dynamic_cast<Engine::CRcTex*>
 		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_RcTex"));
-
-	m_pMagnetBufferCom = dynamic_cast<Engine::CRcTex*>
-		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_RcTex"));
-	m_pMagnetTextureCom = dynamic_cast<Engine::CTexture*>
-		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_MagnetTexture"));
 
 	m_pDoorTextureCom = dynamic_cast<Engine::CTexture*>
 		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_TJDoorTexture"));
