@@ -237,21 +237,21 @@ void CRemotePlayer::SetDragonState(bool bOnDragon, int iDragonIdx,
 {
     //first dragon packet
     bool bFirstDragon = (!m_bOnDragon && bOnDragon);
+    bool bDismount = (m_bOnDragon && !bOnDragon);
 
     m_bOnDragon        = bOnDragon;
     m_iDragonIdx       = iDragonIdx;
     m_fTargetDragonX   = fRootX;
     m_fTargetDragonY   = fRootY;
     m_fTargetDragonZ   = fRootZ;
-    //첫 수신 시 현재 위치 동기화
-    if (bFirstDragon)
+    //탑승 또는 하차시 즉시 스냅
+    if (bFirstDragon || bDismount)
     {
         m_fCurDragonX = fRootX;
         m_fCurDragonY = fRootY;
         m_fCurDragonZ = fRootZ;
     }
 }
-
 // =====================================================================
 //  Update_GameObject  —  현재 위치를 목표 위치로 Lerp
 // =====================================================================
@@ -272,12 +272,9 @@ _int CRemotePlayer::Update_GameObject(const _float& fTimeDelta)
     m_fCurRotY += fRotDiff * fT;
 
     //Dragon position lerp
-    if (m_bOnDragon)
-    {
-        m_fCurDragonX += (m_fTargetDragonX - m_fCurDragonX) * fT;
-        m_fCurDragonY += (m_fTargetDragonY - m_fCurDragonY) * fT;
-        m_fCurDragonZ += (m_fTargetDragonZ - m_fCurDragonZ) * fT;
-    }
+    m_fCurDragonX += (m_fTargetDragonX - m_fCurDragonX) * fT;
+    m_fCurDragonY += (m_fTargetDragonY - m_fCurDragonY) * fT;
+    m_fCurDragonZ += (m_fTargetDragonZ - m_fCurDragonZ) * fT;
 
     if (m_bMoving)
         m_fWalkTime += fTimeDelta * 8.f;

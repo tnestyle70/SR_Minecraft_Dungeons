@@ -18,6 +18,7 @@ enum PACKET_TYPE : WORD
     C2S_DRAGON_SYNC  = 6,   // dragon rider only, 5TPS
     C2S_ARROW        = 7,   // arrow fire event (replaces C2S_ATTACK)
     C2S_FLAME = 8, //flame sync
+    C2S_ENDER_DRAGON_DAMAGE = 9, //client -> server Enderdargon damage
     
     S2C_LOGIN_ACK    = 101,
     S2C_SPAWN        = 102,
@@ -27,6 +28,7 @@ enum PACKET_TYPE : WORD
     S2C_DAMAGE       = 107,
     S2C_ARROW        = 108,   // arrow broadcast
     S2C_FLAME = 110,
+    S2C_ENDER_DRAGON_SYNC = 111, //Server -> Client enderdragon state broadcast
     S2C_DRAGON_SYNC  = 109,   // dragon position broadcast
 };
 
@@ -112,6 +114,29 @@ struct PKT_S2C_DragonSync
     BYTE  pad[3];             // 3
 };  // total 32 bytes
 static_assert(sizeof(PKT_S2C_DragonSync) == 32, "PKT_S2C_DragonSync size mismatch");
+
+//enderdragon sync
+struct PKT_C2S_EnderDragonDamage
+{
+    PKT_HEADER header; //4bytes
+    int iDamage;//4bytes
+}; //total 8 bytes
+
+//server -> client enderdragon state
+struct PKT_S2C_EnderDragonSync
+{
+    PKT_HEADER header; //4 bytes
+    float fRootX, fRootY, fRootZ; //12
+    float fDirX, fDirZ; //8
+    int iState; //4
+    int iHP; //4
+    int iMaxHP; //4
+    int iTargetPlayerId; //4
+    float fTargetX, fTargetY, fTargetZ; //12
+    float fStateTimer; //4
+    bool bDead; //1
+    BYTE pad[3]; //3
+}; //60 bytes
 
 struct PlayerState
 {

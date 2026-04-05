@@ -30,7 +30,7 @@ private:
 
     _vec3 m_vDir = {};
     float m_fSpeed = 100.f;
-    float m_fDamage = 5.f;
+    float m_fDamage = 2.f;
     float m_fLifeTime = 0.f;
     bool  m_bDead = false;
     

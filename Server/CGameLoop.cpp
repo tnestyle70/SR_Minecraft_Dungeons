@@ -56,9 +56,11 @@ void CGameLoop::Run()
 void CGameLoop::Tick(float fDt)
 {
     UpdateWorld(fDt);
+    UpdateEnderDragon(fDt);
 
     static DWORD s_dwTick = 0;
     BroadcastSnapshot(++s_dwTick);
+    BroadcastEnderDragon();
 }
 
 // =====================================================================
@@ -135,4 +137,130 @@ void CGameLoop::BroadcastSnapshot(DWORD dwTick)
     {
         CSessionMgr::GetInstance()->BroadcastToLoggedIn(&pkt, sizeof(pkt));
     }
+}
+
+void CGameLoop::UpdateEnderDragon(float fDt)
+{
+    auto& dragon = m_EnderDragon;
+    if (dragon.bDead)
+        return;
+
+    dragon.fStateTimer += fDt;
+
+    //Find nearest player
+    int iNearest = FindNearestPlayer(dragon.fX, dragon.fY, dragon.fZ);
+    dragon.iTargetPlayerId = iNearest;
+
+    //target position update
+    if (iNearest >= 0)
+    {
+        std::vector<int> ids = CSessionMgr::GetInstance()->GetSessionIds();
+        for (int id : ids)
+        {
+            CSession* pSession = CSessionMgr::GetInstance()->Find(id);
+
+            if (pSession && pSession->GetPlayerId() == iNearest)
+            {
+                dragon.fTargetX = pSession->GetX();
+                dragon.fTargetY = pSession->GetY();
+                dragon.fTargetZ = pSession->GetZ();
+                break;
+            }
+        }
+    }
+   //dist to target
+    if (dragon.iState != 0 && iNearest >= 0)  
+    {
+        dragon.fX = dragon.fTargetX;
+        dragon.fY = dragon.fTargetY + 16.f;  
+        dragon.fZ = dragon.fTargetZ;
+    }
+
+    float dx = dragon.fTargetX - dragon.fX;
+    float dy = dragon.fTargetY - dragon.fY;
+    float dz = dragon.fTargetZ - dragon.fZ;
+    float fDist = sqrtf(dx * dx + dy * dy + dz * dz);
+
+    switch (dragon.iState)
+    {
+    case 0: // IDLE
+        if (iNearest >= 0 && fDist < 100.f) 
+        {
+            dragon.iState = 3; // → CIRCLE_DIVE
+            dragon.fStateTimer = 0.f;
+        }
+        break;
+
+    case 3: // CIRCLE_DIVE
+        if (iNearest < 0 || fDist > 150.f) 
+        {
+            dragon.iState = 0; // → IDLE
+            dragon.fStateTimer = 0.f;
+        }
+
+        else if (dragon.iHP <= dragon.iMaxHP / 2 && dragon.fStateTimer > 6.f)
+        {
+            dragon.iState = 4; // TAIL_ATTACK
+            dragon.fStateTimer = 0.f;
+        }
+        break;
+
+    case 4: // TAIL_ATTACK
+        if (dragon.fStateTimer > 6.f)
+        {
+            dragon.iState = 3; // → CIRCLE_DIVE
+            dragon.fStateTimer = 0.f;
+        }
+        break;
+    }
+}
+
+void CGameLoop::BroadcastEnderDragon()
+{
+    auto& d = m_EnderDragon;
+
+    PKT_S2C_EnderDragonSync pkt = {};
+    FillHeader(pkt, S2C_ENDER_DRAGON_SYNC);
+    pkt.fRootX = d.fX; 
+    pkt.fRootY = d.fY;
+    pkt.fRootZ = d.fZ;
+    pkt.fDirX = d.fDirX;  pkt.fDirZ = d.fDirZ;
+    pkt.iState = d.iState;
+    pkt.iHP = d.iHP;      pkt.iMaxHP = d.iMaxHP;
+    pkt.iTargetPlayerId = d.iTargetPlayerId;
+    pkt.fTargetX = d.fTargetX;
+    pkt.fTargetY = d.fTargetY;
+    pkt.fTargetZ = d.fTargetZ;
+    pkt.fStateTimer = d.fStateTimer;
+    pkt.bDead = d.bDead;
+
+    CSessionMgr::GetInstance()->BroadcastToLoggedIn(&pkt, sizeof(pkt));
+}
+
+int CGameLoop::FindNearestPlayer(float fX, float fY, float fZ)
+{
+    std::vector<int> ids = CSessionMgr::GetInstance()->GetSessionIds();
+    int iBestId = -1;
+    float fBestDist = FLT_MAX;
+    
+    for (int id : ids)
+    {
+        CSession* pSession = CSessionMgr::GetInstance()->Find(id);
+        
+        if (!pSession || !pSession->IsLoggedIn())
+            continue;
+        
+        float dx = pSession->GetX() - fX;
+        float dy = pSession->GetY() - fY;
+        float dz = pSession->GetZ() - fZ;
+        float fDist = sqrtf(dx * dx + dy * dy + dz * dz);
+
+        if (fDist < fBestDist)
+        {
+            fBestDist = fDist;
+            iBestId = pSession->GetPlayerId();
+        }
+    }
+
+    return iBestId;
 }

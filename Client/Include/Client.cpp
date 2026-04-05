@@ -146,11 +146,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    RECT rc{ 0, 0, 1280, 720 };
 
+   //WS_POPUP으로 설정해서 하얀색 바 없애기
+   //WS_OVERLAPPEDWINDOW 
    AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
 
    HWND hWnd = CreateWindowW(szWindowClass,
                              szTitle,
-                             WS_OVERLAPPEDWINDOW,
+       WS_OVERLAPPEDWINDOW,
                              CW_USEDEFAULT, 0, 
                              rc.right - rc.left, 
                              rc.bottom - rc.top,

@@ -27,6 +27,7 @@ public:
 	virtual			void		Render_GameObject();
 
 private:
+	void Update_Dead(const _float fTimeDelta);
 	void Update_Missison(const _float fTimeDelta);
 	void Update_Death(const _float fTimeDelta);
 	void Use_Posion(const _float fTimeDelta);
@@ -71,7 +72,8 @@ private:
 	CTexture* m_pArtifact = nullptr;
 	//Death 이미지
 	CTexture* m_pDeath = nullptr;
-
+	CTexture* m_pDeathBackground = nullptr;
+	
 	CPlayer* m_pPlayer = nullptr;
 	CNetworkPlayer* m_pNetworkPlayer = nullptr;
 	

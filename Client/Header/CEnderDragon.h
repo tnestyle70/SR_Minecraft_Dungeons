@@ -114,6 +114,14 @@ private:
 
 	void Check_PlayerAttack();
 
+	void ApplyServerSync();  // 서버 데이터 적용
+
+	// 타겟 위치 (서버에서 수신, m_pPlayer 대체)
+	_vec3 m_vServerTargetPos = {};
+	int   m_iServerTargetId = -1;
+
+	bool m_bDeadSoundPlayed = false;
+
 private:
 	CNetworkPlayer* m_pPlayer = nullptr;
 

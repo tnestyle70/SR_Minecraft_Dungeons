@@ -129,11 +129,18 @@ HRESULT CEnderDragon::Ready_GameObject()
 // ─────────────────────────────────────────────────────────────────────────────
 _int CEnderDragon::Update_GameObject(const _float& fTimeDelta)
 {
+	ApplyServerSync();
+
 	//죽었으면 Dissolve 이후 소멸
 	if (m_bDead)
 	{
-		CSoundMgr::GetInstance()->PlayEffect(L"Effect/Ender_Dead2.wav", 1.f);
-		//Dissolve();
+		if (!m_bDeadSoundPlayed)
+		{
+			CSoundMgr::GetInstance()->PlayEffect(L"Effect/Ender_Dead2.wav", 1.f);
+			//Dissolve();
+			m_bDeadSoundPlayed = true;
+			return -1;
+		}
 		return -1;
 	}
 	//데미지 체크
@@ -162,7 +169,7 @@ _int CEnderDragon::Update_GameObject(const _float& fTimeDelta)
 	}
 
 	// ── Evaluate JSON-based state transitions ─────────────────────────────────
-	Evaluate_Transitions();
+	//Evaluate_Transitions();
 
 	// ── Accumulate physics forces: gravity + drag + lift ────────────────────────────
 	Accumulate_Forces(dt);
@@ -269,6 +276,9 @@ _int CEnderDragon::Update_GameObject(const _float& fTimeDelta)
 
 void CEnderDragon::LateUpdate_GameObject(const _float& fTimeDelta)
 {
+	if (m_bDead)
+		return;
+
 	CGameObject::LateUpdate_GameObject(fTimeDelta);
 }
 
@@ -277,6 +287,8 @@ void CEnderDragon::LateUpdate_GameObject(const _float& fTimeDelta)
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Render_GameObject()
 {
+	if (m_bDead)
+		return;
 	m_pGraphicDev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
 	m_pGraphicDev->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
 
@@ -310,7 +322,7 @@ void CEnderDragon::Render_GameObject()
 		CBreathFlame::GetInstance()->Render();
 
 	// ImGui debug panel
-	Render_DebugPanel();
+	//Render_DebugPanel();
 
 	//Boss Name, HealthBar Rendering
 	if (m_eState != eEnderDragonState::IDLE)
@@ -456,21 +468,8 @@ void CEnderDragon::Update_IDLE(const _float& fTimeDelta)
 		m_Flight.vAccumForce += vBrake * (fSpeed * m_Flight.fMass * 1.5f);
 	}
 
-	// ── Player distance monitoring ──
-	_float fPlayerDist = DistToPlayer();
-	if (fPlayerDist < m_fDetectRange)
-	{
-		m_fDetectTimer += fTimeDelta;
-		if (m_fDetectTimer >= m_fDetectThreshold)
-		{
-			Transition_State(eEnderDragonState::CIRCLE_DIVE);
-			return;
-		}
-	}
-	else
-	{
-		m_fDetectTimer = max(0.f, m_fDetectTimer - fTimeDelta * 0.5f);
-	}
+	// ── Player distance monitoring (서버가 상태 전환 결정) ──
+	// 클라이언트 독자 전환 제거 — ApplyServerSync에서 서버 상태 적용
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -484,8 +483,8 @@ void CEnderDragon::Update_Attack(const _float& fTimeDelta)
 		return;
 	}
 
-	CTransform* pTransform = m_pPlayer->Get_Transform();
-	if (pTransform) pTransform->Get_Info(INFO_POS, &m_vPlayerPos);
+	//CTransform* pTransform = m_pPlayer->Get_Transform();
+	//if (pTransform) pTransform->Get_Info(INFO_POS, &m_vPlayerPos);
 
 	m_vMoveTarget = m_vPlayerPos + _vec3(0.f, 4.f, 0.f);
 
@@ -515,14 +514,15 @@ void CEnderDragon::Update_BREATH(const _float& fTimeDelta)
 		Transition_State(eEnderDragonState::IDLE);
 		return;
 	}
+
 	// Update player position
-	CComponent* pCom = CManagement::GetInstance()->Get_Component(
-		ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
-	if (pCom)
-	{
-		CTransform* pTrans = dynamic_cast<CTransform*>(pCom);
-		if (pTrans) pTrans->Get_Info(INFO_POS, &m_vPlayerPos);
-	}
+	//CComponent* pCom = CManagement::GetInstance()->Get_Component(
+	//	ID_DYNAMIC, L"GameLogic_Layer", L"Player", L"Com_Transform");
+	//if (pCom)
+	//{
+	//	CTransform* pTrans = dynamic_cast<CTransform*>(pCom);
+	//	if (pTrans) pTrans->Get_Info(INFO_POS, &m_vPlayerPos);
+	//}
 
 	// Dragon body hover (partially counteract gravity)
 	m_Flight.vAccumForce += _vec3(0.f, m_Flight.fMass * m_Flight.fGravity * 0.5f, 0.f);
@@ -562,15 +562,11 @@ void CEnderDragon::Update_BREATH(const _float& fTimeDelta)
 // ─────────────────────────────────────────────────────────────────────────────
 void CEnderDragon::Update_CIRCLE_DIVE(const _float& fTimeDelta)
 {
-	if (m_fDisEngageRange < DistToPlayer())
-	{
-		Transition_State(eEnderDragonState::IDLE);
-		return;
-	}
+	// 서버가 상태 전환 결정 — 클라이언트 독자 전환 제거
 
-	CTransform* pPlayerTransform = m_pPlayer->Get_Transform();
+	//CTransform* pPlayerTransform = m_pPlayer->Get_Transform();
 
-	pPlayerTransform->Get_Info(INFO_POS, &m_vPlayerPos);
+	//pPlayerTransform->Get_Info(INFO_POS, &m_vPlayerPos);
 	
 	// ── Circular orbit ──
 	_float fAngSpeed = m_fDiveSpeed / m_fCircleRadius;
@@ -775,7 +771,6 @@ void CEnderDragon::Update_CIRCLE_DIVE(const _float& fTimeDelta)
 					//사운드 재생
 					CSoundMgr::GetInstance()->PlayEffect(L"Effect/Ender_Tail2.wav", 1.f);
 
-
 					m_pPlayer->Hit(25.f);
 					m_bTailHitApplied = true;
 					CScreenFX::GetInstance()->Trigger_GlassBreak(1.0f, 0.4f);
@@ -799,7 +794,7 @@ void CEnderDragon::Update_TailAttack(const _float& fTimeDelta)
 	CCollider* pCollider = m_pPlayer->Get_Collider();
 	CTransform* pTransform = m_pPlayer->Get_Transform();
 	
-	pTransform->Get_Info(INFO_POS, &m_vPlayerPos);
+	//pTransform->Get_Info(INFO_POS, &m_vPlayerPos);
 
 	m_fTailSwingTimer += fTimeDelta;
 
@@ -821,28 +816,30 @@ void CEnderDragon::Update_TailAttack(const _float& fTimeDelta)
 
 	 //── Tail hit detection (colliders updated after Apply_TailSwingPostChain) ──
 	AABB tPlayerAABB = pCollider->Get_AABB();
-
-	for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
+	if (!m_bTailHitApplied)
 	{
-		if (!m_pTailCollider[i]) continue;
-		if (m_pTailCollider[i]->IsColliding(tPlayerAABB))
+		for (int i = 0; i < ENDER_DRAGON_TAIL_COUNT; ++i)
 		{
-
-			m_pPlayer->Hit(12.f); // triggers knockback
-			m_bTailHitApplied = true;
-			
-			// Screen effects
-			CScreenFX* pFX = CScreenFX::GetInstance();
-			if (pFX)
+			if (!m_pTailCollider[i]) continue;
+			if (m_pTailCollider[i]->IsColliding(tPlayerAABB))
 			{
-				//사운드 재생
-				CSoundMgr::GetInstance()->PlayEffect(L"Effect/Ender_Tail2.wav", 1.f);
 
-				pFX->Trigger_GlassBreak(1.0f, 0.4f);
-				pFX->Trigger_Noise(0.8f, 0.5f);
-				pFX->Trigger_Hit(1.0f);
+				m_pPlayer->Hit(12.f); // triggers knockback
+				m_bTailHitApplied = true;
+
+				// Screen effects
+				CScreenFX* pFX = CScreenFX::GetInstance();
+				if (pFX)
+				{
+					//사운드 재생
+					CSoundMgr::GetInstance()->PlayEffect(L"Effect/Ender_Tail2.wav", 1.f);
+
+					pFX->Trigger_GlassBreak(1.0f, 0.4f);
+					pFX->Trigger_Noise(0.8f, 0.5f);
+					pFX->Trigger_Hit(1.0f);
+				}
+				break;
 			}
-			break;
 		}
 	}
 	
@@ -1311,13 +1308,14 @@ void CEnderDragon::Force_RootPos(const _vec3& vPos)
 
 void CEnderDragon::Take_Damage(int iDamage)
 {
-	m_iHP -= iDamage; 
+	CNetworkMgr::GetInstance()->SendEnderDragonDamage(iDamage);
+	//m_iHP -= iDamage; 
 
-	if (m_iHP <= 0)
-	{
-		m_bDead = true;
-		m_iHP = 0;
-	}
+	//if (m_iHP <= 0)
+	//{
+	//	m_bDead = true;
+	//	m_iHP = 0;
+	//}
 }
 
 void CEnderDragon::Check_Hit()
@@ -1473,6 +1471,31 @@ void CEnderDragon::Check_PlayerAttack()
 	}
 }
 
+void CEnderDragon::ApplyServerSync()
+{
+	auto& sync = CNetworkMgr::GetInstance()->GetEnderDragonSync();
+	if (!sync.bUpdated) return;
+
+	// HP 동기화 (서버 권위)
+	m_iHP = sync.iHP;
+	m_iMaxHP = sync.iMaxHP;
+	m_bDead = sync.bDead;
+
+	// FSM 상태 전환 (서버가 다른 상태를 지시하면 강제 전환)
+	eEnderDragonState eServerState = static_cast<eEnderDragonState>(sync.iState);
+	if (m_eState != eServerState)
+	{
+		Transition_State(eServerState);
+	}
+
+	// 타겟 위치 동기화 (모든 FSM 함수에서 사용)
+	m_vPlayerPos = _vec3(sync.fTargetX, sync.fTargetY, sync.fTargetZ);
+	m_iServerTargetId = sync.iTargetPlayerId;
+
+	// 소비 처리: 같은 데이터로 반복 전환 방지
+	CNetworkMgr::GetInstance()->ConsumeEnderDragonSync();
+}
+
 void CEnderDragon::Handle_Input(const _float& fTimeDelta)
 {
 	// F5 -> JSON runtime reload
@@ -1553,10 +1576,11 @@ void CEnderDragon::Handle_Input(const _float& fTimeDelta)
 
 _float CEnderDragon::DistToPlayer() const
 {
-	CTransform* pTransform = m_pPlayer->Get_Transform();
-	_vec3 vPlayerPos;
-	pTransform->Get_Info(INFO_POS, &vPlayerPos);
-	return D3DXVec3Length(&(vPlayerPos - m_Spine[0].vPos));
+	return D3DXVec3Length(&(m_vPlayerPos - m_Spine[0].vPos));
+	//CTransform* pTransform = m_pPlayer->Get_Transform();
+	//_vec3 vPlayerPos;
+	//pTransform->Get_Info(INFO_POS, &vPlayerPos);
+	//return D3DXVec3Length(&(vPlayerPos - m_Spine[0].vPos));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
