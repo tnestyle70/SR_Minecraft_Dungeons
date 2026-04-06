@@ -57,13 +57,13 @@ HRESULT CSquidCoast::Ready_Scene()
 
 	if (FAILED(Ready_Environment_Layer(L"Environment_Layer")))
 		return E_FAIL;
-	
+
 	if (FAILED(Ready_GameLogic_Layer(L"GameLogic_Layer")))
 		return E_FAIL;
 
 	if (FAILED(Ready_UI_Layer(L"UI_Layer")))
 		return E_FAIL;
-	 
+
 	CCMiniMap::GetInstance()->Ready_MiniMap(m_pGraphicDev);
 
 	Ready_StageData(L"../Bin/Data/Stage1.dat");
@@ -95,10 +95,10 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 	CIronBarMgr::GetInstance()->Update(fTimeDelta);
 
 	CMonsterMgr::GetInstance()->Update(fTimeDelta);
-	
+
 	CJumpingTrapMgr::GetInstance()->Update(fTimeDelta);
 
-	CParticleMgr::GetInstance()->Update(fTimeDelta); 
+	CParticleMgr::GetInstance()->Update(fTimeDelta);
 
 	//CCMiniMap::GetInstance()->Update(fTimeDelta);
 
@@ -115,7 +115,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 				PARTICLE_HIT, _vec3(5.f, 2.f, 0.f), nullptr)
 		);
 	}
-	
+
 	//Scene Change
 	if (GetAsyncKeyState(VK_RETURN) || CTriggerBoxMgr::GetInstance()->IsSceneChanged())
 	{
@@ -137,7 +137,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 			MSG_BOX("Camp Create Failed");
 			return -1;
 		}
-		
+
 		return iExit;
 	}
 
@@ -201,7 +201,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 			return -1;
 		}
 		return iExit;
-	}  
+	}
 	//CAMP
 	if (GetAsyncKeyState(VK_F8) & 0x8000)
 	{
@@ -240,7 +240,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 			return -1;
 		}
 		return iExit;
-	} 
+	}
 
 	Update_EnderEyes();
 
@@ -275,7 +275,7 @@ void CSquidCoast::Render_Scene()
 {
 	if (CInventoryMgr::GetInstance()->IsActive())
 	{
-		CInventoryMgr::GetInstance()->Render(); 
+		CInventoryMgr::GetInstance()->Render();
 
 		return;
 	}
@@ -298,7 +298,9 @@ void CSquidCoast::Render_Scene()
 	//CCMiniMap::GetInstance()->Render();
 
 		// 조명 비활성화 (다른 렌더 그룹에 영향 차단)
-	m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE);
+	m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE);  
+
+	
 }
 
 void CSquidCoast::Render_UI()
@@ -373,7 +375,7 @@ HRESULT CSquidCoast::Ready_Environment_Layer(const _tchar* pLayerTag)
 
 	if (!pGameObject)
 		return E_FAIL;
-	
+
 	if (FAILED(pLayer->Add_GameObject(L"DynamicCamera", pGameObject)))
 		return E_FAIL;
 
@@ -401,17 +403,17 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	CGameObject* pGameObject = nullptr;
-	
+
 	//Player
 	pGameObject = CPlayer::Create(m_pGraphicDev);
 
 	if (!pGameObject)
 		return E_FAIL;
-	
+
 	if (FAILED(pLayer->Add_GameObject(L"Player", pGameObject)))
 		return E_FAIL;
 
-	CPlayer* pPlayer = dynamic_cast<CPlayer*>(pGameObject); 
+	CPlayer* pPlayer = dynamic_cast<CPlayer*>(pGameObject);
 
 	m_pPlayer = pPlayer;
 
@@ -479,7 +481,7 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		pLayer->Add_GameObject(L"TNT", pTNT);
 		pPlayer->Add_TNT(pTNT);
 	}
-  
+
 	//HUD
 	pGameObject = CHUD::Create(m_pGraphicDev);
 
@@ -503,7 +505,7 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	}
 	CTriggerBoxMgr::GetInstance()->SetPlayerCollider(pCollider);
 	CMonsterMgr::GetInstance()->SetPlayer(pPlayer);
-		
+
 	//Boss
 	pGameObject = CRedStoneGolem::Create(m_pGraphicDev);
 
@@ -514,7 +516,7 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	CRedStoneGolem* pGolem = dynamic_cast<CRedStoneGolem*>(pGameObject);
-	
+
 	if (pGolem)
 	{
 		CDamageMgr::GetInstance()->Ready_Component();
@@ -568,7 +570,7 @@ HRESULT CSquidCoast::Ready_StageData(const _tchar* szPath)
 		return E_FAIL;
 
 	// 1. 블럭 (LoadBlocks 내부에서 RebuildBatchMesh까지)
-	
+
 	//BlockMgr
 	if (FAILED(CBlockMgr::GetInstance()->Ready_BlockMgr(m_pGraphicDev)))
 	{
@@ -579,9 +581,9 @@ HRESULT CSquidCoast::Ready_StageData(const _tchar* szPath)
 	CBlockMgr::GetInstance()->SetRenderMode(eRenderMode::RENDER_BATCH); // 먼저 모드 설정
 
 	CBlockMgr::GetInstance()->LoadBlocks(pFile);
-	
+
 	CMonsterMgr::GetInstance()->Ready_MonsterMgr(m_pGraphicDev);
-	
+
 	// 2. 몬스터 - map에 안 담고 레이어에 바로 추가
 	int iCount = 0;
 	fread(&iCount, sizeof(int), 1, pFile);
@@ -596,7 +598,7 @@ HRESULT CSquidCoast::Ready_StageData(const _tchar* szPath)
 			m_pGraphicDev, (EMonsterType)tData.iMonsterType, vPos);
 
 		//MonsterMgr 쪽에 추가
-		if(pMonster)
+		if (pMonster)
 			CMonsterMgr::GetInstance()->AddMonster(pMonster, tData.iTriggerID, vPos);
 	}
 
@@ -612,7 +614,7 @@ HRESULT CSquidCoast::Ready_StageData(const _tchar* szPath)
 		if (pIronBar)
 			CIronBarMgr::GetInstance()->AddIronBar(pIronBar, tData.iTriggerID);
 	}
-	
+
 	// 4. 트리거박스
 	fread(&iCount, sizeof(int), 1, pFile);
 	for (int i = 0; i < iCount; ++i)
@@ -621,7 +623,7 @@ HRESULT CSquidCoast::Ready_StageData(const _tchar* szPath)
 		fread(&tData, sizeof(TriggerBoxData), 1, pFile);
 		_vec3 vPos = { (float)tData.x, (float)tData.y, (float)tData.z };
 
-		CGameObject* pTriggerBox = CTriggerBox::Create(m_pGraphicDev, vPos, tData.iTriggerID ,(eTriggerBoxType)tData.iTriggerBoxType);
+		CGameObject* pTriggerBox = CTriggerBox::Create(m_pGraphicDev, vPos, tData.iTriggerID, (eTriggerBoxType)tData.iTriggerBoxType);
 		if (pTriggerBox)
 			CTriggerBoxMgr::GetInstance()->AddTriggerBox(pTriggerBox);
 	}
@@ -691,7 +693,7 @@ HRESULT CSquidCoast::Ready_ObjectData(const char* pFileName)
 				{
 					pEye->Set_Player(m_pPlayer);
 					pEye->Start_Flicker();
-					m_vecEnderEyes.push_back(pEye); 
+					m_vecEnderEyes.push_back(pEye);
 					m_pPlayer->Add_EnderEye(pEye);
 				}
 			}
@@ -750,14 +752,13 @@ void CSquidCoast::Free()
 	CIronBarMgr::GetInstance()->Clear();
 	CMonsterMgr::GetInstance()->Clear();
 	CParticleMgr::GetInstance()->Clear_Emitters();
-	CBlockMgr::GetInstance()->ClearBlocks(); 
-	
+	CBlockMgr::GetInstance()->ClearBlocks();
+
 
 	CMonsterMgr::GetInstance()->Clear();
 	CTriggerBoxMgr::GetInstance()->Clear();
 	CIronBarMgr::GetInstance()->Clear();
 
-	
 
 	CScene::Free();
 }

@@ -22,6 +22,7 @@ private:
 	HRESULT Add_Component();
 	//void Render_Overlay();
 	void Render_Score();
+	void Render_Mission();
 	void Render_GameOver();
 
 public:
@@ -34,9 +35,15 @@ private:
 	CRcTex* m_pGameOverBuf = nullptr;
 	CTexture* m_pGameOverTex = nullptr;
 
+	CRcTex* m_pMissionBuf = nullptr;
+	CTexture* m_pMissionTex = nullptr;
+
 	_int m_iScore = 0;
 	_float m_fDistance = 0.f;
 	_float m_fSpeed = 20.f;
+
+	_float m_fDeadTime = 0.f;
+	_bool m_bPop = false;
 
 private:
 	virtual void Free();

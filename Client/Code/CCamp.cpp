@@ -216,6 +216,7 @@ HRESULT CCamp::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 
 	CPlayer* pPlayer = dynamic_cast<CPlayer*>(pGameObject);
 
+
 	Engine::CTransform* pTrans = dynamic_cast<Engine::CTransform*>
 		(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform"));
 	if (pTrans)
@@ -229,6 +230,7 @@ HRESULT CCamp::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 			dynamic_cast<Engine::CTransform*>(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform")));
 		m_pDynamicCamera->SnapToTarget();
 	}
+
 
 	//HUD
 	pGameObject = CHUD::Create(m_pGraphicDev);

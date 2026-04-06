@@ -25,7 +25,7 @@ public:
     void Add_Time(float fTime)
     {
         m_fTimer += fTime;
-        m_bShowAddTime = true;
+        m_bShowAddTime = true; 
         m_fAddTimeShow = 1.5f;
     }
 
@@ -37,7 +37,9 @@ private:
     HRESULT Ready_StageData(const _tchar* szPath);
     void    Update_TorchLights();
     _vec3   Get_PlayerPos(); 
-    set<int> m_setIronBarTriggered;
+    set<int> m_setIronBarTriggered; 
+
+
 
 private:
     CCYCamera* m_pCYCamera = nullptr;
@@ -62,7 +64,11 @@ private:
     bool m_bPrevAtkColliding = false; 
     bool m_bPrevPlayerHit = false; 
 
-    CCYGuardian* m_pCYGuardian = nullptr;
+    CCYGuardian* m_pCYGuardian = nullptr; 
+
+    // private ¸â¹ö¿¡ Ãß°¡
+    LPDIRECT3DTEXTURE9 m_pTitleTex = nullptr;
+    LPD3DXSPRITE       m_pSprite = nullptr; 
 
 public:
     static CCYStage* Create(LPDIRECT3DDEVICE9 pGraphicDev);

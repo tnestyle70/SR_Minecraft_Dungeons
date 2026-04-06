@@ -6,6 +6,7 @@
 #include "CJSChunkMgr.h"
 #include "CDInputMgr.h"
 #include "CSceneChanger.h"
+#include "CSoundMgr.h"
 
 CJSScoreUI::CJSScoreUI(LPDIRECT3DDEVICE9 pGraphicDev)
     : CGameObject(pGraphicDev)
@@ -44,6 +45,14 @@ _int CJSScoreUI::Update_GameObject(const _float& fTimeDelta)
 
     if (CJSScoreMgr::GetInstance()->Is_GameOver())
     {
+        m_fDeadTime += fTimeDelta;
+
+        if (m_fDeadTime >= 2.f && !m_bPop)
+        {
+            m_bPop = true;
+            CSoundMgr::GetInstance()->PlayEffect(L"JS/2-15.-Score-Blast.wav", 1.f);
+        }
+
         if (CDInputMgr::GetInstance()->Get_DIMouseState(DIM_LB))
             CJSScoreMgr::GetInstance()->Set_ExitReserved();
     }
@@ -92,12 +101,18 @@ void CJSScoreUI::Render_GameObject()
     m_fDistance = CJSScoreMgr::GetInstance()->Get_Distance();
     m_fSpeed = CJSScoreMgr::GetInstance()->Get_Speed();
 
+    if ((_int)m_fDistance % 1000 == 0)
+    {
+        CSoundMgr::GetInstance()->PlayEffect(L"JS/2-25.-Woo-Hoo.wav", 1.f);
+    }
+
     //TCHAR szScore[64];
     //wsprintf(szScore, L"Score: %d", m_iScore);
     //_vec2 vScorePos = { 10.f, 10.f };
     //CFontMgr::GetInstance()->Render_Font(L"Font_Score", szScore, &vScorePos, D3DXCOLOR(0.f, 1.f, 0.f, 1.f));
 
     Render_Score();
+    Render_Mission();
 
     TCHAR szDist[64];
     wsprintf(szDist, L"Distance: %d m", (_int)m_fDistance);
@@ -133,6 +148,16 @@ HRESULT CJSScoreUI::Add_Component()
         CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_JSGameOverTexture"));
     if (!pComponent) return E_FAIL;
     m_mapComponent[ID_STATIC].insert({ L"Com_GameOverTex", pComponent });
+
+    pComponent = m_pMissionBuf = dynamic_cast<CRcTex*>(
+        CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_RcTex"));
+    if (!pComponent) return E_FAIL;
+    m_mapComponent[ID_STATIC].insert({ L"Com_MissionBuf", pComponent });
+
+    pComponent = m_pMissionTex = dynamic_cast<CTexture*>(
+        CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_JSMission"));
+    if (!pComponent) return E_FAIL;
+    m_mapComponent[ID_STATIC].insert({ L"Com_MissionTex", pComponent });
 
     return S_OK;
 }
@@ -173,8 +198,41 @@ void CJSScoreUI::Render_Score()
     m_pGraphicDev->SetTransform(D3DTS_PROJECTION, &matProjOld);
 }
 
+void CJSScoreUI::Render_Mission()
+{
+    _matrix matViewOld, matProjOld;
+    m_pGraphicDev->GetTransform(D3DTS_VIEW, &matViewOld);
+    m_pGraphicDev->GetTransform(D3DTS_PROJECTION, &matProjOld);
+
+    _matrix matView, matProj;
+    D3DXMatrixIdentity(&matView);
+    D3DXMatrixOrthoLH(&matProj, (_float)WINCX, (_float)WINCY, 0.f, 1.f);
+    m_pGraphicDev->SetTransform(D3DTS_VIEW, &matView);
+    m_pGraphicDev->SetTransform(D3DTS_PROJECTION, &matProj);
+
+    _matrix matWorld;
+    D3DXMatrixScaling(&matWorld, 120.f, 120.f, 1.f);
+    matWorld._41 = 30.f - WINCX * 0.5f + 1100.f;   // x 더 오른쪽으로
+    matWorld._42 = WINCY * 0.5f - 80.f;  // y 그대로
+
+    m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+
+    m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+    m_pGraphicDev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+    m_pGraphicDev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    m_pMissionTex->Set_Texture(0);
+    m_pMissionBuf->Render_Buffer();
+    m_pGraphicDev->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+
+    m_pGraphicDev->SetTransform(D3DTS_VIEW, &matViewOld);
+    m_pGraphicDev->SetTransform(D3DTS_PROJECTION, &matProjOld);
+}
+
 void CJSScoreUI::Render_GameOver()
 {
+    if (!m_bPop)
+        return;
+
     _matrix matViewOld, matProjOld;
     m_pGraphicDev->GetTransform(D3DTS_VIEW, &matViewOld);
     m_pGraphicDev->GetTransform(D3DTS_PROJECTION, &matProjOld);

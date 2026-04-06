@@ -139,7 +139,7 @@ _int CPlayer::Update_GameObject(const _float& fTimeDelta)
 			int iIdx = rand() % 6 + 1;
 			TCHAR szKey[MAX_PATH];
 			wsprintf(szKey, L"Player/__cutfast_convert_sfx_player_stepStone-%03d_soundWave.wav", iIdx);
-			CSoundMgr::GetInstance()->PlayEffect(szKey, 0.5f);
+			CSoundMgr::GetInstance()->PlayEffect(szKey, 2.0f);
 		}
 	}
 	else
@@ -639,6 +639,7 @@ void CPlayer::Key_Input(const _float& fTimeDelta)
 					}
 					m_bRolling = true;
 					m_fRollTime = 0.f;
+					CSoundMgr::GetInstance()->PlayEffect(L"Player/Dumbling.wav", 1.f);
 					m_bHasTarget = false;
 				}
 			}
@@ -903,6 +904,7 @@ void CPlayer::Key_Input(const _float& fTimeDelta)
 			m_bRolling = true;
 			m_fRollTime = 0.f;
 			m_bHasTarget = false;
+			CSoundMgr::GetInstance()->PlayEffect(L"Player/Dumbling.wav", 1.f);
 		}
 	}
 }
@@ -1601,6 +1603,7 @@ void CPlayer::Hit(float fDamage)
 	if (m_bHit)
 		return;
 	m_bHit = true;
+	CSoundMgr::GetInstance()->PlayEffect(L"Player/PlayerHurt.wav", 1.f);
 	m_fHitTime = 0.f;
 	m_fHp -= fDamage;
 	if (m_fHp < 0.f) m_fHp = 0.f;

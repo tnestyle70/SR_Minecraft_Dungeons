@@ -116,7 +116,7 @@ void CAncientGuardian::Update_AI(const _float& fTimeDelta)
         if (m_pBodyCom->Get_Anim())
         {
             if (m_pBodyCom->Get_Anim()->Get_State() != EAGState::DEAD)
-                CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_DEAD.wav", 0.8f);
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_DEAD.wav", 1.f);
             m_pBodyCom->Get_Anim()->Set_State(EAGState::DEAD);
         }
         Update_Biomines(fTimeDelta);
@@ -149,7 +149,7 @@ void CAncientGuardian::Update_AI(const _float& fTimeDelta)
             m_fIdleSoundTimer = 0.f;
             if (fDist <= m_fDetectRange * 10.f)
             {
-                CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_IDLE.wav", 0.6f);
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_IDLE.wav", 1.f);
             }
            
         }
@@ -379,7 +379,7 @@ void CAncientGuardian::Update_Reposition(const _float& fTimeDelta)
 
 void CAncientGuardian::Fire_Beam()
 { 
-    CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_Attack1.wav", 0.6f);
+    CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_Attack1.wav", 1.f);
     if (!m_pTransformCom) return;
 
     _vec3 vMyPos, vLook;

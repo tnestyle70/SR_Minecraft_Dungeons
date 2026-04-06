@@ -22,6 +22,7 @@
 #include "CTJLevelUpUI.h"
 #include "CTJBoss.h"
 #include "CEventBus.h"
+#include "CSoundMgr.h"
 
 CTGStage::CTGStage(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -35,7 +36,7 @@ HRESULT CTGStage::Ready_Scene()
 	if (FAILED(Ready_Light()))
 		return E_FAIL;
 
-	D3DXCreateFont(m_pGraphicDev, 24, 0, FW_BOLD, 1, FALSE,
+	D3DXCreateFont(m_pGraphicDev, 32, 0, FW_BOLD, 1, FALSE,
 		DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY,
 		DEFAULT_PITCH | FF_DONTCARE, L"Arial", &m_pFont);
 
@@ -52,6 +53,9 @@ HRESULT CTGStage::Ready_Scene()
 
 	if (FAILED(Ready_StageData(L"../Bin/Data/Stage6.dat")))
 		MSG_BOX("StageData Load Failed");
+
+	CSoundMgr::GetInstance()->StopAll();
+	CSoundMgr::GetInstance()->PlayBGM(L"Player/ArenaBGM.wav", 1.f);
 
 	return S_OK;
 }
@@ -74,6 +78,7 @@ _int CTGStage::Update_Scene(const _float& fTimeDelta)
 		if (m_pLevelUpUI->Is_Selected())
 		{
 			m_pTJPlayer->Apply_Ability(m_pLevelUpUI->Get_Selected());
+			CSoundMgr::GetInstance()->PlayEffect(L"Player/Ability_Pick.wav", 1.5f);
 			m_pLevelUpUI->Reset_Selected();
 			m_pLevelUpUI->Hide();
 		}
@@ -84,6 +89,7 @@ _int CTGStage::Update_Scene(const _float& fTimeDelta)
 	{
 		m_pTJPlayer->Set_LevelUp(false);
 		m_pLevelUpUI->Show(m_pTJPlayer);
+		CSoundMgr::GetInstance()->PlayEffect(L"Player/Abilty_Pop.wav", 1.5f);
 	}
 
 	// 최대 레벨 달성 시 보스 스폰
@@ -143,6 +149,8 @@ _int CTGStage::Update_Scene(const _float& fTimeDelta)
 		vDiff.y = 0.f;
 		if (D3DXVec3Length(&vDiff) < 4.f)
 		{
+			if (m_fDoorTimer == 0.f)
+				CSoundMgr::GetInstance()->PlayEffect(L"Player/Portal.wav", 1.f);
 			m_fDoorTimer += fTimeDelta;
 			if (m_fDoorTimer >= 3.f)
 			{
@@ -154,6 +162,7 @@ _int CTGStage::Update_Scene(const _float& fTimeDelta)
 				CInventoryMgr::GetInstance()->Clear_Player();
 				CTJSpawnMgr::GetInstance()->Clear();
 				CBlockMgr::GetInstance()->ClearBlocks();
+				CSoundMgr::GetInstance()->StopAll();
 
 				if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP)))
 				{
@@ -265,6 +274,14 @@ void CTGStage::Render_UI()
 		CInventoryMgr::GetInstance()->Render();
 		return;
 	}
+
+	// 그림자
+	RECT rcShadow = { (LONG)(WINCX - 448), 22, (LONG)WINCX - 8, 100 };
+	m_pFont->DrawText(nullptr, L"능력치를 강화하여\n좀비킹을 처치하세요", -1, &rcShadow, DT_RIGHT, D3DCOLOR_RGBA(0, 0, 0, 255));
+
+	// 본문
+	RECT rc = { (LONG)(WINCX - 450), 20, (LONG)WINCX - 10, 100 };
+	m_pFont->DrawText(nullptr, L"능력치를 강화하여\n좀비킹을 처치하세요", -1, &rc, DT_RIGHT, D3DCOLOR_RGBA(255, 220, 50, 255));
 
 	// 보스 체력바
 	if (m_bBossSpawned && m_pTJBoss && !m_pTJBoss->Is_Dead() && m_pLine)

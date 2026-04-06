@@ -53,7 +53,6 @@ void CTJSpawnMgr::Update(const _float& fTimeDelta)
                         if (pOrb)
                             m_vecExpOrbs.push_back(pOrb);
 
-                        // 자석 10% 확률 드롭
                         if (rand() % 10 < 1)
                         {
                             vPos.y = 0.5f;
@@ -108,8 +107,17 @@ void CTJSpawnMgr::Update(const _float& fTimeDelta)
                 if (!pTrans) continue;
                 _vec3 vPos;
                 pTrans->Get_Info(INFO_POS, &vPos);
+
                 if (vPos.y < -10.f)
-                    pMonster->Take_Damage(9999);
+                {
+                    static float fFallTimer = 0.f;
+                    fFallTimer += fTimeDelta;
+                    if (fFallTimer >= 5.f)
+                    {
+                        fFallTimer = 0.f;
+                        pMonster->Take_Damage(100);
+                    }
+                }
             }
         }
     }

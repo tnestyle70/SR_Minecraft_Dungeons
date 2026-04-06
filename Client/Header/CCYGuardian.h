@@ -27,7 +27,7 @@ private:
 private:
     _vec3 m_vTargetPos = { 0.f, 0.f, 0.f };
     bool  m_bActive = false;
-    float m_fMoveSpeed = 5.f;
+    float m_fMoveSpeed =20.f;
     float m_fAtkTimer = 0.f;
     float m_fAtkInterval = 3.f;
     float m_fIdleSoundTimer = 0.f;
