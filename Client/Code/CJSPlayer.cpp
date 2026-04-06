@@ -229,10 +229,16 @@ void CJSPlayer::Check_WallCollision()
 	m_pColliderCom->Update_Collider(&matCheck);
 
 	if (CJSChunkMgr::GetInstance()->Check_WallCollision(m_pColliderCom))
+	{
 		CJSScoreMgr::GetInstance()->Set_GameOver(DEATH_COLLISION);
+		CSoundMgr::GetInstance()->PlayEffect(L"JS/2-22.-Splat.wav", 1.f);
+	}
 
 	if (CJSChunkMgr::GetInstance()->Check_ObstacleCollision(m_pColliderCom))
+	{
 		CJSScoreMgr::GetInstance()->Set_GameOver(DEATH_COLLISION);
+		CSoundMgr::GetInstance()->PlayEffect(L"JS/2-22.-Splat.wav", 1.f);
+	}
 }
 
 HRESULT CJSPlayer::Ready_BodyParts()
@@ -334,16 +340,32 @@ void CJSPlayer::LateUpdate_BodyParts(const _float& fTimeDelta)
 
 void CJSPlayer::Update_RunAnimation(const _float& fTimeDelta)
 {
+	_float fPrevAnimTime = m_fAnimTime;
 	m_fAnimTime += fTimeDelta * m_fAnimSpeed;
 
-	// 사인파로 앞뒤 흔들기
+	_float fPrevCycle = fPrevAnimTime / (D3DX_PI * 4.f);
+	_float fCurCycle = m_fAnimTime / (D3DX_PI * 4.f);
+
+	if ((_int)fPrevCycle != (_int)fCurCycle)
+		CSoundMgr::GetInstance()->PlayEffect(L"JS/2-02.-Footsteps-Temple.wav", 0.5f);
+
 	_float fSwing = sinf(m_fAnimTime) * 60.f;
 
-	// 팔은 다리랑 반대로
-	if (m_pArmL)  m_pArmL->Get_Transform()->Set_Rotation(ROT_X, fSwing);
-	if (m_pArmR)  m_pArmR->Get_Transform()->Set_Rotation(ROT_X, -fSwing);
-	if (m_pLegL)  m_pLegL->Get_Transform()->Set_Rotation(ROT_X, -fSwing);
-	if (m_pLegR)  m_pLegR->Get_Transform()->Set_Rotation(ROT_X, fSwing);
+	if (m_pArmL) m_pArmL->Get_Transform()->Set_Rotation(ROT_X, fSwing);
+	if (m_pArmR) m_pArmR->Get_Transform()->Set_Rotation(ROT_X, -fSwing);
+	if (m_pLegL) m_pLegL->Get_Transform()->Set_Rotation(ROT_X, -fSwing);
+	if (m_pLegR) m_pLegR->Get_Transform()->Set_Rotation(ROT_X, fSwing);
+
+	//m_fAnimTime += fTimeDelta * m_fAnimSpeed;
+
+	//// 사인파로 앞뒤 흔들기
+	//_float fSwing = sinf(m_fAnimTime) * 60.f;
+
+	//// 팔은 다리랑 반대로
+	//if (m_pArmL)  m_pArmL->Get_Transform()->Set_Rotation(ROT_X, fSwing);
+	//if (m_pArmR)  m_pArmR->Get_Transform()->Set_Rotation(ROT_X, -fSwing);
+	//if (m_pLegL)  m_pLegL->Get_Transform()->Set_Rotation(ROT_X, -fSwing);
+	//if (m_pLegR)  m_pLegR->Get_Transform()->Set_Rotation(ROT_X, fSwing);
 }
 
 void CJSPlayer::Update_JumpAnimation(const _float& fTimeDelta)
@@ -432,11 +454,13 @@ void CJSPlayer::Key_Input(const _float& fTimeDelta)
 		{
 			m_pTransformCom->Rotation(ROT_Y, -90.f);
 			m_bRotated = true;
+			CSoundMgr::GetInstance()->PlayEffect(L"JS/2-03.-Footsteps-Turn.wav", 1.f);
 		}
 		if (CDInputMgr::GetInstance()->Get_DIKeyState(DIK_D) && !m_bRotated)
 		{
 			m_pTransformCom->Rotation(ROT_Y, 90.f);
 			m_bRotated = true;
+			CSoundMgr::GetInstance()->PlayEffect(L"JS/2-03.-Footsteps-Turn.wav", 1.f);
 		}
 	}
 	else
