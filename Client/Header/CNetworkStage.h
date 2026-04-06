@@ -5,6 +5,7 @@
 #include "CEnderDragon.h"
 
 class COcean;
+class CHUD;
 
 class CNetworkStage : public CScene
 {

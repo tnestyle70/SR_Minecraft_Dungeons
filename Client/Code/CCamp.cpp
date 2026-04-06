@@ -18,6 +18,7 @@
 #include "CHUD.h"
 #include "CInventoryMgr.h"
 #include "CNPC.h"
+#include "CSoundMgr.h"
 
 CCamp::CCamp(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -43,6 +44,8 @@ HRESULT CCamp::Ready_Scene()
 		return E_FAIL;
 
 	Ready_StageData(L"../Bin/Data/Stage2.dat");
+
+	CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_MainStage.wav", 0.5f);
 
 	return S_OK;
 }

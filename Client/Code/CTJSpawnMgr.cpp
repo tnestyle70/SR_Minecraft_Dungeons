@@ -53,7 +53,6 @@ void CTJSpawnMgr::Update(const _float& fTimeDelta)
                         if (pOrb)
                             m_vecExpOrbs.push_back(pOrb);
 
-                        // 자석 20% 확률 드롭
                         if (rand() % 10 < 1)
                         {
                             vPos.y = 0.5f;

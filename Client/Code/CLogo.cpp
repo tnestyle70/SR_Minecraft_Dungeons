@@ -31,8 +31,8 @@ HRESULT CLogo::Ready_Scene()
     if (FAILED(Ready_Environment_Layer(L"Environment_Layer")))
         return E_FAIL;
 
-    CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_MainStage.wav", 2.f);
-
+    CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_MainStage.wav", 0.5f);
+    
     //CSoundMgr::GetInstance()->PlayBGM(L"BGM/Title.wav", 2.f);
 
     return S_OK;

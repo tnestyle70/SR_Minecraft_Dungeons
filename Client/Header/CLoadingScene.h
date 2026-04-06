@@ -38,7 +38,7 @@ private:
 
 private:
 	float   m_fDisplayTimer = 0.f;
-	float   m_fMinDisplayTime = 1.5f;  // 최소 1.5초는 보여줌
+	float   m_fMinDisplayTime = 3.5f;  // 최소 1.5초는 보여줌
 
 public:
 	static CLoadingScene* Create(LPDIRECT3DDEVICE9 pGraphicDev,

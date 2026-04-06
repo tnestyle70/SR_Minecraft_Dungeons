@@ -828,7 +828,7 @@ void CNetworkPlayer::Key_Input(const _float& fTimeDelta)
 			if (pFlame)
 			{
 				//사운드 재생
-				CSoundMgr::GetInstance()->PlayEffect(L"Effect/Ender_Flame2.wav", 1.f);
+				CSoundMgr::GetInstance()->PlayEffect(L"Effect/Ender_Flame2.wav", 0.5f);
 				m_vecVoidFlames.push_back(pFlame);
 				//Network Sync
 				CNetworkMgr::GetInstance()->SendFlame(

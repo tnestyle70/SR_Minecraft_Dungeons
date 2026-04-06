@@ -4,6 +4,7 @@
 #include "CRenderer.h"
 #include "CLoadingBlock.h"
 #include "CLoadingTexture.h"
+#include "CSoundMgr.h"
 
 CLoadingScene::CLoadingScene(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -82,6 +83,9 @@ HRESULT CLoadingScene::Ready_Scene()
 
 	if (!m_pTextTexture)
 		return E_FAIL;
+
+	//씬 전환 시에 모든 사운드 다 끄기 
+	CSoundMgr::GetInstance()->StopAll();
 	
 	return S_OK;
 }
