@@ -42,7 +42,13 @@ HRESULT CCYStage::Ready_Scene()
         DEFAULT_PITCH | FF_DONTCARE, L"Arial", &m_pFont); 
 
     CSoundMgr::GetInstance()->StopSound(SOUND_BGM);
-    CSoundMgr::GetInstance()->PlayBGM(L"BGM/CCYStageBGM.wav", 0.5f);
+    CSoundMgr::GetInstance()->PlayBGM(L"BGM/CCYStageBGM.wav", 1.f); 
+
+    D3DXCreateTextureFromFile(m_pGraphicDev,
+        L"../Bin/Resource/Texture/CY/CCYStage.png",
+        &m_pTitleTex); 
+     
+    D3DXCreateSprite(m_pGraphicDev, &m_pSprite);
 
     if (FAILED(Ready_Light()))                                 return E_FAIL;
     if (FAILED(Ready_Environment_Layer(L"Environment_Layer"))) return E_FAIL;
@@ -125,7 +131,7 @@ _int CCYStage::Update_Scene(const _float& fTimeDelta)
                     if (m_pCYGuardian)
                     {
                         m_pCYGuardian->SetActive(true);
-                        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_IDLE.wav", 0.8f);
+                        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_IDLE.wav", 1.5f);
                     }
                 } 
                 if (i == 6)
@@ -140,7 +146,9 @@ _int CCYStage::Update_Scene(const _float& fTimeDelta)
                     CMonsterMgr::GetInstance()->Clear();
                     CParticleMgr::GetInstance()->Clear_Emitters();
                     CInventoryMgr::GetInstance()->Clear_Player();
-                    CBlockMgr::GetInstance()->ClearBlocks();
+                    CBlockMgr::GetInstance()->ClearBlocks(); 
+                    if (m_pTitleTex) { m_pTitleTex->Release(); m_pTitleTex = nullptr; }
+                    if (m_pSprite) { m_pSprite->Release();   m_pSprite = nullptr; }
                     Safe_Release(m_pCYGuardian);
                     m_pCYGuardian = nullptr;
                     m_vecTorches.clear();  // 횃불 클리어
@@ -420,7 +428,29 @@ void CCYStage::Render_UI()
         RECT rcAdd = { WINCX - 150, 80, WINCX - 20, 130 };
         m_pFont->DrawText(nullptr, L"+3", -1, &rcAdd,
             DT_CENTER | DT_VCENTER, D3DCOLOR_ARGB(255, 100, 255, 100));
+    }  
+
+    if (m_pSprite && m_pTitleTex)
+    {
+        D3DSURFACE_DESC desc;
+        m_pTitleTex->GetLevelDesc(0, &desc);
+
+        // 화면 중앙 상단 위치 계산
+        float fX = (WINCX - (float)desc.Width * 0.5f) * 0.5f;
+        float fY = 10.f;
+
+        D3DXMATRIX matScale, matTrans, matWorld;
+        D3DXMatrixScaling(&matScale, 0.4f, 0.4f, 1.f);  // 크기 조절
+        D3DXMatrixTranslation(&matTrans, fX, fY, 0.f);
+        matWorld = matScale * matTrans;
+
+        m_pSprite->Begin(D3DXSPRITE_ALPHABLEND);
+        m_pSprite->SetTransform(&matWorld);
+        m_pSprite->Draw(m_pTitleTex, nullptr, nullptr, nullptr, 0xFFFFFFFF);
+        m_pSprite->End();
     }
+
+
 }
 
 HRESULT CCYStage::Ready_Environment_Layer(const _tchar* pLayerTag)
@@ -663,7 +693,10 @@ void CCYStage::Free()
     {
         m_pFont->Release();
         m_pFont = nullptr;
-    }
+    } 
+    if (m_pTitleTex) { m_pTitleTex->Release(); m_pTitleTex = nullptr; }
+    if (m_pSprite) { m_pSprite->Release();   m_pSprite = nullptr; } 
+
     Safe_Release(m_pCYGuardian);
     CDamageMgr::GetInstance()->Clear_Boss();
     m_vecTorches.clear();

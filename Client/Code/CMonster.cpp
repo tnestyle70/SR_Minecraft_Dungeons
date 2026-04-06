@@ -548,13 +548,13 @@ void CMonster::Take_Damage(int iDamage)
             switch (m_eType)
             {
             case EMonsterType::ZOMBIE:
-                CSoundMgr::GetInstance()->PlayEffect(L"Monster/zombieDead.wav", 0.7f);
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/zombieDead.wav", 1.f);
                 break;
             case EMonsterType::SPIDER:
-                CSoundMgr::GetInstance()->PlayEffect(L"Monster/spiderDeath.wav", 0.7f);
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/spiderDeath.wav", 1.f);
                 break;
             case EMonsterType::SKELETON:
-                CSoundMgr::GetInstance()->PlayEffect(L"Monster/skeletonDeath.wav", 0.7f);
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/skeletonDeath.wav", 1.f);
                 break;
             }
         }
@@ -568,16 +568,16 @@ void CMonster::Take_Damage(int iDamage)
             switch (m_eType)
             {
             case EMonsterType::ZOMBIE:
-                CSoundMgr::GetInstance()->PlayEffect(L"Monster/zombieHit.wav", 0.7f);
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/zombieHit.wav", 1.f);
                 break;
             case EMonsterType::SKELETON:
-                CSoundMgr::GetInstance()->PlayEffect(L"Monster/skeletonHurt.wav", 0.7f);
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/skeletonHurt.wav", 1.f);
                 break;
             case EMonsterType::CREEPER:
-                CSoundMgr::GetInstance()->PlayEffect(L"Monster/Creeper_HIT.wav", 0.7f);
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/Creeper_HIT.wav", 1.f);
                 break;
             case EMonsterType::SPIDER:
-                CSoundMgr::GetInstance()->PlayEffect(L"Monster/spiderHIT.wav", 0.7f);
+                CSoundMgr::GetInstance()->PlayEffect(L"Monster/spiderHIT.wav", 1.f);
                 break;
             }
         }
@@ -704,10 +704,11 @@ void CMonster::Update_AI(const _float& fTimeDelta)
                 case EMonsterType::ZOMBIE:
                     break;
                 case EMonsterType::SPIDER:
-                    CSoundMgr::GetInstance()->PlayEffect(L"Monster/spiderIdle.wav", 0.5f);
+                    CSoundMgr::GetInstance()->PlayEffect(L"Monster/spiderIdle.wav", 1.f);
                     break;
+
                 case EMonsterType::SKELETON:
-                    CSoundMgr::GetInstance()->PlayEffect(L"Monster/skeletonIdle.wav", 0.5f);
+                    CSoundMgr::GetInstance()->PlayEffect(L"Monster/skeletonIdle.wav", 1.f);
                     break;
                 }
             }

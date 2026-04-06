@@ -56,11 +56,11 @@ void CCYGuardian::Take_Damage(int iDamage)
     {
         m_iHp = 0;
         m_bActive = false;
-        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_DEAD.wav", 0.8f);
+        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_DEAD.wav", 1.f);
     }
     else
     {
-        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_Attack1.wav", 0.5f);
+        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_Attack1.wav", 1.f);
     }
 }
 
@@ -111,7 +111,7 @@ void CCYGuardian::Update_CCY_AI(const _float& fTimeDelta)
     if (m_fIdleSoundTimer >= m_fIdleSoundInterval)
     {
         m_fIdleSoundTimer = 0.f;
-        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_IDLE.wav", 0.6f);
+        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_IDLE.wav", 1.f);
     }
 
     // 공격 타이머 - 빔 발사
@@ -119,7 +119,7 @@ void CCYGuardian::Update_CCY_AI(const _float& fTimeDelta)
     if (m_fAtkTimer >= m_fAtkInterval)
     {
         m_fAtkTimer = 0.f;
-        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_Attack1.wav", 0.6f);
+        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_Attack1.wav", 1.f);
 
         _vec3 vLook;
         pTrans->Get_Info(INFO_LOOK, &vLook);
