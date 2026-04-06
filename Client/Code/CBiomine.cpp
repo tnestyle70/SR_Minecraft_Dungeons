@@ -212,7 +212,7 @@ void CBiomine::Explode()
    
     m_pExplosionLight = new CExplosionLight(m_pGraphicDev, vPos); 
 
-    CSoundMgr::GetInstance()->PlayEffect(L"Monster/explode.wav", 0.8f);
+    CSoundMgr::GetInstance()->PlayEffect(L"Monster/explode.wav", 1.f);
 }
 
 CBiomine* CBiomine::Create(LPDIRECT3DDEVICE9 pGraphicDev,

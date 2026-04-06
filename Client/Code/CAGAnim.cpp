@@ -44,7 +44,7 @@ void CAGAnim::Set_State(EAGState eState)
         m_bHitFlash = true;
         m_fHitTimer = 0.f;
         // 추가 : 피격 사운드
-        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_HIT.wav", 0.7f);
+        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_HIT.wav", 1.5f);
     }
 }
 

@@ -211,6 +211,12 @@ HRESULT CCamp::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 
 	CPlayer* pPlayer = dynamic_cast<CPlayer*>(pGameObject);
 
+	// 플레이어 초기 위치 설정
+	Engine::CTransform* pTrans = dynamic_cast<Engine::CTransform*>
+		(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform"));
+	if (pTrans)
+		pTrans->Set_Pos(-2.f, 2.f, 0.f);  // ← 추가
+
 	//HUD
 	pGameObject = CHUD::Create(m_pGraphicDev);
 

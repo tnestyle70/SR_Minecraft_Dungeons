@@ -42,7 +42,7 @@ HRESULT CCYStage::Ready_Scene()
         DEFAULT_PITCH | FF_DONTCARE, L"Arial", &m_pFont); 
 
     CSoundMgr::GetInstance()->StopSound(SOUND_BGM);
-    CSoundMgr::GetInstance()->PlayBGM(L"BGM/CCYStageBGM.wav", 0.5f);
+    CSoundMgr::GetInstance()->PlayBGM(L"BGM/CCYStageBGM.wav", 1.f);
 
     if (FAILED(Ready_Light()))                                 return E_FAIL;
     if (FAILED(Ready_Environment_Layer(L"Environment_Layer"))) return E_FAIL;
@@ -125,7 +125,7 @@ _int CCYStage::Update_Scene(const _float& fTimeDelta)
                     if (m_pCYGuardian)
                     {
                         m_pCYGuardian->SetActive(true);
-                        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_IDLE.wav", 0.8f);
+                        CSoundMgr::GetInstance()->PlayEffect(L"Monster/AG_IDLE.wav", 1.5f);
                     }
                 } 
                 if (i == 6)
