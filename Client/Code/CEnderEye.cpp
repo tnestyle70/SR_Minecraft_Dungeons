@@ -2,6 +2,7 @@
 #include "CEnderEye.h"
 #include "CRenderer.h"
 #include "CPlayerArrow.h"
+#include "CSoundMgr.h"
 
 CEnderEye::CEnderEye(LPDIRECT3DDEVICE9 pGraphicDev)
     : CGameObject(pGraphicDev)
@@ -65,10 +66,10 @@ void CEnderEye::Check_ArrowCollision()
 
         if (m_pColliderCom->IsColliding(pArrowCol->Get_AABB()))
         {
-            // Ãæµ¹ ¡æ ±ôºýÀÓ OFF
             m_bFlickering = false;
             m_fAlpha = 1.f;
             m_fFlickerTime = 0.f;
+            CSoundMgr::GetInstance()->PlayEffect(L"Effect/EnderEye_Break.wav", 1.f);  // ¡ç Ãß°¡
             return;
         }
     }
