@@ -19,6 +19,7 @@ enum PACKET_TYPE : WORD
     C2S_ARROW        = 7,   // arrow fire event (replaces C2S_ATTACK)
     C2S_FLAME = 8, //flame sync
     C2S_ENDER_DRAGON_DAMAGE = 9, //client -> server Enderdargon damage
+    C2S_PLAYER_DEAD = 10, //player dead detection
     
     S2C_LOGIN_ACK    = 101,
     S2C_SPAWN        = 102,
@@ -29,6 +30,7 @@ enum PACKET_TYPE : WORD
     S2C_ARROW        = 108,   // arrow broadcast
     S2C_FLAME = 110,
     S2C_ENDER_DRAGON_SYNC = 111, //Server -> Client enderdragon state broadcast
+    S2C_PLAYER_DEAD = 112, //player dead broadcast
     S2C_DRAGON_SYNC  = 109,   // dragon position broadcast
 };
 
@@ -244,6 +246,27 @@ struct PKT_S2C_Damage
     int   iAttackerPlayerId;
     float fDamage;
 };
+
+#pragma pack(push, 1)
+struct PKT_C2S_PlayerDead
+{
+    PKT_HEADER header;
+    int iKillPlayerId;
+};
+#pragma pack(pop)
+static_assert(sizeof(PKT_C2S_PlayerDead) == 8, "PKT_C2S_PlayerDead size mismatch");
+
+#pragma pack(push, 1)
+struct PKT_S2C_PlayerDead
+{
+    PKT_HEADER header;
+    int iVictimPlayerId;
+    int iKillerPlayerId;
+};
+#pragma pack(pop)
+static_assert(sizeof(PKT_S2C_PlayerDead) == 12, "PKT_S2C_PlayerDead size mismatch");
+
+
 
 #pragma pack(pop)
 

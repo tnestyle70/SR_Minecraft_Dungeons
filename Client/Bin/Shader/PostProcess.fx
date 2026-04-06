@@ -508,3 +508,38 @@ technique TechBreathBeam
         CullMode         = NONE;
     }
 }
+
+//Dragon Dissolve
+float fDissolveAmt; // 0 = solid, 1 = fully dissolved
+
+sampler2D DragonBaseTex : register(s0); //fixed pipeline setexture
+
+float4 PS_DragonDissolve(float2 vUV : TEXCOORD0) : COLOR0
+{
+    float4 color = tex2D(DragonBaseTex, vUV);
+    //noise sample(UV Tiling * 3 for detail)
+    float noise = tex2D(NoiseTex, vUV * 3.f).r;
+    
+    //Dissolve clip
+    clip(noise - fDissolveAmt);
+    
+    //Edge glow(ender purple)
+    float edge = smoothstep(0.0, 0.08, noise - fDissolveAmt);
+    float3 glowColor = float3(0.45, 0.0, 0.85);
+    color.rgb += glowColor * (1.0 - edge) * 4.0;
+    
+    return color;
+}
+
+technique TechDragonDissolve
+{
+    pass P0
+    {
+        VertexShader = null; //fixed function vertex processing
+        PixelShader = compile ps_2_0 PS_DragonDissolve();
+        
+        AlphaBlendEnable = false;
+        ZWriteEnable = true;
+        CullMode = None;
+    }
+}

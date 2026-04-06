@@ -20,7 +20,7 @@ HRESULT CJSChunkMgr::Ready_Manager(LPDIRECT3DDEVICE9 pGraphicDev, CLayer* pLayer
 
     for (_int i = 0; i < m_iRenderCount; ++i)
     {
-        _vec3 vPos = { 0.f, 0.f, m_fChunkSize * i };
+        _vec3 vPos = { 0.f, 0.f, m_fChunkSize * i + 30.f };
 
         CJSChunk* pChunk = CJSChunk::Create(m_pGraphicDev, vPos, m_pLayer, CHUNK_FULL, m_eCurrentDir);
         if (pChunk)
@@ -205,7 +205,7 @@ void CJSChunkMgr::Remove_OldChunk(_vec3 vPlayerPos)
     vDiff.y = 0.f;  // Y ¹«½Ã
     _float fDist = D3DXVec3Length(&vDiff);
 
-    if (fDist > m_fChunkSize + 10.f)
+    if (fDist > m_fChunkSize + 20.f)
     {
         m_ChunkList.front()->Set_Dead();
         m_RemoveList.push_back(m_ChunkList.front());
@@ -250,6 +250,11 @@ _bool CJSChunkMgr::Check_WallCollision(CJSCollider* pPlayerCol)
             if (pJSChunk->Get_RightWallCol() &&
                 pPlayerCol->Check_Collision(pJSChunk->Get_RightWallCol()))
                 return true;
+
+            for (auto& pCol : pJSChunk->Get_ArchCols())
+                if (pPlayerCol->Check_Collision(pCol))
+                    return true;
+
             continue;
         }
 

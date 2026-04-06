@@ -227,6 +227,20 @@ _uint CLoading::Loading_SquidCoast()
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/mob/steve_real.png"))))
         return E_FAIL;
 
+    // TempleRun UI
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSUITexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/JS/JSUI.png"))))
+        return E_FAIL;
+
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSGameOverTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/JS/JS_GameOver.png"))))
+        return E_FAIL;
+
+    // TempleRun Monster
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_JSMonster",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/mob/zombie_villager/zombie_villager.png"))))
+        return E_FAIL;
+
     //오징어 해안 로딩 텍스쳐`
     //if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SquidCoastLoadingTexture",
     //    Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/Logo/Loading_Screen_Squid_Coast.png"))))
@@ -757,6 +771,10 @@ _uint CLoading::Loading_SquidCoast()
 
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_TJDoorTexture",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/TJ_Door.png"))))
+        return E_FAIL;
+
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_MagnetTexture",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/TJ/Magnet.png"))))
         return E_FAIL;
 
     lstrcpy(m_szLoading, L"기타 등등 로딩");

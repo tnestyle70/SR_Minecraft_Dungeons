@@ -16,7 +16,6 @@ public:
 	virtual void Render_Scene();
 	virtual void Render_UI() override; 
 
-
 private:
 	void               Update_EnderEyes();
 

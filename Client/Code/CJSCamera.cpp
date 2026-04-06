@@ -56,29 +56,33 @@ void CJSCamera::LateUpdate_GameObject(const _float& fTimeDelta)
     Get_PlayerPos();
     Get_PlayerLook();
 
-    DEATHTYPE eDeathType = CJSScoreMgr::GetInstance()->Get_DeathType();
+    JSGAMESTAGE eStage = CJSScoreMgr::GetInstance()->Get_Stage();
 
-    if (eDeathType == DEATH_COLLISION)
+    if (eStage == JSSTAGE_INTRO)
     {
-        if (!m_bShaking)
-            Start_Shake();
+        m_vEye = { -10.f, 15.f, 30.f };
+        m_vAt = { 0.f, 0.f, -10.f };
 
-        if (m_bShaking)
-        {
-            m_fShakeTime += fTimeDelta;
-            if (m_fShakeTime < m_fShakeMax)
-            {
-                _float fOffsetX = (rand() % 100 / 100.f - 0.5f) * m_fShakeStrength;
-                _float fOffsetY = (rand() % 100 / 100.f - 0.5f) * m_fShakeStrength;
-                m_vEye.x += fOffsetX;
-                m_vEye.y += fOffsetY;
-            }
-            else
-                m_bShaking = false;
-        }
+        m_vCamLook.x = -m_vPlayerLook.x;
+        m_vCamLook.z = -m_vPlayerLook.z;
+
         return;
     }
-    else if (eDeathType == DEATH_FALL)
+
+    if (eStage == JSSTAGE_COUNTDOWN)
+    {
+        m_vEye.x = m_vPlayerPos.x;
+        m_vEye.y = 8.f;
+        m_vEye.z = m_vPlayerPos.z - 10.f;
+        m_vAt.x = m_vPlayerPos.x;
+        m_vAt.y = 0.f;
+        m_vAt.z = m_vPlayerPos.z + 1.f;
+        return;
+    }
+
+    DEATHTYPE eDeathType = CJSScoreMgr::GetInstance()->Get_DeathType();
+
+    if (eDeathType == DEATH_FALL)
     {
         m_vAt.x = m_vPlayerPos.x;
         m_vAt.y = m_vPlayerPos.y;
@@ -90,9 +94,23 @@ void CJSCamera::LateUpdate_GameObject(const _float& fTimeDelta)
     m_vCamLook.x += (vTargetLook.x - m_vCamLook.x) * 5.f * fTimeDelta;
     m_vCamLook.z += (vTargetLook.z - m_vCamLook.z) * 5.f * fTimeDelta;
     m_vEye.x = m_vPlayerPos.x + m_vCamLook.x * 15.f;
-    m_vEye.z = m_vPlayerPos.z + m_vCamLook.z * 15.f;
+    m_vEye.z = m_vPlayerPos.z + m_vCamLook.z * 17.f;
     m_vAt.x = m_vPlayerPos.x;
     m_vAt.z = m_vPlayerPos.z;
+
+    if (CJSScoreMgr::GetInstance()->Is_Slide())
+    {
+        m_bWasSliding = true;
+        _float fTargetY = m_fSlideEyeY;
+        m_vEye.y += (fTargetY - m_vEye.y) * 5.f * fTimeDelta;
+    }
+    else if (m_bWasSliding)
+    {
+        _float fNormalY = m_fNormalEyeY;
+        m_vEye.y += (fNormalY - m_vEye.y) * 5.f * fTimeDelta;
+        if (fabsf(m_vEye.y - fNormalY) < 0.01f)
+            m_bWasSliding = false;
+    }
 }
 
 void CJSCamera::Get_PlayerPos()

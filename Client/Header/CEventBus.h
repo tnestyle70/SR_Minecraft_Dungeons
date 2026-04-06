@@ -12,6 +12,8 @@ enum class eEventType
 	MISSION_ACCEPT, //미션 수락
 	MISSION_COMPLETE, //미션 완료
 	BOSS_DEAD,
+	PLAYER_DEAD,
+	PLAYER_KILL,
 	GAME_EVENT_END
 };
 

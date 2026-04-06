@@ -171,9 +171,11 @@ HRESULT CCamp::Ready_Environment_Layer(const _tchar* pLayerTag)
 	_vec3 vUp{ 0.f, 1.f, 0.f };
 
 	m_pDynamicCamera = CDynamicCamera::Create(m_pGraphicDev, &vEye, &vAt, &vUp);
+
 	pGameObject = m_pDynamicCamera;
 
 	CDynamicCamera* pDynamicCam = dynamic_cast<CDynamicCamera*>(pGameObject);
+
 	if (!pDynamicCam)
 		return E_FAIL;
 
@@ -211,11 +213,21 @@ HRESULT CCamp::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 
 	CPlayer* pPlayer = dynamic_cast<CPlayer*>(pGameObject);
 
-	// 플레이어 초기 위치 설정
+
 	Engine::CTransform* pTrans = dynamic_cast<Engine::CTransform*>
 		(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform"));
 	if (pTrans)
-		pTrans->Set_Pos(-2.f, 2.f, 0.f);  // ← 추가
+		pTrans->Set_Pos(-2.f, 2.f, 0.f);
+	pTrans->Update_Component(0.016f);
+
+	//플레이어 고정카메라 추가
+	if (m_pDynamicCamera)
+	{
+		m_pDynamicCamera->SetFollowTarget(
+			dynamic_cast<Engine::CTransform*>(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform")));
+		m_pDynamicCamera->SnapToTarget();
+	}
+
 
 	//HUD
 	pGameObject = CHUD::Create(m_pGraphicDev);
@@ -244,13 +256,10 @@ HRESULT CCamp::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	{
 		MSG_BOX("Player Collider Set Failed");
 	}
-	CTriggerBoxMgr::GetInstance()->SetPlayerCollider(pCollider);
-	CMonsterMgr::GetInstance()->SetPlayer(pPlayer);
 
-	//고정카메라 추가
-	if (m_pDynamicCamera)
-		m_pDynamicCamera->SetFollowTarget(
-			dynamic_cast<Engine::CTransform*>(pPlayer->Get_Component(ID_DYNAMIC, L"Com_Transform"))); 
+	CTriggerBoxMgr::GetInstance()->SetPlayerCollider(pCollider);
+
+	CMonsterMgr::GetInstance()->SetPlayer(pPlayer);
 
 
 	CDialogueBox* pDialogueBox = CDialogueBox::Create(m_pGraphicDev);

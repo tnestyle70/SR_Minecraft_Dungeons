@@ -15,6 +15,8 @@ struct PartDesc
     CJSBodyBuffer::FaceUV right = {};
     CJSBodyBuffer::FaceUV top = {};
     CJSBodyBuffer::FaceUV bottom = {};
+
+    const _tchar* pTexProto = L"Proto_PlayerTexture";
 };
 
 class CJSBodyPart : public CGameObject
@@ -38,6 +40,8 @@ private:
     CTransform* m_pTransformCom = nullptr;
     CTexture* m_pTextureCom = nullptr;
     _vec3           m_vOffset = {};
+
+    const _tchar* m_pTexProto = L"Proto_PlayerTexture";
 
 public:
     CTransform* Get_Transform() { return m_pTransformCom; }

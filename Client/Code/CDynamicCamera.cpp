@@ -260,6 +260,22 @@ void CDynamicCamera::SetActionCam(eActionCamType eType)
     return;
 }
 
+void CDynamicCamera::SnapToTarget()
+{
+    //플레이어 시점으로 바로 스냅
+    if (!m_pTargetTransform)
+        return;
+
+    _vec3 vPlayerPos;
+    m_pTargetTransform->Get_Info(INFO_POS, &vPlayerPos);
+
+    m_vEye = vPlayerPos + m_vFollowOffset;
+    m_vAt = vPlayerPos + _vec3(0.f, 1.5f, 0.f);
+
+    D3DXMatrixLookAtLH(&m_matView, &m_vEye, &m_vAt, &m_vUp);
+    m_pGraphicDev->SetTransform(D3DTS_VIEW, &m_matView);
+}
+
 void CDynamicCamera::Set_SquidCoastActionCam()
 {
     //eye 위치 처음 cam 위치로 설정, follow offset에서 -12의 값으로 오프셋을 설정해주고 있는 상태

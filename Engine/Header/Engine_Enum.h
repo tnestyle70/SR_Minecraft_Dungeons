@@ -42,5 +42,7 @@ namespace Engine
 
 		DEATH_END
 	};
+
+	enum JSGAMESTAGE { JSSTAGE_INTRO, JSSTAGE_COUNTDOWN, JSSTAGE_PLAY, JSSTAGE_END };
 }
 #endif // Engine_Enum_h__

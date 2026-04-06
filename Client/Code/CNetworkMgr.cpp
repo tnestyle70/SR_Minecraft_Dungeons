@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <algorithm>
 #include "CVoidFlame.h"
+#include "CEventBus.h"
 
 CNetworkMgr* CNetworkMgr::m_pInstance = nullptr;
 
@@ -362,6 +363,9 @@ void CNetworkMgr::ProcessPacket(const PKT_HEADER* pHdr)
     case S2C_DAMAGE:
         On_Damage(reinterpret_cast<const PKT_S2C_Damage*>(pHdr));
         break;
+    case S2C_PLAYER_DEAD:
+        OnPlayerDead(reinterpret_cast<const PKT_S2C_PlayerDead*>(pHdr));
+        break;
     default:
         printf("[NET] Unknown packet type: %d\n", pHdr->wType);
         break;
@@ -633,22 +637,17 @@ void CNetworkMgr::On_Damage(const PKT_S2C_Damage* pPkt)
             return;
 
         m_pLocalPlayer->Hit(pPkt->fDamage);
-        float fNewHp = m_pLocalPlayer->Get_Hp();
 
-        printf("[NET] PVP damage received: %.1f HP  (attacker=%d, remaining=%.1f)\n",
-            pPkt->fDamage, pPkt->iAttackerPlayerId, fNewHp);
-
-        // #region agent log
+        //로컬 플레이어 사망 감지 -> 서버 + 로컬에 알리기
+        if (m_pLocalPlayer->Is_Dead())
         {
-            FILE* fp = nullptr;
-            if (_wfopen_s(&fp, L"debug-9b3cff.log", L"a") == 0 && fp)
-            {
-                fprintf(fp, "{\"sessionId\":\"9b3cff\",\"runId\":\"pre-fix\",\"hypothesisId\":\"H5\",\"location\":\"Client/Code/CNetworkMgr.cpp:486\",\"message\":\"apply_damage\",\"data\":{\"attacker\":%d,\"damage\":%.3f,\"remainingHp\":%.3f},\"timestamp\":%llu}\n",
-                    pPkt->iAttackerPlayerId, pPkt->fDamage, fNewHp, (unsigned long long)GetTickCount64());
-                fclose(fp);
-            }
+            SendPlayerDead(pPkt->iAttackerPlayerId);
+
+            FGameEvent event;
+            event.eType = eEventType::PLAYER_DEAD;
+            event.iValue = pPkt->iAttackerPlayerId;
+            CEventBus::GetInstance()->Publish(event);
         }
-        // #endregion
     }
     else
     {
@@ -656,6 +655,30 @@ void CNetworkMgr::On_Damage(const PKT_S2C_Damage* pPkt)
         auto it = m_mapRemote.find(pPkt->iTargetPlayerId);
         if (it != m_mapRemote.end() && it->second)
             it->second->Set_Hit();
+    }
+}
+
+void CNetworkMgr::SendPlayerDead(int iKillerPlayerId)
+{
+    if (!m_bConnected || m_iMyPlayerId == -1)
+        return;
+    //로컬 플레이어 사망 서버에 알리기
+    PKT_C2S_PlayerDead pkt = {};
+    FillHeader(pkt, C2S_PLAYER_DEAD);
+    pkt.iKillPlayerId = iKillerPlayerId;
+
+    Send(&pkt, sizeof(pkt));
+}
+
+void CNetworkMgr::OnPlayerDead(const PKT_S2C_PlayerDead * pPkt)
+{
+    //내가 remoteplayer를 kill한 경우
+    if (pPkt->iKillerPlayerId == m_iMyPlayerId)
+    {
+        FGameEvent event;
+        event.eType = eEventType::PLAYER_KILL;
+        event.iValue = pPkt->iKillerPlayerId;
+        CEventBus::GetInstance()->Publish(event);
     }
 }
 

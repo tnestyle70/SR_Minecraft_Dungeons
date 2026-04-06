@@ -201,6 +201,7 @@
     <ClInclude Include="..\Header\CJSChunkMgr.h" />
     <ClInclude Include="..\Header\CJSCornerChunk.h" />
     <ClInclude Include="..\Header\CJSEmerald.h" />
+    <ClInclude Include="..\Header\CJSMonster.h" />
     <ClInclude Include="..\Header\CJSObstacle.h" />
     <ClInclude Include="..\Header\CJSPlayer.h" />
     <ClInclude Include="..\Header\CJSScoreMgr.h" />
@@ -257,6 +258,7 @@
     <ClInclude Include="..\Header\CTJBoss.h" />
     <ClInclude Include="..\Header\CTJExpOrb.h" />
     <ClInclude Include="..\Header\CTJLevelUpUi.h" />
+    <ClInclude Include="..\Header\CTJMagnet.h" />
     <ClInclude Include="..\Header\CTJPlayer.h" />
     <ClInclude Include="..\Header\CTJSpawnMgr.h" />
     <ClInclude Include="..\Header\CTNT.h" />
@@ -335,6 +337,7 @@
     <ClCompile Include="..\Code\CJSChunkMgr.cpp" />
     <ClCompile Include="..\Code\CJSCornerChunk.cpp" />
     <ClCompile Include="..\Code\CJSEmerald.cpp" />
+    <ClCompile Include="..\Code\CJSMonster.cpp" />
     <ClCompile Include="..\Code\CJSObstacle.cpp" />
     <ClCompile Include="..\Code\CJSPlayer.cpp" />
     <ClCompile Include="..\Code\CJSScoreMgr.cpp" />
@@ -387,6 +390,7 @@
     <ClCompile Include="..\Code\CTJBoss.cpp" />
     <ClCompile Include="..\Code\CTJExpOrb.cpp" />
     <ClCompile Include="..\Code\CTJLevelUpUi.cpp" />
+    <ClCompile Include="..\Code\CTJMagnet.cpp" />
     <ClCompile Include="..\Code\CTJPlayer.cpp" />
     <ClCompile Include="..\Code\CTJSpawnMgr.cpp" />
     <ClCompile Include="..\Code\CTNT.cpp" />

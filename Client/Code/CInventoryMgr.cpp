@@ -25,7 +25,7 @@ HRESULT CInventoryMgr::Ready_InventoryMgr(LPDIRECT3DDEVICE9 pGraphicDev)
 	for (int currency = 0; currency < (int)eCurrencyType::CURRENCY_END; ++currency)
 	{
 		m_arrCurrency[currency] = CCurrencyHUD::Create(m_pGraphicDev,
-		(eCurrencyType)currency, 40.f + 70.f * currency, 40.f, 50.f, 50.f);
+		(eCurrencyType)currency, 40.f + 90.f * currency, 40.f, 50.f, 50.f);
 	}
 	//InventorySlot들 전부 세팅
 	for(int tab = 0; tab < (int)eInventoryTab::INVENTORY_END; tab++)
@@ -343,7 +343,7 @@ void CInventoryMgr::Render_Currency()
 	CFontMgr::GetInstance()->Render_Font(
 		L"Font_Minecraft", buf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
 
-	vPos.x += 70.f;
+	vPos.x += 90.f;
 	
 	swprintf_s(buf, L"%d", m_iArtifactCount);
 

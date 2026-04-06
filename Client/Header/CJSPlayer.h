@@ -32,6 +32,7 @@ private:
 	void	LateUpdate_BodyParts(const _float& fTimeDelta);
 	void	Update_RunAnimation(const _float& fTimeDelta);
 	void	Update_JumpAnimation(const _float& fTimeDelta);
+	void	Update_SlideAnimation();
 
 public:
 	static CJSPlayer* Create(LPDIRECT3DDEVICE9 pGraphicDev);

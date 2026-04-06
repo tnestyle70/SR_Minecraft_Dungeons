@@ -122,6 +122,9 @@ private:
     void On_DragonSync (const PKT_S2C_DragonSync*      pPkt); // S2C_DRAGON_SYNC
     void On_Damage     (const PKT_S2C_Damage*          pPkt);
 
+    void SendPlayerDead(int iKillerPlayerId);
+    void OnPlayerDead(const PKT_S2C_PlayerDead* pPkt);
+
     // ── 소켓 / 버퍼 ───────────────────────────────────────────────────
     bool Send(const void* pData, int iSize);
 

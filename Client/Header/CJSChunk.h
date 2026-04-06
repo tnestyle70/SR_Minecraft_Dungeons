@@ -52,12 +52,14 @@ public:
 	_bool Check_ObstacleCollision(CJSCollider* pPlayerCol);
 	CJSCollider* Get_LeftWallCol() { return m_pLeftWallCol; }
 	CJSCollider* Get_RightWallCol() { return m_pRightWallCol; }
+	vector<CJSCollider*>& Get_ArchCols() { return m_vecArchCol; }
 
 private:
 	HRESULT Add_Component();
 	_vec3 Calc_TilePos(_vec3 vChunkPos, _int x, _int z);
 	HRESULT Ready_Collider(_vec3 vChunkPos);
 	HRESULT Ready_Obstacle(_vec3 vChunkPos);
+	HRESULT Ready_Arch(_vec3 vChunkPos);
 
 public:
 	static CJSChunk* Create(LPDIRECT3DDEVICE9 pGraphicDev, _vec3 vPos, CLayer* pLayer, CHUNKTYPE eType, DIRECTION eDir);
@@ -75,6 +77,7 @@ private:
 	vector<CJSTile*> m_vecWall;
 	vector<CJSEmerald*> m_vecEmerald;
 	vector<CJSObstacle*> m_vecObstacle;
+	vector<CJSCollider*> m_vecArchCol;
 
 	CHUNKTYPE m_eChunkType;
 
