@@ -105,22 +105,22 @@
       <Filter>02. GameObject\04. Terrain</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\imgui_widgets.cpp">
-      <Filter>01. Scene\03. Editor\00. ImGui</Filter>
+      <Filter>01. Scene\03. Editor\03. BlockMgr\00. ImGui</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\imgui.cpp">
-      <Filter>01. Scene\03. Editor\00. ImGui</Filter>
+      <Filter>01. Scene\03. Editor\03. BlockMgr\00. ImGui</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\imgui_draw.cpp">
-      <Filter>01. Scene\03. Editor\00. ImGui</Filter>
+      <Filter>01. Scene\03. Editor\03. BlockMgr\00. ImGui</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\imgui_impl_dx9.cpp">
-      <Filter>01. Scene\03. Editor\00. ImGui</Filter>
+      <Filter>01. Scene\03. Editor\03. BlockMgr\00. ImGui</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\imgui_impl_win32.cpp">
-      <Filter>01. Scene\03. Editor\00. ImGui</Filter>
+      <Filter>01. Scene\03. Editor\03. BlockMgr\00. ImGui</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\imgui_tables.cpp">
-      <Filter>01. Scene\03. Editor\00. ImGui</Filter>
+      <Filter>01. Scene\03. Editor\03. BlockMgr\00. ImGui</Filter>
     </ClCompile>
     <ClCompile Include="..\Code\CStage.cpp">
       <Filter>01. Scene</Filter>
@@ -857,9 +857,6 @@
     <Filter Include="01. Scene\03. Editor">
       <UniqueIdentifier>{6e17a0d8-76b0-4718-8c4e-e7baa64af39e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="01. Scene\03. Editor\00. ImGui">
-      <UniqueIdentifier>{122dd7f2-668e-4aaf-8e2c-0d59b9eb3586}</UniqueIdentifier>
-    </Filter>
     <Filter Include="01. Scene\03. Editor\01. Block">
       <UniqueIdentifier>{e4906bad-9742-40a5-b01a-008e3a810719}</UniqueIdentifier>
     </Filter>
@@ -991,6 +988,9 @@
     </Filter>
     <Filter Include="01. Scene\01. Stage\07. GB\04. Network\06. VoidFlame">
       <UniqueIdentifier>{c8d7d565-8a74-41f3-b944-1c6d8e5d84a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="01. Scene\03. Editor\03. BlockMgr\00. ImGui">
+      <UniqueIdentifier>{122dd7f2-668e-4aaf-8e2c-0d59b9eb3586}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
