@@ -310,6 +310,10 @@ _uint CLoading::Loading_SquidCoast()
         return E_FAIL;
 
     //Mission Text
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_EnderDragonText",
+        CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_EnderDragon.png"))))
+        return E_FAIL;
+    //Mission Text
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_SpiderText",
         CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/Text_Spider.png"))))
         return E_FAIL;
@@ -384,6 +388,10 @@ _uint CLoading::Loading_SquidCoast()
     //Inventory bow tab off
     if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_BowTabOff",
         Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/bow_icon.png"))))
+        return E_FAIL;
+    //HUD Arrow Clean
+    if (FAILED(CProtoMgr::GetInstance()->Ready_Prototype(L"Proto_ArrowsTexture",
+        Engine::CTexture::Create(m_pGraphicDev, TEX_NORMAL, L"../Bin/Resource/Texture/UI_0/arrows_clean.png"))))
         return E_FAIL;
 
     //플레이어 아머 텍스쳐

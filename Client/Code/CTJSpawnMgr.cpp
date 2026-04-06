@@ -53,8 +53,8 @@ void CTJSpawnMgr::Update(const _float& fTimeDelta)
                         if (pOrb)
                             m_vecExpOrbs.push_back(pOrb);
 
-                        // 자석 30% 확률 드롭
-                        if (rand() % 10 < 2)
+                        // 자석 10% 확률 드롭
+                        if (rand() % 10 < 1)
                         {
                             vPos.y = 0.5f;
                             CTJMagnet* pMagnet = CTJMagnet::Create(m_pGraphicDev, vPos);

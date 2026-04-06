@@ -137,6 +137,13 @@ _int CEnderDragon::Update_GameObject(const _float& fTimeDelta)
 	{
 		if (!m_bDeadSoundPlayed)
 		{
+			//미션 성공 이벤트 보내기
+			FGameEvent event;
+			event.eType = eEventType::MISSION_COMPLETE;
+			event.iValue = 2; //몬스터 처치 1 증가 -> 이거를 거미, 크리퍼, 좀비, 
+			event.iSubType = static_cast<int>(2);
+			CEventBus::GetInstance()->Publish(event);
+
 			CSoundMgr::GetInstance()->PlayEffect(L"Effect/Ender_Dead2.wav", 1.f);
 			m_bDeadSoundPlayed = true;
 			m_bDissolving = true;
@@ -743,7 +750,7 @@ void CEnderDragon::Update_CIRCLE_DIVE(const _float& fTimeDelta)
 			_vec3 vFireDir = m_vPlayerPos - m_Head.vPos;
 			_float fLen = D3DXVec3Length(&vFireDir);
 
-			CSoundMgr::GetInstance()->PlayEffect(L"Effect/Ender_Flame2.wav", 1.f);
+			CSoundMgr::GetInstance()->PlayEffect(L"Effect/Ender_Flame2.wav", 0.5f);
 
 			if (fLen > 0.01f)
 			{
@@ -2165,7 +2172,6 @@ HRESULT CEnderDragon::Init_WingChains()
 	}
 	return S_OK;
 }
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ImGui debug panel

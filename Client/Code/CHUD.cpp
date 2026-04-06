@@ -37,12 +37,16 @@ HRESULT CHUD::Ready_GameObject()
 	m_fPosionX = 696.f; m_fPosionY = 694.f;
 	m_fPosionW = 48.f; m_fPosionH = 62.f;
 
+	//화살
+	m_fArrowsX = 884.f; m_fArrowsY = 636.f;
+	m_fArrowsW = 60.f; m_fArrowsH = 56.f;
+	
 	//미션 완료 텍스트
 	m_fMissionComX = 470.f; m_fMissionComY = 80.f;
 	m_fMissionComW = 340.f; m_fMissionComH = 150.f;
 	
 	m_fMissionCoolTime = m_fMissionDuration;
-	m_eMissionType = eMissionType::MISSION_NPC1;
+	//m_eMissionType = eMissionType::MISSION_NPC1;
 
 	//아티펙트
 	m_fArtifactX = 560.f; m_fArtifactY = 160.f;
@@ -77,6 +81,10 @@ HRESULT CHUD::Ready_GameObject()
 			{
 			case eMissionType::MISSION_NPC1:    m_bMissionNPC1 = false; break;
 			case eMissionType::MISSION_NPC2:   m_bMissionNPC2 = false; break;
+			case eMissionType::MISSION_ENDERDRAGON:   
+				m_bMissionEnderDragon = false;
+				m_iEnderDragonCount++;
+				break;
 			}
 			m_bMissionComplete = static_cast<bool>(event.iValue);
 		});
@@ -195,6 +203,18 @@ void CHUD::Update_Missison(const _float fTimeDelta)
 			m_bFirstMissionComplete = false;
 		}
 		break;
+	case eMissionType::MISSION_ENDERDRAGON:
+		if (m_iEnderDragonCount >= 1)
+		{
+			FGameEvent event;
+			event.eType = eEventType::MISSION_COMPLETE;
+			event.iValue = 1; //Gain Artifact
+			event.iSubType = 1;
+			CEventBus::GetInstance()->Publish(event);
+
+			m_bFirstMissionComplete = false;
+		}
+		break;
 	case eMissionType::MISSION_END:
 		break;
 	default:
@@ -267,6 +287,7 @@ void CHUD::Render_GameObject()
 	m_pTextureCom->Set_Texture(0);
 	m_pBufferCom->Render_Buffer();
 
+	Render_Arrows();
 	Render_PosionCoolTime();
 	Render_CurrencyCount(); 
 	Render_Mission();
@@ -380,6 +401,31 @@ void CHUD::Render_PosionCoolTime()
 		return;
 }
 
+void CHUD::Render_Arrows()
+{
+	_matrix matWorld;
+	float fNDCX = (m_fArrowsX + m_fArrowsW * 0.5f) / (WINCX * 0.5f) - 1.f;
+	float fNDCY = 1.f - (m_fArrowsY + m_fArrowsH * 0.5f) / (WINCY * 0.5f);
+	float fScaleX = m_fArrowsW / WINCX;
+	float fScaleY = m_fArrowsH / WINCY;
+
+	D3DXMatrixTransformation2D(&matWorld,
+		nullptr, 0.f,
+		&_vec2(fScaleX, fScaleY),
+		nullptr, 0.f,
+		&_vec2(fNDCX, fNDCY));
+
+	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+
+	//Set_Texture
+	//GPU의 텍스쳐 스테이지에 해당 이미지를 올려둠, 모든 도형에는 해당 텍스쳐로 그려짐
+	//Vertex Texture에서 설정한 texture UV 값을 통해서 
+	//GPU는 설정된 텍스쳐의 어디서부터 어디까지를 그릴지를 결정해서 렌더링한다
+
+	m_pArrows->Set_Texture(0);
+	m_pBufferCom->Render_Buffer();
+}
+
 void CHUD::Render_CurrencyCount()
 {
 	//에메랄드
@@ -410,6 +456,9 @@ void CHUD::Render_Mission()
 		break;
 	case eMissionType::MISSION_NPC2:
 		Render_Mission2();
+		break;
+	case eMissionType::MISSION_ENDERDRAGON:
+		Render_MissionEnderDragon();
 		break;
 	default:
 		break;
@@ -524,9 +573,45 @@ void CHUD::Render_Mission2()
 	m_pBufferCom->Render_Buffer();
 
 	_vec2 vPos{ 1150.f, 20.f };
+
 	//스켈레톤
 	_tchar missionBuf[32];
 	swprintf_s(missionBuf, L"%d / 10", m_iSkeletonCount);
+
+	CFontMgr::GetInstance()->Render_Font(
+		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
+}
+
+void CHUD::Render_MissionEnderDragon()
+{
+	//EnderDragon 엔더 드래곤
+	if (!m_bMissionEnderDragon)
+		return;
+
+	//상단을 고정하기 위해서 Y를 fEmptyH * 0.5를 기준으로 잡는다?
+	float fNDCX = (m_fMissionTextX + m_fMissionTextW * 0.5f) / (WINCX * 0.5f) - 1.f;
+	float fNDCY = 1.f - (m_fMissionTextY + m_fMissionTextH * 0.5f) / (WINCY * 0.5f);
+
+	_matrix matWorld;
+	D3DXMatrixTransformation2D(&matWorld,
+		nullptr, 0.f,
+		&_vec2(m_fMissionTextW / WINCX, m_fMissionTextH / WINCY), //높이 비율 조정
+		nullptr, 0.f,
+		&_vec2(fNDCX, fNDCY));
+	m_pGraphicDev->SetTransform(D3DTS_WORLD, &matWorld);
+
+	_matrix matTexture;
+	D3DXMatrixScaling(&matTexture, 1.f, 1.f, 1.f);
+	m_pGraphicDev->SetTransform(D3DTS_TEXTURE0, &matTexture);
+	m_pGraphicDev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+	//텍스쳐만 교체하고, Buffer는 그대로 써도 무관
+	m_pEnderDragonMission->Set_Texture(0);
+	m_pBufferCom->Render_Buffer();
+
+	_vec2 vPos{ 1150.f, 20.f };
+	//엔더드래곤
+	_tchar missionBuf[32];
+	swprintf_s(missionBuf, L"%d / 1", m_iEnderDragonCount);
 
 	CFontMgr::GetInstance()->Render_Font(
 		L"Font_Minecraft", missionBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
@@ -625,7 +710,7 @@ void CHUD::Render_Death()
 	_tchar countdownBuf[32];
 	swprintf_s(countdownBuf, L"Respawn %d", iCountDown);
 
-	_vec2 vPos = { (float)(WINCX / 2 - 60), (float)(WINCY / 2 + 80) };
+	_vec2 vPos = { (float)(WINCX / 2 - 50), (float)(WINCY / 2 + 80) };
 
 	CFontMgr::GetInstance()->Render_Font(
 		L"Font_Minecraft", countdownBuf, &vPos, D3DXCOLOR(1.f, 1.f, 1.f, 1.f));
@@ -700,6 +785,15 @@ HRESULT CHUD::Add_Component()
 	
 	m_mapComponent[ID_STATIC].insert({ L"Com_PosionCoolTimeTexture", pComponent });
 
+	//Arrows
+	pComponent = m_pArrows= dynamic_cast<CTexture*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_ArrowsTexture"));
+
+	if (nullptr == pComponent)
+		return E_FAIL;
+
+	m_mapComponent[ID_STATIC].insert({ L"Com_ArrowsTexture", pComponent });
+
 	//Mission Complete
 	pComponent = m_pMissionComplete = dynamic_cast<CTexture*>
 		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_MissionCompleteText"));
@@ -744,6 +838,15 @@ HRESULT CHUD::Add_Component()
 		return E_FAIL;
 
 	m_mapComponent[ID_STATIC].insert({ L"Com_SkeletonTextTexture", pComponent });
+
+	//EnderDragon Mission
+	pComponent = m_pEnderDragonMission = dynamic_cast<CTexture*>
+		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_EnderDragonText"));
+
+	if (nullptr == pComponent)
+		return E_FAIL;
+
+	m_mapComponent[ID_STATIC].insert({ L"Com_EnderDragonTextTexture", pComponent });
 
 	//Artifact
 	pComponent = m_pArtifact = dynamic_cast<CTexture*>

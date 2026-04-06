@@ -39,6 +39,7 @@
 #include "CEnderEye.h" 
 #include "CTorch.h"
 #include "CLightMgr.h"
+#include "CSoundMgr.h"
 
 CSquidCoast::CSquidCoast(LPDIRECT3DDEVICE9 pGraphicDev)
 	:CScene(pGraphicDev)
@@ -68,6 +69,10 @@ HRESULT CSquidCoast::Ready_Scene()
 	Ready_StageData(L"../Bin/Data/Stage1.dat");
 
 	Ready_ObjectData("../Bin/Data/Stage1Object.dat");
+
+	//BGM 변경
+	CSoundMgr::GetInstance()->StopAll();
+	CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_Squidcoast.wav", 0.2f);
 
 	return S_OK;
 }
@@ -127,7 +132,7 @@ _int CSquidCoast::Update_Scene(const _float& fTimeDelta)
 		CDamageMgr::GetInstance()->Clear_Boss();
 		CEnvironmentMgr::GetInstance()->Clear_Boxes();
 
-		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_NETWORK)))
+		if (FAILED(CSceneChanger::ChangeScene(m_pGraphicDev, eSceneType::SCENE_CAMP)))
 		{
 			MSG_BOX("Camp Create Failed");
 			return -1;
@@ -324,6 +329,9 @@ void CSquidCoast::Update_EnderEyes()
 		CLayer* pLayer = m_mapLayer[L"GameLogic_Layer"];
 		if (!pLayer) return;
 
+		CSoundMgr::GetInstance()->StopAll();
+		CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_Guardian.wav", 0.5f);
+
 		CGameObject* pGuardian = CAncientGuardian::Create(
 			m_pGraphicDev, _vec3(42.f, 9.f, 229.f));
 		if (!pGuardian) return;
@@ -361,7 +369,7 @@ HRESULT CSquidCoast::Ready_Environment_Layer(const _tchar* pLayerTag)
 	if (!pDynamicCam)
 		return E_FAIL;
 
-	pDynamicCam->SetActionCam(eActionCamType::SQUID_COAST);
+	//pDynamicCam->SetActionCam(eActionCamType::SQUID_COAST);
 
 	if (!pGameObject)
 		return E_FAIL;
@@ -482,6 +490,7 @@ HRESULT CSquidCoast::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	CHUD* pHUD = dynamic_cast<CHUD*>(pGameObject);
+	pHUD->Set_MissionType(eMissionType::MISSION_NPC1);
 	pHUD->Set_Player(pPlayer);
 
 	m_mapLayer.insert({ pLayerTag, pLayer });

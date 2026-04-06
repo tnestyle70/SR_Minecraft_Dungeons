@@ -52,7 +52,7 @@ HRESULT CNetworkStage::Ready_Scene()
 
 	CSoundMgr::GetInstance()->StopAll();
 
-	CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_GBStage.wav", 1.f);
+	CSoundMgr::GetInstance()->PlayBGM(L"BGM/BGM_GBStage.wav", 0.5f);
 
 	CCursorMgr::GetInstance()->SetCursorState(eCursorState::DEFAULT);
 
@@ -365,7 +365,7 @@ HRESULT CNetworkStage::Ready_Environment_Layer(const _tchar* pLayerTag)
 	if (!pDynamicCam)
 		return E_FAIL;
 	
-	//pDynamicCam->SetActionCam(eActionCamType::GB_STAGE);
+	pDynamicCam->SetActionCam(eActionCamType::GB_STAGE);
 	
 	//카메라 오프셋 설정
 	_vec3 vOffset = { -12.f, 30.f, -12.f };
@@ -479,6 +479,8 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	{
 		pHUD->Set_NetworkPlayer(pPlayer);
 		pHUD->ShowScore(true);
+		pHUD->Set_MissionEnderDragon(true);
+		pHUD->Set_MissionType(eMissionType::MISSION_ENDERDRAGON);
 	}
 	else
 	{
@@ -523,7 +525,7 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	//char szNick[32];
 	//sprintf_s(szNick, sizeof(szNick), "Player%u", GetCurrentProcessId() % 10000);
 	//CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.61", 9000, szNick);
-	CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.155", 9000, "pending");
+	CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.61", 9000, "pending");
 	//CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "10.78.171.237", 9000, "pending");
 
 	m_mapLayer.insert({ pLayerTag, pLayer });
@@ -539,16 +541,6 @@ HRESULT CNetworkStage::Ready_UI_Layer(const _tchar* pLayerTag)
 		return E_FAIL;
 
 	CGameObject* pGameObject = nullptr;
-	//HUD
-	pGameObject = CHUD::Create(m_pGraphicDev);
-
-	if (nullptr == pGameObject)
-		return E_FAIL;
-
-	if (FAILED(pLayer->Add_GameObject(L"HUD", pGameObject)))
-		return E_FAIL;
-
-	m_mapLayer.insert({ pLayerTag, pLayer });
 
 	return S_OK;
 }
@@ -556,7 +548,6 @@ HRESULT CNetworkStage::Ready_UI_Layer(const _tchar* pLayerTag)
 HRESULT CNetworkStage::Ready_Light()
 {
 	D3DLIGHT9   tLightInfo;
-
 
 	ZeroMemory(&tLightInfo, sizeof(D3DLIGHT9));
 

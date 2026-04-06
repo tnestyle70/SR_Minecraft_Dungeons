@@ -6,6 +6,7 @@ enum class eMissionType
 {
 	MISSION_NPC1,
 	MISSION_NPC2,
+	MISSION_ENDERDRAGON,
 	MISSION_END
 };
 
@@ -37,6 +38,8 @@ public:
 	void Set_NetworkPlayer(CNetworkPlayer* pPlayer) { m_pNetworkPlayer = pPlayer; }
 	void Clear_Player() { m_pPlayer = nullptr; m_pNetworkPlayer = nullptr; }
 
+	void Set_MissionType(eMissionType eType) { m_eMissionType = eType; }
+	void Set_MissionEnderDragon(bool bShowMission) { m_bMissionEnderDragon = bShowMission; }
 	void ShowScore(bool bShow) { m_bShowScore = bShow; }
 
 private:
@@ -46,12 +49,15 @@ private:
 	void Render_EndUI();
 	//포션 쿨타임
 	void Render_PosionCoolTime();
+	//화살
+	void Render_Arrows();
 	//에메랄드 개수
 	void Render_CurrencyCount();
 	//미션
 	void Render_Mission();
 	void Render_Mission1();
 	void Render_Mission2();
+	void Render_MissionEnderDragon();
 	//미션 성공
 	void Render_MissionComplete();
 	//죽음
@@ -65,6 +71,7 @@ private:
 	//하트, 쿨타임, 미션 완료
 	CTexture* m_pFilledHeart = nullptr;
 	CTexture* m_pEmptyHeart = nullptr;
+	CTexture* m_pArrows = nullptr;
 	CTexture* m_pPosionCoolTime = nullptr;
 	CTexture* m_pMissionComplete = nullptr;
 	//미션 텍스트
@@ -72,6 +79,8 @@ private:
 	CTexture* m_pCripperMission = nullptr;
 	CTexture* m_pSpiderMission = nullptr;
 	CTexture* m_pSkeletonMission = nullptr;
+	//엔더 드래곤 미션 텍스쳐
+	CTexture* m_pEnderDragonMission = nullptr;
 	//아티펙트
 	CTexture* m_pArtifact = nullptr;
 	//Death 이미지
@@ -88,6 +97,10 @@ private:
 	//Posion Cooltime 위치, 사이즈
 	float m_fPosionX, m_fPosionY = 0.f;
 	float m_fPosionW, m_fPosionH = 0.f;
+
+	//Arrows 위치 사이즈
+	float m_fArrowsX, m_fArrowsY = 0.f;
+	float m_fArrowsW, m_fArrowsH = 0.f;
 
 	//MissionComplete 위치, 사이즈
 	float m_fMissionComX, m_fMissionComY = 0.f;
@@ -128,10 +141,12 @@ private:
 	int m_iCreeperCount = 0; 
 	int m_iSkeletonCount = 0;
 	int m_iSpiderCount = 0;
+	int m_iEnderDragonCount = 0;
 	eMissionType m_eMissionType = eMissionType::MISSION_END;
-	//미션 - 몬스터, 스켈레톤
+	//미션 - 몬스터, 스켈레톤, 엔더드래곤
 	bool m_bMissionNPC1 = false;
 	bool m_bMissionNPC2 = false;
+	bool m_bMissionEnderDragon = false;
 
 	bool m_bMissionComplete = false;
 	bool m_bFirstMissionComplete = true;
