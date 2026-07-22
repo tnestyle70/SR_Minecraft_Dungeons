@@ -91,9 +91,6 @@ void CLayer::LateUpdate_Layer(const _float& fTimeDelta)
 		pObj.second->LateUpdate_GameObject(fTimeDelta);
 }
 
-
-
-
 CLayer* CLayer::Create()
 {
 	CLayer* pLayer = new CLayer;

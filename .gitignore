@@ -59,6 +59,7 @@ Mesh/
 
 # Build results folders
 ipch/
+/packages/
 *.ilk
 *.meta
 *.pdb

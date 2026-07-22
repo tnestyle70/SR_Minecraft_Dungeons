@@ -14,7 +14,6 @@
 #include "CBlockMgr.h"
 #include "CPlayer.h"
 
-
 enum eStageType
 {
     STAGE_SQUIDCOAST,

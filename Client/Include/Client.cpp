@@ -97,7 +97,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 pMainApp->Render_MainApp();
             }           
         }
-       
     }
 
     _ulong dwRefCnt(0);

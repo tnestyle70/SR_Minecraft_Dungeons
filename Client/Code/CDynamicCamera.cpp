@@ -180,7 +180,6 @@ _int CDynamicCamera::Update_GameObject(const _float& fTimeDelta)
             m_vEye.y += ((rand() % 100) / 100.f - 0.5f) * fStrength;
             m_vEye.z += ((rand() % 100) / 100.f - 0.5f) * fStrength;
         }
-
     }
     else
     {

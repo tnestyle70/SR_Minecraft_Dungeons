@@ -93,7 +93,7 @@ HRESULT CEnderDragon::Ready_GameObject()
 	}
 
 	// Load JSON parameters (falls back to hardcoded defaults on failure)
-	Load_DragonPatterns("Data/dragon_patterns.json");
+	Load_DragonPatterns("../Bin/Data/dragon_patterns.json");
 
 	// Spine AABB collider creation (Gotcha #3: use Create() directly)
 	for (int i = 0; i < ENDER_DRAGON_SPINE_COUNT; ++i)
@@ -1573,7 +1573,7 @@ void CEnderDragon::Handle_Input(const _float& fTimeDelta)
 {
 	// F5 -> JSON runtime reload
 	if (GetAsyncKeyState(VK_F5) & 0x0001)
-		Load_DragonPatterns("Data/dragon_patterns.json");
+		Load_DragonPatterns("../Bin/Data/dragon_patterns.json");
 
 	// ── H/J/K/L: force state transition debug keys (always works, independent of CScreenFX) ──
 	if (GetAsyncKeyState('H') & 0x0001)
@@ -2221,7 +2221,7 @@ void CEnderDragon::Render_DebugPanel()
 	}
 
 	if (ImGui::Button("Reload JSON (F5)"))
-		Load_DragonPatterns("Data/dragon_patterns.json");
+		Load_DragonPatterns("../Bin/Data/dragon_patterns.json");
 
 	ImGui::End();
 }

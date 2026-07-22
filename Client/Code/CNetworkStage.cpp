@@ -527,7 +527,7 @@ HRESULT CNetworkStage::Ready_GameLogic_Layer(const _tchar* pLayerTag)
 	//sprintf_s(szNick, sizeof(szNick), "Player%u", GetCurrentProcessId() % 10000);
 	//CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.61", 9000, szNick);
 
-	CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "192.168.0.155", 9000, "pending");
+	CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "127.0.0.1", 9000, "pending");
 
 	//CNetworkMgr::GetInstance()->Connect(m_pGraphicDev, "10.78.171.237", 9000, "pending");
 

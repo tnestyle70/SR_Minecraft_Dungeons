@@ -16,6 +16,7 @@ public:
 	virtual			_int		Update_Scene(const _float& fTimeDelta);
 	virtual			void		LateUpdate_Scene(const _float& fTimeDelta);
 	virtual			void		Render_Scene();
+
 	virtual void Render_UI() override;
 
 private:
@@ -27,6 +28,7 @@ private:
 	CObjectEditor* m_pObjectEditor;
 	bool m_bF1Toggle = false;
 	bool m_bF2Toggle = false;
+
 public:
 	static CLogo* Create(LPDIRECT3DDEVICE9 pGraphicDev);
 

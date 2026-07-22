@@ -8,7 +8,9 @@ CBoxBottomTex::CBoxBottomTex(LPDIRECT3DDEVICE9 pGraphicDev)
 	: CVIBuffer(pGraphicDev)
 {
 }
-
+//복사 생성으로 넘겨줘서 미리 등록된 값을 사용할 수 있도록 한다. 
+//new는 동시에 하지만 I/O 예를 들어서 JSON, LUA로 읽어서 데이터를 저장할 경우에 
+//I/O 속도가 크기 때문에 해당 비용을 줄이는 것에 의미가 있다!
 CBoxBottomTex::CBoxBottomTex(const CBoxBottomTex& rhs)
 	: CVIBuffer(rhs)
 {

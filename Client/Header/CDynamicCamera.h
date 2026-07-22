@@ -47,6 +47,7 @@ private:
 	void		Key_Input(const _float& fTimeDelta);
 	void		Mouse_Move();
 	void		Mouse_Fix();
+
 public:
 	void SetActionCam(eActionCamType eType);
 	bool IsActionCamFinished() { return m_bActionCam; }
@@ -64,6 +65,7 @@ private:
 	_float		m_fSpeed;
 	_bool		m_bFix;
 	_bool		m_bCheck;
+
 private: //Cam Way Point
 	deque<CamWayPoint> m_deqWayPoints;
 	CamWayPoint m_wpStart;

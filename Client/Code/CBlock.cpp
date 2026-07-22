@@ -107,7 +107,7 @@ void CBlock::Render_GameObject()
 HRESULT CBlock::Add_Component()
 {
 	CComponent* pComponent = nullptr;
-
+	//VIBuffer
 	pComponent = m_pBufferCom = dynamic_cast<CCubeTex*>
 		(CProtoMgr::GetInstance()->Clone_Prototype(L"Proto_CubeTex"));
 	if (!pComponent)

@@ -299,8 +299,6 @@ void CSquidCoast::Render_Scene()
 
 		// 조명 비활성화 (다른 렌더 그룹에 영향 차단)
 	m_pGraphicDev->SetRenderState(D3DRS_LIGHTING, FALSE);  
-
-	
 }
 
 void CSquidCoast::Render_UI()
